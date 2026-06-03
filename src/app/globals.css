@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #FAF9F7;
+  --primary: #1B2B4B;
+  --accent: #FF6B6B;
+  --accent-gold: #D4A843;
+  --text-primary: #1B2B4B;
+  --text-secondary: #6B7280;
+  --surface: #FFFFFF;
+  --border: #E8E4DF;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3 { font-family: var(--font-fraunces), Georgia, serif; }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-2xl shadow-card border border-border;
+  }
+  .btn-primary {
+    @apply bg-accent text-white font-semibold px-6 py-3 rounded-xl
+           hover:bg-red-500 transition-all duration-200
+           active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent/40;
+  }
+  .btn-secondary {
+    @apply bg-surface text-primary font-semibold px-6 py-3 rounded-xl
+           border border-border hover:border-primary/30 hover:shadow-card
+           transition-all duration-200 active:scale-95;
+  }
+  .btn-ghost {
+    @apply text-primary font-medium px-4 py-2 rounded-lg
+           hover:bg-primary/5 transition-all duration-200;
+  }
+  .input {
+    @apply w-full bg-surface border border-border rounded-xl px-4 py-3
+           text-text-primary placeholder:text-text-secondary/50
+           focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50
+           transition-all duration-200;
+  }
+  .textarea {
+    @apply input resize-none;
+  }
+  .score-green { @apply text-success; }
+  .score-orange { @apply text-warning; }
+  .score-red { @apply text-danger; }
+  .badge-intro {
+    @apply inline-flex items-center gap-1 bg-danger/10 text-danger
+           text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide;
+  }
+  .section { @apply py-16 md:py-24; }
+  .container-narrow { @apply max-w-3xl mx-auto px-4 sm:px-6; }
+  .gradient-hero {
+    background: linear-gradient(135deg, #FAF9F7 0%, #F0EDE8 100%);
+  }
+}
+
+/* Voortgangsbalk animatie */
+@keyframes progress-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.progress-animated {
+  animation: progress-fill 60s ease-in-out forwards;
+}
+
+/* Boni bounce animatie */
+@keyframes boni-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.boni-float { animation: boni-float 3s ease-in-out infinite; }
+
+/* Score cirkel */
+.score-circle-track { fill: none; stroke: #E8E4DF; stroke-width: 8; }
+.score-circle-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 1.5s ease-in-out;
+}
+
+/* Scroll reveal */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

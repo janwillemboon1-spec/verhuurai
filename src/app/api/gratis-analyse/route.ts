@@ -1,0 +1,47 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { buildTitelPrompt } from "@/lib/boni-prompt";
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { titel, airbnbUrl, recensies } = body;
+
+    if (!titel || typeof titel !== "string") {
+      return NextResponse.json({ error: "Titel is verplicht" }, { status: 400 });
+    }
+
+    if (titel.trim().length > 100) {
+      return NextResponse.json({ error: "Titel mag maximaal 100 tekens bevatten" }, { status: 400 });
+    }
+
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 1500,
+      messages: [
+        {
+          role: "user",
+          content: buildTitelPrompt(titel.trim(), airbnbUrl?.trim(), recensies?.trim()),
+        },
+      ],
+    });
+
+    const content = message.content[0];
+    if (content.type !== "text") {
+      throw new Error("Onverwacht antwoordtype van Claude");
+    }
+
+    const raw = content.text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+    const parsed = JSON.parse(raw);
+
+    return NextResponse.json(parsed);
+  } catch (error) {
+    console.error("Gratis analyse fout:", error);
+    return NextResponse.json(
+      { error: "Boni heeft even een technisch probleem. Probeer het zo nog eens!" },
+      { status: 500 }
+    );
+  }
+}

@@ -1,0 +1,38 @@
+import Link from "next/link";
+
+export function Footer() {
+  return (
+    <footer className="bg-primary text-white/80 py-12 mt-auto">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Logo + tagline */}
+          <div className="flex flex-col items-center md:items-start gap-1">
+            <div className="flex items-center gap-2 font-display font-bold text-xl text-white">
+              <span>🏠</span>
+              <span>VerhuurAI</span>
+            </div>
+            <p className="text-sm text-white/50">
+              Jouw advertentie geoptimaliseerd door Boni.
+            </p>
+          </div>
+
+          {/* Links */}
+          <div className="flex gap-6 text-sm">
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy
+            </Link>
+            <Link href="/voorwaarden" className="hover:text-white transition-colors">
+              Voorwaarden
+            </Link>
+            <Link href="/contact" className="hover:text-white transition-colors">
+              Contact
+            </Link>
+          </div>
+        </div>
+        <div className="mt-8 pt-6 border-t border-white/10 text-center text-xs text-white/40">
+          © 2024 VerhuurAI — Alle rechten voorbehouden
+        </div>
+      </div>
+    </footer>
+  );
+}
