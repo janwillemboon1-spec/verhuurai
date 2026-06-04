@@ -8,8 +8,6 @@ declare global {
 }
 if (!global.sessies) global.sessies = new Map();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   try {
     const body = await request.text();
@@ -52,6 +50,7 @@ export async function POST(request: Request) {
       });
 
       try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
           from: "boni@verhuurai.nl",
           to: email,
