@@ -8,8 +8,6 @@ declare global {
 if (!global.rapporten) global.rapporten = new Map();
 if (!global.sessies) global.sessies = new Map();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function renderVeldSectie(titel: string, veld: any): string {
   if (!veld) return "";
 
@@ -203,6 +201,7 @@ export async function POST(request: Request) {
     `.trim();
 
     const fromAdres = process.env.RESEND_FROM_EMAIL || "Boni van VerhuurAI <boni@verhuurai.nl>";
+    const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: fromAdres,
       to: email,

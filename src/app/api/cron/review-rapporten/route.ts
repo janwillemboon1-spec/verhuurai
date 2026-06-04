@@ -5,8 +5,6 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function volgendeDatum(frequentie: string, dag: string | null): Date {
   const nu = new Date();
 
@@ -118,6 +116,7 @@ export async function GET(request: Request) {
       const email = userData?.user?.email;
 
       if (email && nieuwRapport) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
         const rapportUrl = `${baseUrl}/dashboard/rapporten/${nieuwRapport.id}`;
         const html = buildReviewRapportEmail(
           aboData.listing_naam || "Mijn woning",
