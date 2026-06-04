@@ -24,14 +24,24 @@ interface Abonnement {
   rapporten: Rapport[];
 }
 
+interface ListingRapport {
+  id: string;
+  host_naam: string | null;
+  aangemaakt_op: string;
+}
+
 export default function DashboardClient({
   email,
   abonnementen: initieel,
+  listingRapporten,
   welkom,
+  resterendeCredits,
 }: {
   email: string;
   abonnementen: Abonnement[];
+  listingRapporten: ListingRapport[];
   welkom: boolean;
+  resterendeCredits?: number;
 }) {
   const router = useRouter();
   const [abonnementen, setAbonnementen] = useState(initieel);
@@ -101,6 +111,28 @@ export default function DashboardClient({
           </div>
           <button onClick={uitloggen} className="btn-secondary text-sm">Uitloggen</button>
         </div>
+
+        {/* Listing Optimizer rapporten */}
+        {listingRapporten.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten</h2>
+            <div className="card overflow-hidden">
+              {listingRapporten.map((r) => (
+                <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-border last:border-0 hover:bg-surface/50 transition-colors">
+                  <div>
+                    <p className="font-semibold text-primary text-sm">{r.host_naam || "Advertentie-analyse"}</p>
+                    <p className="text-xs text-text-secondary">
+                      {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                  <a href={`/dashboard/listing-rapporten/${r.id}`} className="text-accent text-sm font-semibold">
+                    Bekijk →
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Woningen */}
         <div className="space-y-4">

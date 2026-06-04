@@ -11,7 +11,7 @@ export default function StartenPage() {
   const [laden, setLaden] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
 
-  const geldig = naam.trim().length > 0 && email.trim().length > 0 && email.includes("@");
+  const geldig = naam.trim().length > 0 && email.trim().includes("@");
 
   const starten = async () => {
     if (!geldig) return;
@@ -23,11 +23,11 @@ export default function StartenPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ naam: naam.trim(), email: email.trim() }),
       });
-      if (!res.ok) throw new Error("Er ging iets mis. Probeer het opnieuw.");
+      if (!res.ok) throw new Error();
       const { sessieId } = await res.json();
       router.push(`/analyseer/${sessieId}`);
-    } catch (e: unknown) {
-      setFout(e instanceof Error ? e.message : "Er ging iets mis. Probeer het opnieuw.");
+    } catch {
+      setFout("Er ging iets mis. Probeer het opnieuw.");
       setLaden(false);
     }
   };
@@ -37,12 +37,11 @@ export default function StartenPage() {
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <BoniAvatar size={80} className="mx-auto mb-4" />
-          <h1 className="font-display text-3xl text-primary mb-2">
-            Start jouw analyse
-          </h1>
+          <h1 className="font-display text-3xl text-primary mb-2">Start jouw analyse</h1>
           <p className="text-text-secondary">
             Vul je naam en e-mailadres in en Boni gaat direct aan de slag.
           </p>
+          <p className="text-accent font-semibold mt-2">€9,99 per analyse — eenmalig</p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-5">

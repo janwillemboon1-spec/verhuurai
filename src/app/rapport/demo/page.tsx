@@ -547,7 +547,7 @@ export default function DemoRapportPage() {
         {/* CTA */}
         <div className="card p-8 bg-primary text-white text-center space-y-4">
           <h2 className="font-display text-2xl font-bold">Wil je je eigen advertentie laten analyseren?</h2>
-          <p className="text-white/70 text-sm">Boni analyseert jouw echte advertentie en geeft gepersonaliseerd advies. Vanaf €9,40.</p>
+          <p className="text-white/70 text-sm">Boni analyseert jouw echte advertentie en geeft gepersonaliseerd advies. €9,99 per analyse.</p>
           <Link href="/starten" className="btn-primary inline-flex mx-auto">
             Start mijn analyse →
           </Link>

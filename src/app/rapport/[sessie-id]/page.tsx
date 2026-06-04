@@ -183,6 +183,7 @@ export default function RapportPagina() {
   const [fout, setFout] = useState<string | null>(null);
   const [emailVersturen, setEmailVersturen] = useState(false);
   const [emailStatus, setEmailStatus] = useState<"idle" | "verstuurd" | "fout">("idle");
+  const [dashboardOpgeslagen, setDashboardOpgeslagen] = useState(false);
 
   useEffect(() => {
     if (!sessieId) return;
@@ -197,6 +198,15 @@ export default function RapportPagina() {
         setHostNaam(data.hostNaam ?? null);
         setDatum(data.datum ?? null);
         setLaden(false);
+
+        // Automatisch opslaan in dashboard als gebruiker ingelogd is met hetzelfde email
+        fetch("/api/listing-rapport-opslaan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessieId }),
+        }).then((r) => r.json()).then((d) => {
+          if (d.opgeslagen && !d.bestaand) setDashboardOpgeslagen(true);
+        }).catch(() => {});
       })
       .catch((err) => {
         setFout(err.message ?? "Er ging iets mis bij het laden van het rapport.");
@@ -248,9 +258,23 @@ export default function RapportPagina() {
 
   const velden = rapport.velden;
 
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+
+        {dashboardOpgeslagen && (
+          <div className="card p-4 bg-success/10 border-success/30 flex items-center gap-3">
+            <span className="text-success text-xl">✅</span>
+            <div>
+              <p className="font-semibold text-success text-sm">Rapport opgeslagen in je dashboard</p>
+              <p className="text-xs text-text-secondary">
+                Je vindt dit rapport terug in je{" "}
+                <a href="/dashboard" className="text-accent underline">dashboard</a>.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="card p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">

@@ -33,7 +33,8 @@ export default function GratisPage() {
   const [scrapeSucces, setScrapeSucces] = useState<number | null>(null);
 
   const titelTeLang = titel.length > 50;
-  const kanAnalyseren = titel.trim().length > 0 && !titelTeLang && !laden;
+  const geldigeUrl = airbnbUrl.trim().includes("airbnb.");
+  const kanAnalyseren = titel.trim().length > 0 && !titelTeLang && geldigeUrl && !laden;
 
   const haalReviewsOp = async () => {
     if (!airbnbUrl.trim()) return;
@@ -146,22 +147,11 @@ export default function GratisPage() {
             )}
           </div>
 
-          {/* Extra context toggle */}
-          <button
-            type="button"
-            onClick={() => setToonExtra(!toonExtra)}
-            className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors"
-          >
-            <span className={`transition-transform duration-200 ${toonExtra ? "rotate-90" : ""}`}>▶</span>
-            {toonExtra ? "Minder opties verbergen" : "Extra context toevoegen voor betere analyse (optioneel)"}
-          </button>
-
-          {toonExtra && (
-            <div className="space-y-4 border-t border-border pt-4">
-              {/* Airbnb URL */}
+          <div className="space-y-4 border-t border-border pt-4">
+              {/* Airbnb URL — verplicht */}
               <div>
                 <label htmlFor="url-input" className="block text-sm font-semibold text-primary mb-1.5">
-                  Airbnb advertentie URL
+                  Airbnb advertentie URL <span className="text-accent">*</span>
                 </label>
                 <input
                   id="url-input"
@@ -169,12 +159,17 @@ export default function GratisPage() {
                   value={airbnbUrl}
                   onChange={(e) => setAirbnbUrl(e.target.value)}
                   placeholder="https://www.airbnb.nl/rooms/12345678"
-                  className="input"
+                  className={`input ${airbnbUrl && !geldigeUrl ? "border-danger/50" : ""}`}
                   disabled={laden}
                 />
-                <p className="text-xs text-text-secondary mt-1">
-                  Helpt Boni je woning beter te begrijpen voor titeladvies.
-                </p>
+                {airbnbUrl && !geldigeUrl && (
+                  <p className="text-xs text-danger mt-1">Voer een geldige Airbnb URL in</p>
+                )}
+                {!airbnbUrl && (
+                  <p className="text-xs text-text-secondary mt-1">
+                    Boni heeft je advertentie nodig om betere titelopties te geven.
+                  </p>
+                )}
                 {airbnbUrl.trim() && (
                   <div className="mt-3">
                     <button
@@ -209,26 +204,7 @@ export default function GratisPage() {
                 )}
               </div>
 
-              {/* Reviews */}
-              <div>
-                <label htmlFor="recensies-input" className="block text-sm font-semibold text-primary mb-1.5">
-                  Plak hier je beste reviews
-                </label>
-                <textarea
-                  id="recensies-input"
-                  value={recensies}
-                  onChange={(e) => setRecensies(e.target.value)}
-                  rows={6}
-                  placeholder="Plak hier je gastrecenties zodat Boni ziet wat gasten waarderen. Hoe meer reviews, hoe beter het advies over welke kenmerken in jouw titel moeten."
-                  className="textarea"
-                  disabled={laden}
-                />
-                <p className="text-xs text-text-secondary mt-1">
-                  Boni gebruikt de meest genoemde positieve punten als inspiratie voor je titelkenmerken.
-                </p>
-              </div>
             </div>
-          )}
 
           {/* Knop */}
           <button

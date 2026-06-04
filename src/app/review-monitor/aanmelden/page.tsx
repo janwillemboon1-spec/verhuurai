@@ -17,6 +17,7 @@ export default function AanmeldenPage() {
   const [airbnbUrl, setAirbnbUrl] = useState("");
   const [listingNaam, setListingNaam] = useState("");
   const [email, setEmail] = useState("");
+  const isEenmalig = searchParams.get("type") === "eenmalig";
   const [frequentie, setFrequentie] = useState<"monthly" | "weekly">(
     (searchParams.get("frequentie") as "monthly" | "weekly") || "monthly"
   );
@@ -177,8 +178,12 @@ export default function AanmeldenPage() {
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <BoniAvatar size={70} className="mx-auto mb-4" />
-          <h1 className="font-display text-3xl text-primary mb-2">Aanmelden Review Monitor</h1>
-          <p className="text-text-secondary">Je eerste rapport is gratis. Geen creditcard nodig.</p>
+          <h1 className="font-display text-3xl text-primary mb-2">
+            {isEenmalig ? "Eenmalig rapport aanvragen" : "Aanmelden Review Monitor"}
+          </h1>
+          <p className="text-text-secondary">
+            {isEenmalig ? "Betaal eenmalig €7,99 — geen abonnement." : "Je eerste rapport is gratis. Geen creditcard nodig."}
+          </p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-6">
@@ -219,16 +224,16 @@ export default function AanmeldenPage() {
 
           <div className="border-t border-border" />
 
-          {/* Stap 2 — Frequentie */}
-          <div className="space-y-3">
+          {/* Stap 2 — Frequentie (alleen bij abonnement) */}
+          {!isEenmalig && <div className="space-y-3">
             <h2 className="font-semibold text-primary flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">2</span>
               Hoe vaak wil je een rapport?
             </h2>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { waarde: "monthly", label: "Maandelijks", prijs: "€5,99/maand", omschrijving: "Elke 1e van de maand" },
-                { waarde: "weekly",  label: "Wekelijks",   prijs: "€9,99/maand", omschrijving: "Elke maandag" },
+                { waarde: "monthly", label: "Maandelijks", prijs: "€5,99/maand", omschrijving: "Rapport op de 1e van de maand" },
+                { waarde: "weekly",  label: "Wekelijks",   prijs: "€9,99/maand", omschrijving: "Rapport elke maandag" },
               ].map(({ waarde, label, prijs, omschrijving }) => (
                 <button
                   key={waarde}
@@ -246,7 +251,7 @@ export default function AanmeldenPage() {
             <p className="text-xs text-text-secondary">
               Eerste rapport is gratis. Daarna automatisch verlengd. Altijd opzegbaar.
             </p>
-          </div>
+          </div>}
 
           <div className="border-t border-border" />
 
@@ -291,7 +296,11 @@ export default function AanmeldenPage() {
                 </svg>
                 Bezig...
               </>
-            ) : isIngelogd ? "Woning toevoegen →" : "Gratis rapport aanvragen →"}
+            ) : isEenmalig
+              ? "Eenmalig rapport aanvragen — €7,99 →"
+              : isIngelogd
+              ? "Woning toevoegen →"
+              : "Gratis rapport aanvragen →"}
           </button>
         </div>
       </div>

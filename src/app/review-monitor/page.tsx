@@ -118,7 +118,7 @@ export default function ReviewMonitorPage() {
               </div>
               <div className="text-4xl mb-4">⚡</div>
               <h3 className="font-display text-2xl font-bold text-primary mb-3">Wekelijks</h3>
-              <p className="text-text-secondary flex-1">Rapport elke maandag. Blijf altijd een stap voor op je gasten.</p>
+              <p className="text-text-secondary flex-1">Rapport elke maandag. Blijf je gasten altijd een stap voor.</p>
               <div className="mt-4 mb-4">
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-4xl font-bold text-accent">€9,99</span>
@@ -132,8 +132,40 @@ export default function ReviewMonitorPage() {
             </div>
           </div>
           <p className="text-center text-sm text-text-secondary mt-6">
-            Meerdere woningen? Elke extra woning goedkoper. Altijd opzegbaar.
+            Altijd maandelijks opzegbaar. Meerdere woningen? Elke extra woning goedkoper.
           </p>
+
+          {/* Eenmalige optie */}
+          <div className="mt-8 max-w-sm mx-auto">
+            <div className="card p-6 text-center space-y-3 border-dashed">
+              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Liever geen abonnement?</p>
+              <h3 className="font-display text-xl font-bold text-primary">Eenmalig rapport</h3>
+              <p className="text-text-secondary text-sm">Eén rapport voor één woning. Geen abonnement, geen verlenging.</p>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-3xl font-bold text-accent">€7,99</span>
+                <span className="text-text-secondary text-sm">eenmalig</span>
+              </div>
+              <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-secondary w-full text-center block">
+                Eenmalig rapport aanvragen →
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-8 max-w-2xl mx-auto card p-6 sm:p-8 space-y-4 border-accent/30 text-center">
+            <h3 className="font-display text-xl text-primary">Benieuwd hoe een rapport eruitziet?</h3>
+            <div className="grid grid-cols-3 gap-3 text-center text-sm">
+              {[["📈", "Sentimenttrend"], ["💬", "Voorbeeldreacties"], ["🎯", "Verbeterpunten"]].map(([icoon, label]) => (
+                <div key={label} className="bg-primary/5 rounded-xl p-3">
+                  <div className="text-2xl mb-1">{icoon}</div>
+                  <p className="text-text-secondary text-xs font-semibold">{label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-text-secondary text-sm">Een realistisch voorbeeld van Casa Luna in Alicante — 23 reviews geanalyseerd.</p>
+            <Link href="/review-monitor/demo" className="btn-primary inline-block text-center">
+              👁️ Bekijk het volledige voorbeeldrapport →
+            </Link>
+          </div>
         </div>
       </section>
 

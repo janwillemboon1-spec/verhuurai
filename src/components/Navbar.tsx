@@ -1,10 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [ingelogd, setIngelogd] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIngelogd(!!user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIngelogd(!!session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
@@ -16,22 +29,25 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8">
-          <Link href="/#hoe-het-werkt" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            Hoe het werkt
+        <div className="hidden md:flex items-center gap-6">
+          <Link href="/listing-optimizer" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
+            Listing Optimizer
           </Link>
-          <Link href="/#prijzen" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            Prijzen
+          <Link href="/review-monitor" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
+            Review Monitor
           </Link>
-          <Link href="/#faq" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            FAQ
-          </Link>
-          <Link
-            href="/gratis"
-            className="text-accent font-semibold text-sm hover:underline"
-          >
+          <Link href="/gratis" className="text-accent font-semibold text-sm hover:underline">
             Gratis proberen
           </Link>
+          {ingelogd ? (
+            <Link href="/dashboard" className="btn-secondary text-sm py-2 px-4">
+              Mijn dashboard
+            </Link>
+          ) : (
+            <Link href="/login" className="btn-secondary text-sm py-2 px-4">
+              Inloggen
+            </Link>
+          )}
           <Link href="/starten" className="btn-primary text-sm py-2 px-4">
             Analyseer mijn advertentie
           </Link>
@@ -47,9 +63,7 @@ export function Navbar() {
             {open ? (
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
             ) : (
-              <>
-                <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-              </>
+              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
             )}
           </svg>
         </button>
@@ -58,18 +72,24 @@ export function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-background border-t border-border px-4 py-4 flex flex-col gap-4">
-          <Link href="/#hoe-het-werkt" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            Hoe het werkt
+          <Link href="/listing-optimizer" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
+            Listing Optimizer
           </Link>
-          <Link href="/#prijzen" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            Prijzen
-          </Link>
-          <Link href="/#faq" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            FAQ
+          <Link href="/review-monitor" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
+            Review Monitor
           </Link>
           <Link href="/gratis" onClick={() => setOpen(false)} className="text-accent font-semibold">
             Gratis proberen
           </Link>
+          {ingelogd ? (
+            <Link href="/dashboard" onClick={() => setOpen(false)} className="btn-secondary text-center">
+              Mijn dashboard
+            </Link>
+          ) : (
+            <Link href="/login" onClick={() => setOpen(false)} className="btn-secondary text-center">
+              Inloggen
+            </Link>
+          )}
           <Link href="/starten" onClick={() => setOpen(false)} className="btn-primary text-center">
             Analyseer mijn advertentie
           </Link>
