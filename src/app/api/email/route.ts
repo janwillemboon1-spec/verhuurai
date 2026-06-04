@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     const sessie = global.sessies.get(sessieId);
-    const email = emailOverride || sessie?.email || "";
+    const email = emailOverride || rapport.email || sessie?.email || "";
     const naam = rapport.hostNaam || sessie?.naam || "Host";
 
     if (!email) {

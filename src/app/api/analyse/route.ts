@@ -126,13 +126,14 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
     const raw = content.text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
     const rapport = JSON.parse(raw);
 
+    const sessie = global.sessies.get(sessieId);
+
     global.rapporten.set(sessieId, {
       ...rapport,
       hostNaam: formData.hostNaam,
       datum: new Date().toISOString(),
+      email: sessie?.email || "",
     });
-
-    const sessie = global.sessies.get(sessieId);
     if (sessie) {
       sessie.gebruiktCredits += 1;
       global.sessies.set(sessieId, sessie);

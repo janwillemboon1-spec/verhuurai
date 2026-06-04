@@ -217,17 +217,21 @@ export default function RapportPagina() {
   }, [sessieId]);
 
   const handleEmailVersturen = async () => {
-    if (!emailInvoer.includes("@")) {
-      setToonEmailInvoer(true);
-      return;
-    }
     setEmailVersturen(true);
     try {
       const res = await fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessieId, emailOverride: emailInvoer }),
+        body: JSON.stringify({ sessieId, emailOverride: emailInvoer || undefined }),
       });
+
+      if (res.status === 400 && !toonEmailInvoer) {
+        // Email niet gevonden — vraag het op
+        setToonEmailInvoer(true);
+        setEmailVersturen(false);
+        return;
+      }
+
       setEmailStatus(res.ok ? "verstuurd" : "fout");
       setToonEmailInvoer(false);
     } catch {
