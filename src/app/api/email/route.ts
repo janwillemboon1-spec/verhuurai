@@ -202,7 +202,7 @@ export async function POST(request: Request) {
 </html>
     `.trim();
 
-    const fromAdres = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    const fromAdres = process.env.RESEND_FROM_EMAIL || "Boni van VerhuurAI <boni@verhuurai.nl>";
     await resend.emails.send({
       from: fromAdres,
       to: email,
