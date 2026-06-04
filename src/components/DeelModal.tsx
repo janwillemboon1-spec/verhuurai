@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 interface DeelModalProps {
   onSluit: () => void;
   titel?: string;
+  overrideUrl?: string;
 }
 
 const DEEL_OPTIES = [
@@ -97,13 +98,13 @@ const DEEL_OPTIES = [
   },
 ];
 
-export function DeelModal({ onSluit, titel }: DeelModalProps) {
+export function DeelModal({ onSluit, titel, overrideUrl }: DeelModalProps) {
   const [gekopieerd, setGekopieerd] = useState(false);
   const [url, setUrl] = useState("");
 
   useEffect(() => {
-    setUrl(window.location.href);
-  }, []);
+    setUrl(overrideUrl || window.location.href);
+  }, [overrideUrl]);
 
   const deelTekst = titel
     ? `Bekijk mijn VerhuurAI review rapport: ${titel}`
