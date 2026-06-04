@@ -25,7 +25,12 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Beschermde routes — doorsturen naar login als niet ingelogd
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  // Rapport-pagina's zijn publiek toegankelijk via gedeelde link
+  const isPubliekRapport =
+    request.nextUrl.pathname.match(/^\/dashboard\/rapporten\/[^/]+$/) ||
+    request.nextUrl.pathname.match(/^\/dashboard\/listing-rapporten\/[^/]+$/);
+
+  if (!user && request.nextUrl.pathname.startsWith("/dashboard") && !isPubliekRapport) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

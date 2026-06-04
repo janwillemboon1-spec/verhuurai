@@ -5,6 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { BoniAvatar } from "@/components/BoniAvatar";
+import { VeldUitleg } from "@/components/VeldUitleg";
 import { AnalyseFormulier } from "@/types/rapport";
 
 const TOTAAL_STAPPEN = 14;
@@ -601,56 +602,76 @@ function Stap3({
   );
 }
 
-const STAP_VELD_NAMEN: Record<number, { label: string; uitleg: string; veld: keyof AnalyseFormulier }> = {
+const STAP_VELD_NAMEN: Record<number, { label: string; uitleg: string; veld: keyof AnalyseFormulier; airbnbUitleg: string; screenshot?: string }> = {
   4: {
     label: "Accommodatie omschrijving",
     uitleg: "Beschrijf alle ruimtes, het interieur en wat de woning bijzonder maakt.",
     veld: "accommodatie",
+    airbnbUitleg: "Ga in Airbnb naar jouw advertentie → klik op 'Bewerken' → sectie 'Je woning'. Kopieer de volledige tekst bij 'De ruimte' of 'Accommodatieomschrijving'.",
+    screenshot: "accommodatie.png",
   },
   5: {
     label: "Toegang voor gasten",
     uitleg: "Hoe komen gasten binnen? Sleutelkluisje, slimme slot, check-in instructies?",
     veld: "toegang",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Je woning' → 'Toegang voor gasten'. Hier staat beschreven hoe gasten binnenkomen en welke ruimtes ze kunnen gebruiken.",
+    screenshot: "toegang.png",
   },
   6: {
     label: "Interactie met gasten",
     uitleg: "Hoe beschikbaar ben je? Vertel over je communicatiestijl als host.",
     veld: "interactie",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Je woning' → 'Interactie met gasten'. Dit veld beschrijft hoe jij als host aanwezig bent tijdens het verblijf.",
+    screenshot: "interactie.png",
   },
   7: {
     label: "Andere belangrijke informatie",
     uitleg: "Denk aan trap zonder lift, parkeerruimte, huisdieren, geluidsniveau, etc.",
     veld: "andereInfo",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Je woning' → 'Andere dingen die gasten moeten weten'. Hier staan bijzonderheden die gasten moeten weten vóór boeking.",
+    screenshot: "andere-info.png",
   },
   8: {
     label: "Voorzieningen",
     uitleg: "Lijst alle voorzieningen op, gescheiden door komma's of als lijst.",
     veld: "voorzieningen",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Voorzieningen'. Hier zie je alle aangevinkte voorzieningen (wifi, keuken, parkeren, etc.). Kopieer de volledige lijst.",
+    screenshot: "voorzieningen.png",
   },
   9: {
     label: "Hoogtepunten van de buurt",
     uitleg: "Restaurants, bezienswaardigheden, parken, markten — wat maakt jouw buurt bijzonder?",
     veld: "buurt",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Locatie' → 'Hoogtepunten van de buurt'. Hier beschrijf je wat de omgeving bijzonder maakt voor gasten.",
+    screenshot: "buurt.png",
   },
   10: {
     label: "Vervoersmogelijkheden",
     uitleg: "Hoe ver is het station, de bushalte, de luchthaven? Parkeermogelijkheden?",
     veld: "vervoer",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Locatie' → 'Verplaatsen'. Hier staat hoe gasten van en naar jouw woning kunnen reizen.",
+    screenshot: "vervoer.png",
   },
   11: {
     label: "Recensies",
     uitleg: "Plak hier minimaal 5 recensies (inclusief eventuele hostrespons). Hoe meer, hoe beter.",
     veld: "recensies",
+    airbnbUitleg: "Ga naar jouw Airbnb advertentie (de publieke pagina) → scroll naar beneden naar het gedeelte 'Recensies'. Kopieer de tekst van minimaal 5 recensies, inclusief jouw reacties als host.",
+    screenshot: "recensies.png",
   },
   12: {
     label: "Host profiel",
     uitleg: "Plak de tekst van jouw hostprofiel. Wat vertel je over jezelf?",
     veld: "hostProfiel",
+    airbnbUitleg: "Ga naar jouw Airbnb profiel → klik op jouw naam/foto → 'Profiel bekijken'. Kopieer de profieltekst die gasten te zien krijgen ('Over mij' of 'Ik ben...').",
+    screenshot: "hostprofiel.png",
   },
   13: {
     label: "Huisregels",
     uitleg: "Wat zijn de regels voor gasten? Inchecktijden, huisdieren, roken, feesten?",
     veld: "huisregels",
+    airbnbUitleg: "Ga naar jouw advertentie → 'Bewerken' → sectie 'Huisregels'. Hier staan alle regels die gasten moeten accepteren bij boeking (inchecktijden, huisdieren, roken, feesten, etc.).",
+    screenshot: "huisregels.png",
   },
 };
 
@@ -683,6 +704,12 @@ function StapInhoud({
       <div>
         <label className="block text-sm font-semibold text-primary mb-1">{info.label}</label>
         <p className="text-xs text-text-secondary mb-3">{info.uitleg}</p>
+        {(info as any).airbnbUitleg && (
+          <VeldUitleg
+            tekst={(info as any).airbnbUitleg}
+            screenshot={(info as any).screenshot}
+          />
+        )}
         <textarea
           {...register(info.veld as keyof AnalyseFormulier)}
           rows={rijenTekstveld}
