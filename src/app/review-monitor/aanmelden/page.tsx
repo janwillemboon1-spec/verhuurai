@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { BoniAvatar } from "@/components/BoniAvatar";
@@ -11,7 +11,7 @@ const MAAND_DAGEN = [
   { waarde: "28", label: "28e dag van de maand" },
 ];
 
-export default function AanmeldenPage() {
+function AanmeldenForm() {
   const searchParams = useSearchParams();
 
   const [airbnbUrl, setAirbnbUrl] = useState("");
@@ -305,5 +305,17 @@ export default function AanmeldenPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AanmeldenPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <AanmeldenForm />
+    </Suspense>
   );
 }
