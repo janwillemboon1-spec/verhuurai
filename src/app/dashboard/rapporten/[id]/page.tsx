@@ -1,22 +1,19 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
 import RapportActions from "./RapportActions";
+import { notFound } from "next/navigation";
 
 export default async function RapportPagina({ params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const supabase = createAdminClient();
 
   const { data: rapport } = await supabase
     .from("rapporten")
     .select("*, abonnementen(listing_naam, airbnb_url, frequentie)")
     .eq("id", params.id)
-    .eq("user_id", user.id)
     .single();
 
-  if (!rapport) redirect("/dashboard");
+  if (!rapport) notFound();
 
   const r = rapport.rapport_json;
   const abo = rapport.abonnementen as any;

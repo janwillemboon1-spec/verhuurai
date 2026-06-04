@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notFound } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
 import { ScoreCircle, VeldScore } from "@/components/ScoreCircle";
@@ -7,18 +7,15 @@ import { scoreKleur, scoreBgKleur, BoniRapport, VeldRapport } from "@/types/rapp
 import RapportActions from "../../rapporten/[id]/RapportActions";
 
 export default async function ListingRapportPagina({ params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const supabase = createAdminClient();
 
   const { data: opgeslagenRapport } = await supabase
     .from("listing_rapporten")
     .select("*")
     .eq("id", params.id)
-    .eq("user_id", user.id)
     .single();
 
-  if (!opgeslagenRapport) redirect("/dashboard");
+  if (!opgeslagenRapport) notFound();
 
   const rapport = opgeslagenRapport.rapport_json as BoniRapport & { hostNaam?: string; datum?: string };
   const velden = rapport.velden;
