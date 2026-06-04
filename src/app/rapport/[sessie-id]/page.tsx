@@ -183,6 +183,8 @@ export default function RapportPagina() {
   const [fout, setFout] = useState<string | null>(null);
   const [emailVersturen, setEmailVersturen] = useState(false);
   const [emailStatus, setEmailStatus] = useState<"idle" | "verstuurd" | "fout">("idle");
+  const [emailInvoer, setEmailInvoer] = useState("");
+  const [toonEmailInvoer, setToonEmailInvoer] = useState(false);
   const [dashboardOpgeslagen, setDashboardOpgeslagen] = useState(false);
 
   useEffect(() => {
@@ -215,14 +217,19 @@ export default function RapportPagina() {
   }, [sessieId]);
 
   const handleEmailVersturen = async () => {
+    if (!emailInvoer.includes("@")) {
+      setToonEmailInvoer(true);
+      return;
+    }
     setEmailVersturen(true);
     try {
       const res = await fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessieId }),
+        body: JSON.stringify({ sessieId, emailOverride: emailInvoer }),
       });
       setEmailStatus(res.ok ? "verstuurd" : "fout");
+      setToonEmailInvoer(false);
     } catch {
       setEmailStatus("fout");
     } finally {
@@ -287,19 +294,40 @@ export default function RapportPagina() {
               {datum && <p>{new Date(datum).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}</p>}
             </div>
           </div>
-          <button
-            onClick={handleEmailVersturen}
-            disabled={emailVersturen || emailStatus === "verstuurd"}
-            className="btn-secondary text-sm w-full sm:w-auto"
-          >
-            {emailVersturen
-              ? "Versturen..."
-              : emailStatus === "verstuurd"
-              ? "✅ Verstuurd!"
-              : emailStatus === "fout"
-              ? "❌ Probeer opnieuw"
-              : "📧 Rapport per email ontvangen"}
-          </button>
+          {toonEmailInvoer && emailStatus !== "verstuurd" ? (
+            <div className="flex gap-2 flex-wrap">
+              <input
+                type="email"
+                value={emailInvoer}
+                onChange={(e) => setEmailInvoer(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleEmailVersturen()}
+                placeholder="jij@voorbeeld.nl"
+                className="input text-sm flex-1 min-w-0"
+                autoFocus
+              />
+              <button
+                onClick={handleEmailVersturen}
+                disabled={!emailInvoer.includes("@") || emailVersturen}
+                className={`btn-primary text-sm flex-shrink-0 ${!emailInvoer.includes("@") ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                {emailVersturen ? "Versturen..." : "Verstuur →"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleEmailVersturen}
+              disabled={emailVersturen || emailStatus === "verstuurd"}
+              className="btn-secondary text-sm w-full sm:w-auto"
+            >
+              {emailVersturen
+                ? "Versturen..."
+                : emailStatus === "verstuurd"
+                ? "✅ Verstuurd!"
+                : emailStatus === "fout"
+                ? "❌ Probeer opnieuw"
+                : "📧 Rapport per email ontvangen"}
+            </button>
+          )}
         </div>
 
         {rapport.openingszin && (

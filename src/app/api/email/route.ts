@@ -60,7 +60,7 @@ function renderVeldSectie(titel: string, veld: any): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { sessieId } = body;
+    const { sessieId, emailOverride } = body;
 
     if (!sessieId || typeof sessieId !== "string") {
       return NextResponse.json({ error: "sessieId is verplicht" }, { status: 400 });
@@ -72,11 +72,11 @@ export async function POST(request: Request) {
     }
 
     const sessie = global.sessies.get(sessieId);
-    const email = sessie?.email || "";
+    const email = emailOverride || sessie?.email || "";
     const naam = rapport.hostNaam || sessie?.naam || "Host";
 
     if (!email) {
-      return NextResponse.json({ error: "Geen e-mailadres gevonden voor deze sessie" }, { status: 400 });
+      return NextResponse.json({ error: "Geen e-mailadres gevonden" }, { status: 400 });
     }
 
     console.log(`[Email] Versturen naar: ${email}, van sessie: ${sessieId}`);
