@@ -213,6 +213,7 @@ export default function AnalyseerPage() {
           )}
           {huidigeStap >= 4 && huidigeStap <= 13 && huidigeStap !== 11 && (
             <StapInhoud
+              key={huidigeStap}
               stap={huidigeStap}
               register={register}
               fotos={fotoPerStap[huidigeStap] || []}
