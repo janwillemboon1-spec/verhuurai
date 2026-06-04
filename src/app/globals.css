@@ -96,6 +96,13 @@
   transition: stroke-dashoffset 1.5s ease-in-out;
 }
 
+/* Print / PDF */
+@media print {
+  nav, footer, button, .btn-primary, .btn-secondary, .fixed { display: none !important; }
+  body { background: white !important; }
+  .card { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+}
+
 /* Scroll reveal */
 .reveal-up {
   opacity: 0;
