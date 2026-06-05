@@ -99,9 +99,10 @@ export default function HomePage() {
               </ul>
               <div className="mt-6 pt-4 border-t border-border space-y-3">
                 <p className="text-accent font-bold text-xl">Vanaf €5,99/maand</p>
-                <Link href="/review-monitor" className="btn-primary text-sm w-full text-center block">
-                  Meer info en aanmelden →
-                </Link>
+                <div className="flex gap-3">
+                  <Link href="/review-monitor/aanmelden" className="btn-primary text-sm flex-1 text-center">Aanmelden →</Link>
+                  <Link href="/review-monitor" className="btn-secondary text-sm flex-1 text-center">Meer info →</Link>
+                </div>
                 <Link href="/review-monitor/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
@@ -109,15 +110,13 @@ export default function HomePage() {
             </div>
 
             {/* Prijscalculator */}
-            <div className="card p-8 flex flex-col space-y-5 relative border-success/40">
+            <div className="card p-8 flex flex-col relative border-success/40">
               <div className="absolute -top-3 right-6 bg-success text-white text-xs font-bold px-3 py-1 rounded-full">Gratis</div>
-              <div className="text-5xl">💰</div>
-              <div>
-                <h3 className="font-display text-2xl font-bold text-primary mb-2">Prijscalculator</h3>
-                <p className="text-text-secondary leading-relaxed min-h-[5rem]">
-                  Vul je locatie en basisprijs in. Boni berekent automatisch de optimale prijzen voor heel 2027 op basis van seizoenen, evenementen en feestdagen.
-                </p>
-              </div>
+              <div className="text-5xl mb-5">💰</div>
+              <h3 className="font-display text-2xl font-bold text-primary mb-2">Prijscalculator</h3>
+              <p className="text-text-secondary leading-relaxed mb-5 min-h-[5rem]">
+                Vul je locatie en basisprijs in. Boni berekent automatisch de optimale prijzen voor heel 2027 op basis van seizoenen, evenementen en feestdagen.
+              </p>
               <ul className="space-y-2 flex-1">
                 {["Seizoensgebonden prijsadvies", "Lokale evenementen en feestdagen", "Weekdag vs. weekend onderscheid", "Volledig gratis te gebruiken"].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-text-secondary">
@@ -130,7 +129,7 @@ export default function HomePage() {
                 <Link href="/prijscalculator" className="btn-primary text-sm w-full text-center block">
                   Bereken mijn prijzen →
                 </Link>
-                <Link href="/prijscalculator/demo" className="text-center block text-sm border border-success/40 text-success font-semibold px-4 py-2.5 rounded-xl hover:bg-success/5 transition-colors">
+                <Link href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
               </div>
