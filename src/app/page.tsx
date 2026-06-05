@@ -26,8 +26,17 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="flex justify-center flex-shrink-0">
-              <BoniAvatar size={200} animate={true} />
+            <div className="flex flex-col items-center flex-shrink-0 gap-3">
+              {/* Tekstwolkje */}
+              <div className="relative bg-white border border-border rounded-2xl px-5 py-3 shadow-card max-w-[230px] text-center">
+                <p className="font-display text-primary text-base leading-snug">
+                  Hoi! Ik ben Boni 👋
+                </p>
+                <p className="text-xs text-text-secondary mt-1">Ik analyseer jouw advertentie en help je meer gasten te trekken.</p>
+                {/* Pijltje naar beneden */}
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-5 h-5 bg-white border-r border-b border-border rotate-45" />
+              </div>
+              <BoniAvatar size={260} animate={true} />
             </div>
           </div>
         </div>
