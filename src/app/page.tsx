@@ -88,7 +88,7 @@ export default function HomePage() {
                 Boni leest automatisch alle nieuwe reviews en stuurt je wekelijks of maandelijks een rapport met verbeterpunten en voorbeeldreacties.
               </p>
               <ul className="space-y-2 flex-1">
-                {["Automatisch reviews bijhouden", "Sentimenttrend + terugkerende punten", "Verbeterpunten + voorbeeldreacties", "Kies je eigen dag en tijdstip"].map((item) => (
+                {["Automatisch reviews bijhouden", "Sentimenttrend + terugkerende punten", "Verbeterpunten + kant-en-klare reacties", "Kies je eigen dag en tijdstip"].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-text-secondary">
                     <span className="text-success font-bold">✓</span>{item}
                   </li>
