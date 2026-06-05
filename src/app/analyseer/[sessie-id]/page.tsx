@@ -505,20 +505,41 @@ function Stap2({
           <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">
             Voorbeeld zoekresultaat
           </p>
-          <div className="rounded-lg overflow-hidden border border-border bg-white">
-            <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-2xl">
-              🏠
-            </div>
-            <div className="p-3">
-              <div
-                className={`text-sm font-semibold rounded px-1 -mx-1 ${
-                  titel ? "bg-yellow-100 border border-yellow-300" : "text-text-secondary"
-                }`}
-              >
-                {titel || "Jouw titel verschijnt hier..."}
+          {/* Airbnb-stijl kaart */}
+          <div className="rounded-2xl overflow-hidden bg-white max-w-[280px]" style={{ fontFamily: "system-ui, sans-serif" }}>
+            {/* Foto */}
+            <div className="relative aspect-[4/3] bg-gradient-to-br from-stone-200 to-stone-300 flex items-center justify-center">
+              <span className="text-5xl">🏠</span>
+              {/* Favoriet badge */}
+              <div className="absolute top-3 left-3 bg-white rounded-full px-2 py-1 text-xs font-semibold text-gray-800 shadow">
+                Favoriet van gasten
               </div>
-              <p className="text-xs text-text-secondary mt-1">5 sterren · 24 beoordelingen</p>
-              <p className="text-xs text-text-secondary">vanaf €85 / nacht</p>
+              {/* Hart */}
+              <div className="absolute top-3 right-3 text-lg">❤️</div>
+              {/* Paginering */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {[0,1,2,3,4].map((i) => (
+                  <div key={i} className={`w-1 h-1 rounded-full ${i === 0 ? "bg-white" : "bg-white/50"}`} />
+                ))}
+              </div>
+            </div>
+            {/* Info */}
+            <div className="p-3 space-y-0.5">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-gray-900 leading-tight">
+                  {titel || <span className="text-gray-400">Jouw titel verschijnt hier...</span>}
+                </p>
+                <div className="flex items-center gap-0.5 flex-shrink-0 text-xs font-semibold text-gray-900">
+                  <span>★</span><span>4,91</span>
+                  <span className="font-normal text-gray-500">(191)</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">3 slaapkamers · 3 bedden · 1 badkamer</p>
+              <p className="text-xs text-gray-500">Zakelijke host</p>
+              <p className="text-xs text-gray-900 mt-1">
+                <span className="font-semibold">In totaal € 1.503</span>
+              </p>
+              <p className="text-xs text-gray-500 underline">Gratis annuleren</p>
             </div>
           </div>
         </div>
