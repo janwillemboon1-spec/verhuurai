@@ -186,6 +186,12 @@ export default function PrijscalculatorPage() {
             </div>
           </div>
 
+          <div className="text-center">
+            <a href="/prijscalculator/demo" className="text-sm text-accent underline hover:no-underline">
+              👁️ Bekijk een voorbeeldrapport (Estepona, Spanje) →
+            </a>
+          </div>
+
           {fout && <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 text-danger text-sm">{fout}</div>}
 
           <button

@@ -127,6 +127,9 @@ export default function HomePage() {
                 <Link href="/prijscalculator" className="btn-primary text-sm w-full text-center block">
                   Bereken mijn prijzen →
                 </Link>
+                <Link href="/prijscalculator/demo" className="text-center block text-sm border border-success/40 text-success font-semibold px-4 py-2.5 rounded-xl hover:bg-success/5 transition-colors">
+                  👁️ Bekijk voorbeeldrapport
+                </Link>
               </div>
             </div>
 
