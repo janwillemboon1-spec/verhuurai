@@ -69,9 +69,9 @@ export default function HomePage() {
               </ul>
               <div className="mt-6 pt-4 border-t border-border space-y-3">
                 <p className="text-accent font-bold text-xl">€9,99 — eenmalig</p>
-                <div className="flex gap-3">
-                  <Link href="/gratis" className="btn-secondary text-sm flex-1 text-center">Gratis proberen</Link>
-                  <Link href="/listing-optimizer" className="btn-primary text-sm flex-1 text-center">Meer info →</Link>
+                <div className="grid grid-cols-2 gap-3">
+                  <Link href="/gratis" className="btn-secondary text-sm text-center">Gratis proberen</Link>
+                  <Link href="/listing-optimizer" className="btn-primary text-sm text-center">Meer info →</Link>
                 </div>
                 <Link href="/rapport/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
                   👁️ Bekijk voorbeeldrapport
