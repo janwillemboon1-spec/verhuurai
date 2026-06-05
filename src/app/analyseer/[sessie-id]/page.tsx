@@ -501,16 +501,18 @@ function Stap2({
           De titel is een van de eerste dingen die gasten zien in de zoekresultaten. Maximaal 50 tekens.
         </p>
 
-        <div className="bg-background rounded-xl border border-border p-3 mb-4">
+        <div className="mb-4">
           <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">
             Voorbeeld zoekresultaat
           </p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/uitleg/airbnb-voorbeeld.png"
-            alt="Voorbeeld Airbnb zoekresultaat"
-            className="w-48 rounded-xl"
-          />
+          <div className="inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/uitleg/airbnb-voorbeeld.png"
+              alt="Voorbeeld Airbnb zoekresultaat"
+              className="w-44 rounded-xl border border-border"
+            />
+          </div>
           <p className="text-xs text-text-secondary mt-2">
             ↑ Jouw titel komt te staan in het <span className="font-semibold text-red-500">rode vak</span>.
           </p>
@@ -694,7 +696,7 @@ function StapInhoud({
         {(info as any).airbnbUitleg && (
           <VeldUitleg tekst={(info as any).airbnbUitleg} />
         )}
-        <textarea
+        <div className="mt-3" />        <textarea
           {...register(info.veld as keyof AnalyseFormulier)}
           rows={rijenTekstveld}
           placeholder={`Jouw ${info.label.toLowerCase()}...`}
