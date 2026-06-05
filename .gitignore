@@ -27,3 +27,5 @@ tsconfig.tsbuildinfo
 
 # Puppeteer
 .cache/
+public/uitleg/*.gif
+public/uitleg/*.mov

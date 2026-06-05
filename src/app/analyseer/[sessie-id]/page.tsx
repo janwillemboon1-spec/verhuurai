@@ -696,10 +696,7 @@ function StapInhoud({
         <label className="block text-sm font-semibold text-primary mb-1">{info.label}</label>
         <p className="text-xs text-text-secondary mb-3">{info.uitleg}</p>
         {(info as any).airbnbUitleg && (
-          <VeldUitleg
-            tekst={(info as any).airbnbUitleg}
-            screenshot={(info as any).screenshot}
-          />
+          <VeldUitleg tekst={(info as any).airbnbUitleg} />
         )}
         <textarea
           {...register(info.veld as keyof AnalyseFormulier)}
