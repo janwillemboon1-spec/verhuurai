@@ -47,6 +47,9 @@ export default function DashboardClient({
   const [abonnementen, setAbonnementen] = useState(initieel);
   const [toonArchief, setToonArchief] = useState<Record<string, boolean>>({});
   const [bezig, setBezig] = useState<string | null>(null);
+  const [wijzigMenu, setWijzigMenu] = useState<string | null>(null);
+
+  const sluitWijzigMenu = () => setWijzigMenu(null);
 
   const uitloggen = async () => {
     const supabase = createClient();
@@ -87,7 +90,7 @@ export default function DashboardClient({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" onClick={wijzigMenu ? sluitWijzigMenu : undefined}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
         {welkom && (
@@ -137,7 +140,7 @@ export default function DashboardClient({
         {/* Woningen */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl text-primary">Mijn woningen</h2>
+            <h2 className="font-display text-xl text-primary">Review Monitor rapporten</h2>
             <Link href="/review-monitor/aanmelden" className="btn-primary text-sm py-2">
               + Woning toevoegen
             </Link>
@@ -146,9 +149,9 @@ export default function DashboardClient({
           {abonnementen.length === 0 ? (
             <div className="card p-8 text-center space-y-4">
               <div className="text-4xl">🏠</div>
-              <h3 className="font-display text-xl text-primary">Nog geen woningen gekoppeld</h3>
+              <h3 className="font-display text-xl text-primary">Nog geen Review Monitor actief</h3>
               <Link href="/review-monitor/aanmelden" className="btn-primary inline-block">
-                Eerste woning toevoegen →
+                Eerste rapport aanvragen →
               </Link>
             </div>
           ) : (
@@ -189,19 +192,51 @@ export default function DashboardClient({
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0 relative">
                         {abo.status === "trial" && (
                           <Link href={`/review-monitor/abonneren/${abo.id}`} className="btn-primary text-sm py-2">
                             Activeer abonnement →
                           </Link>
                         )}
-                        <button
-                          onClick={() => verwijderWoning(abo.id)}
-                          disabled={bezig === abo.id}
-                          className="text-xs text-danger hover:underline px-2 py-1"
-                        >
-                          {bezig === abo.id ? "..." : "Verwijder"}
-                        </button>
+                        {abo.status === "active" && (
+                          <div className="relative">
+                            <button
+                              onClick={() => setWijzigMenu(wijzigMenu === abo.id ? null : abo.id)}
+                              className="btn-secondary text-sm py-2"
+                            >
+                              Wijzig abonnement ▾
+                            </button>
+                            {wijzigMenu === abo.id && (
+                              <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg z-20 min-w-[200px] overflow-hidden">
+                                <Link
+                                  href={`/review-monitor/abonneren/${abo.id}`}
+                                  onClick={() => setWijzigMenu(null)}
+                                  className="flex items-center gap-2 px-4 py-3 text-sm text-primary hover:bg-background transition-colors"
+                                >
+                                  ⚙️ Abonnement aanpassen
+                                </Link>
+                                <button
+                                  onClick={() => {
+                                    setWijzigMenu(null);
+                                    verwijderWoning(abo.id);
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-3 text-sm text-danger hover:bg-danger/5 transition-colors w-full text-left border-t border-border"
+                                >
+                                  🚫 Abonnement beëindigen
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {abo.status !== "active" && (
+                          <button
+                            onClick={() => verwijderWoning(abo.id)}
+                            disabled={bezig === abo.id}
+                            className="text-xs text-danger hover:underline px-2 py-1"
+                          >
+                            {bezig === abo.id ? "..." : "Verwijder"}
+                          </button>
+                        )}
                       </div>
                     </div>
 
