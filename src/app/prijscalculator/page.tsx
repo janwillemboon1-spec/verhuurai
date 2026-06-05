@@ -187,7 +187,7 @@ export default function PrijscalculatorPage() {
           </div>
 
           <div className="text-center">
-            <a href="/prijscalculator/demo" className="text-sm text-accent underline hover:no-underline">
+            <a href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center gap-2">
               👁️ Bekijk een voorbeeldrapport (Estepona, Spanje) →
             </a>
           </div>
