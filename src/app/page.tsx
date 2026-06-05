@@ -45,10 +45,10 @@ export default function HomePage() {
       <section className="section bg-surface">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Twee tools, één doel</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Drie tools, één doel</h2>
             <p className="text-text-secondary text-lg">Meer boekingen, betere reviews, hogere omzet</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
             {/* Listing Optimizer */}
             <div className="card p-8 flex flex-col">
@@ -101,6 +101,31 @@ export default function HomePage() {
                 </Link>
                 <Link href="/review-monitor/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
                   👁️ Bekijk voorbeeldrapport
+                </Link>
+              </div>
+            </div>
+
+            {/* Prijscalculator */}
+            <div className="card p-8 flex flex-col space-y-5 relative border-success/40">
+              <div className="absolute -top-3 right-6 bg-success text-white text-xs font-bold px-3 py-1 rounded-full">Gratis</div>
+              <div className="text-5xl">💰</div>
+              <div>
+                <h3 className="font-display text-2xl font-bold text-primary mb-2">Prijscalculator</h3>
+                <p className="text-text-secondary leading-relaxed min-h-[5rem]">
+                  Vul je locatie en basisprijs in. Boni berekent automatisch de optimale prijzen voor heel 2027 op basis van seizoenen, evenementen en feestdagen.
+                </p>
+              </div>
+              <ul className="space-y-2 flex-1">
+                {["Seizoensgebonden prijsadvies", "Lokale evenementen en feestdagen", "Weekdag vs. weekend onderscheid", "Volledig gratis te gebruiken"].map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-text-secondary">
+                    <span className="text-success font-bold">✓</span>{item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 pt-4 border-t border-border space-y-3">
+                <p className="text-success font-bold text-xl">Gratis</p>
+                <Link href="/prijscalculator" className="btn-primary text-sm w-full text-center block">
+                  Bereken mijn prijzen →
                 </Link>
               </div>
             </div>
