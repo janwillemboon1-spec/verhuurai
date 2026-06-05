@@ -558,20 +558,6 @@ function Stap3({
 
         <VeldUitleg tekst="Hostmodus > Advertenties > Jouw advertentie > Beschrijving > Advertentiebeschrijving" />
 
-        <div className="bg-background rounded-xl border border-border p-4 mb-4">
-          <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">
-            Voorbeeld listing preview
-          </p>
-          <div className="bg-white rounded-lg border border-border p-4">
-            <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
-              {beschrijving || "Jouw beschrijving verschijnt hier als voorbeeld..."}
-            </p>
-            {beschrijving.length > 180 && (
-              <span className="text-xs text-accent font-medium">meer tonen</span>
-            )}
-          </div>
-        </div>
-
         <textarea
           {...register("beschrijving")}
           rows={6}
