@@ -254,8 +254,8 @@ function AanmeldenForm() {
 
           <div className="border-t border-border" />
 
-          {/* Stap 2 — Frequentie (alleen bij abonnement) */}
-          {!isEenmalig && <div className="space-y-3">
+          {/* Stap 2 — Frequentie + interval (alleen bij abonnement) */}
+          {!isEenmalig && <div className="space-y-4">
             <h2 className="font-semibold text-primary flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">2</span>
               Hoe vaak wil je een rapport?
@@ -278,6 +278,27 @@ function AanmeldenForm() {
                 </button>
               ))}
             </div>
+
+            {/* Betaalinterval */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { waarde: "month", label: "Maandelijks betalen", prijs: frequentie === "monthly" ? "€5,99/maand" : "€9,99/maand", korting: null },
+                { waarde: "year",  label: "Jaarlijks betalen",   prijs: frequentie === "monthly" ? "€59/jaar" : "€99/jaar", korting: "2 maanden gratis" },
+              ].map(({ waarde, label, prijs, korting }) => (
+                <button
+                  key={waarde}
+                  onClick={() => setInterval(waarde as "month" | "year")}
+                  className={`card p-4 text-left transition-all ${
+                    interval === waarde ? "border-accent ring-2 ring-accent/30" : "hover:border-primary/20"
+                  }`}
+                >
+                  <p className="font-semibold text-primary text-sm">{label}</p>
+                  <p className="text-accent font-bold">{prijs}</p>
+                  {korting && <p className="text-xs text-success font-semibold">{korting}</p>}
+                </button>
+              ))}
+            </div>
+
             <p className="text-xs text-text-secondary">
               Eerste rapport is gratis. Daarna automatisch verlengd. Altijd opzegbaar.
             </p>
