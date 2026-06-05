@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildReviewRapportPrompt } from "@/lib/review-rapport-prompt";
 import { buildReviewRapportEmail } from "@/lib/review-rapport-email";
+import { filterReviews, formateerGefilterd } from "@/lib/filter-reviews";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
@@ -62,22 +63,33 @@ export async function GET(request: Request) {
 
   for (const abo of abonnementen) {
     try {
-      // Reviews scrapen
+      const aboData = abo as any;
+      // Reviews scrapen + filteren
       let recensies = "";
+      let nieuwAantalReviews = aboData.laatste_review_count || 0;
       try {
-        const airbnbUrl: string = (abo as any).airbnb_url;
         const scrapeRes = await fetch(`${baseUrl}/api/scrape-reviews`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: airbnbUrl }),
+          body: JSON.stringify({ url: aboData.airbnb_url }),
         });
         const scrapeData = await scrapeRes.json();
-        if (scrapeData.ok) recensies = scrapeData.recensies;
+        if (scrapeData.ok && scrapeData.reviewsRaw) {
+          const { gefilterd, aantalTotaal, filterMethode } = filterReviews(
+            scrapeData.reviewsRaw,
+            aboData.laatste_review_count || 0,
+            aboData.laatste_rapport_datum || null
+          );
+          console.log(`[Cron filter] ${filterMethode} — ${gefilterd.length} van ${aantalTotaal}`);
+          recensies = gefilterd.length > 0 ? formateerGefilterd(gefilterd) : "";
+          nieuwAantalReviews = aantalTotaal;
+        } else if (scrapeData.ok) {
+          recensies = scrapeData.recensies;
+        }
       } catch {
         recensies = "";
       }
 
-      const aboData = abo as any;
       const periodeOmschrijving = aboData.frequentie === "weekly"
         ? `Week van ${nu.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}`
         : nu.toLocaleDateString("nl-NL", { month: "long", year: "numeric" });
@@ -143,7 +155,11 @@ export async function GET(request: Request) {
       const volgende = volgendeDatum(aboData.frequentie, aboData.rapport_dag);
       await supabase
         .from("abonnementen")
-        .update({ volgende_rapport_datum: volgende.toISOString() })
+        .update({
+          volgende_rapport_datum: volgende.toISOString(),
+          laatste_review_count: nieuwAantalReviews,
+          laatste_rapport_datum: new Date().toISOString(),
+        })
         .eq("id", aboData.id);
 
       resultaten.push({ id: aboData.id, status: "ok" });

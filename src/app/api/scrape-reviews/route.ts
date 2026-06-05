@@ -150,11 +150,21 @@ export async function POST(request: Request) {
     const recensiesTekst = formateerReviews(reviews);
     const kenmerken = extraheerKenmerken(reviews);
 
+    // Ruwe review data meesturen voor filtering (datum + count)
+    const reviewsRaw = reviews.map((r) => ({
+      createdAt: r.createdAt || r.date || null,
+      tekst: r.comments || r.reviewText || r.text || "",
+      naam: r.reviewer?.firstName || r.reviewer?.name || "Gast",
+      rating: r.rating,
+      response: r.response,
+    }));
+
     return NextResponse.json({
       ok: true,
       recensies: recensiesTekst,
       aantalReviews: reviews.length,
       veelgenoemdeKenmerken: kenmerken,
+      reviewsRaw,
       methode,
     });
   } catch (error) {

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { buildReviewRapportPrompt } from "@/lib/review-rapport-prompt";
+import { filterReviews, formateerGefilterd } from "@/lib/filter-reviews";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -37,16 +38,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, rapportId: bestaandRapport.id, bestaand: true });
     }
 
-    // Reviews scrapen via Apify
+    // Reviews scrapen via Apify + filteren
     let recensies = "";
+    let nieuwAantalReviews = (abo as any).laatste_review_count || 0;
     try {
       const scrapeRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/scrape-reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: abo.airbnb_url }),
+        body: JSON.stringify({ url: (abo as any).airbnb_url }),
       });
       const scrapeData = await scrapeRes.json();
-      if (scrapeData.ok) recensies = scrapeData.recensies;
+      if (scrapeData.ok && scrapeData.reviewsRaw) {
+        const { gefilterd, aantalTotaal, filterMethode } = filterReviews(
+          scrapeData.reviewsRaw,
+          (abo as any).laatste_review_count || 0,
+          (abo as any).laatste_rapport_datum || null
+        );
+        console.log(`[Review filter] ${filterMethode} — ${gefilterd.length} van ${aantalTotaal}`);
+        recensies = gefilterd.length > 0 ? formateerGefilterd(gefilterd) : "";
+        nieuwAantalReviews = aantalTotaal;
+      } else if (scrapeData.ok) {
+        recensies = scrapeData.recensies;
+      }
     } catch {
       recensies = "(Reviews konden niet automatisch worden opgehaald)";
     }
@@ -79,6 +92,15 @@ export async function POST(request: Request) {
       })
       .select()
       .single();
+
+    // Update review count en rapport datum voor volgende keer
+    await supabase
+      .from("abonnementen")
+      .update({
+        laatste_review_count: nieuwAantalReviews,
+        laatste_rapport_datum: new Date().toISOString(),
+      })
+      .eq("id", abonnementId);
 
     return NextResponse.json({ ok: true, rapportId: nieuwRapport?.id });
   } catch (error) {
