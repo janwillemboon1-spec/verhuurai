@@ -133,9 +133,9 @@ export default function DashboardClient({
         {/* Listing Optimizer rapporten */}
         {listingRapporten.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten</h2>
-              <Link href="/starten" className="btn-primary text-sm py-2">
+              <Link href="/starten" className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0">
                 + Nieuw rapport
               </Link>
             </div>
@@ -159,9 +159,9 @@ export default function DashboardClient({
 
         {/* Woningen */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="font-display text-xl text-primary">Review Monitor rapporten</h2>
-            <Link href="/review-monitor/aanmelden" className="btn-primary text-sm py-2">
+            <Link href="/review-monitor/aanmelden" className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0">
               + Nieuw rapport
             </Link>
           </div>
@@ -187,8 +187,8 @@ export default function DashboardClient({
                   <div key={abo.id} className="card overflow-hidden">
                     {/* Woning header */}
                     <div className="p-5 flex flex-wrap items-start justify-between gap-3 border-b border-border">
-                      <div className="space-y-1 flex-1 min-w-0">
-                        <p className="font-semibold text-primary">{abo.listing_naam || "Mijn woning"}</p>
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <p className="font-semibold text-primary break-words pr-2">{abo.listing_naam || "Mijn woning"}</p>
                         <p className="text-xs text-text-secondary truncate">{abo.airbnb_url}</p>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -214,8 +214,8 @@ export default function DashboardClient({
 
                       <div className="flex items-center gap-2 flex-shrink-0 relative">
                         {abo.status === "trial" && (
-                          <Link href={`/review-monitor/abonneren/${abo.id}`} className="btn-primary text-sm py-2">
-                            Activeer abonnement →
+                          <Link href={`/review-monitor/abonneren/${abo.id}`} className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap">
+                            Activeer →
                           </Link>
                         )}
                         {abo.status === "active" && (
