@@ -51,6 +51,21 @@ export default function DashboardClient({
 
   const sluitWijzigMenu = () => setWijzigMenu(null);
 
+  const beeindigAbonnement = async (aboId: string) => {
+    if (!confirm("Weet je zeker dat je dit abonnement wilt beëindigen? Je rapporten blijven bewaard.")) return;
+    setBezig(aboId);
+    await fetch("/api/abonnement-opzeggen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ abonnementId: aboId }),
+    });
+    setAbonnementen((prev) =>
+      prev.map((a) => a.id === aboId ? { ...a, status: "cancelled" } : a)
+    );
+    setBezig(null);
+    setWijzigMenu(null);
+  };
+
   const uitloggen = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -216,10 +231,7 @@ export default function DashboardClient({
                                   ⚙️ Abonnement aanpassen
                                 </Link>
                                 <button
-                                  onClick={() => {
-                                    setWijzigMenu(null);
-                                    verwijderWoning(abo.id);
-                                  }}
+                                  onClick={() => beeindigAbonnement(abo.id)}
                                   className="flex items-center gap-2 px-4 py-3 text-sm text-danger hover:bg-danger/5 transition-colors w-full text-left border-t border-border"
                                 >
                                   🚫 Abonnement beëindigen
@@ -228,13 +240,13 @@ export default function DashboardClient({
                             )}
                           </div>
                         )}
-                        {abo.status !== "active" && (
+                        {(abo.status === "trial" || abo.status === "cancelled") && (
                           <button
                             onClick={() => verwijderWoning(abo.id)}
                             disabled={bezig === abo.id}
                             className="text-xs text-danger hover:underline px-2 py-1"
                           >
-                            {bezig === abo.id ? "..." : "Verwijder"}
+                            {bezig === abo.id ? "..." : "Verwijder alles"}
                           </button>
                         )}
                       </div>

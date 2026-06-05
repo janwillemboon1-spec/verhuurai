@@ -240,7 +240,7 @@ function AanmeldenForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-primary mb-1.5">
-                Naam van de woning <span className="text-text-secondary text-xs font-normal">(optioneel)</span>
+                Naam van de woning <span className="text-text-secondary text-xs font-normal">(voor intern gebruik)</span>
               </label>
               <input
                 type="text"
