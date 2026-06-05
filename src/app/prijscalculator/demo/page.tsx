@@ -47,7 +47,7 @@ const DEMO = {
 };
 
 function maandPrijzen(m: number) {
-  const s = DEMO.seizoenen[m.toString()] as keyof typeof MODIFIERS;
+  const s = DEMO.seizoenen[m.toString() as keyof typeof DEMO.seizoenen] as keyof typeof MODIFIERS;
   const mod = MODIFIERS[s];
   const wd = { min: Math.round(BASIS * (1 + mod.min - 0.20)), max: Math.round(BASIS * (1 + mod.max - 0.10)) };
   const we = { min: Math.round(BASIS * (1 + mod.min + 0.10)), max: Math.round(BASIS * (1 + mod.max + 0.25)) };
