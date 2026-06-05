@@ -514,6 +514,7 @@ function Stap2({
           <p className="text-xs text-text-secondary mt-2">
             ↑ Jouw titel komt te staan in het <span className="font-semibold text-red-500">rode vak</span>.
           </p>
+          <VeldUitleg tekst="Hostmodus > Advertenties > Jouw advertentie > Titel" />
         </div>
 
         <input
@@ -552,6 +553,8 @@ function Stap3({
         <p className="text-xs text-text-secondary mb-3">
           De eerste tekst die gasten zien. Maximaal 500 tekens. Dit is je haak — maak hem sterk.
         </p>
+
+        <VeldUitleg tekst="Hostmodus > Advertenties > Jouw advertentie > Beschrijving > Advertentiebeschrijving" />
 
         <div className="bg-background rounded-xl border border-border p-4 mb-4">
           <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">
@@ -601,61 +604,61 @@ const STAP_VELD_NAMEN: Record<number, { label: string; uitleg: string; veld: key
     label: "Accommodatie omschrijving",
     uitleg: "Beschrijf alle ruimtes, het interieur en wat de woning bijzonder maakt.",
     veld: "accommodatie",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Je woning' → 'Accommodatieomschrijving'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Beschrijving > Je accommodatie",
   },
   5: {
     label: "Toegang voor gasten",
     uitleg: "Hoe komen gasten binnen? Sleutelkluisje, slimme slot, check-in instructies?",
     veld: "toegang",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Je woning' → 'Toegang voor gasten'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Beschrijving > Toegang voor gasten",
   },
   6: {
     label: "Interactie met gasten",
     uitleg: "Hoe beschikbaar ben je? Vertel over je communicatiestijl als host.",
     veld: "interactie",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Je woning' → 'Interactie met gasten'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Beschrijving > Interactie met gasten",
   },
   7: {
     label: "Andere belangrijke informatie",
     uitleg: "Denk aan trap zonder lift, parkeerruimte, huisdieren, geluidsniveau, etc.",
     veld: "andereInfo",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Je woning' → 'Andere dingen die gasten moeten weten'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Beschrijving > Andere belangrijke informatie",
   },
   8: {
     label: "Voorzieningen",
     uitleg: "Lijst alle voorzieningen op, gescheiden door komma's of als lijst.",
     veld: "voorzieningen",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Voorzieningen'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Voorzieningen",
   },
   9: {
     label: "Hoogtepunten van de buurt",
     uitleg: "Restaurants, bezienswaardigheden, parken, markten — wat maakt jouw buurt bijzonder?",
     veld: "buurt",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Locatie' → 'Hoogtepunten van de buurt'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Locatie > Buurtbeschrijving",
   },
   10: {
     label: "Vervoersmogelijkheden",
     uitleg: "Hoe ver is het station, de bushalte, de luchthaven? Parkeermogelijkheden?",
     veld: "vervoer",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Locatie' → 'Verplaatsen'",
+    airbnbUitleg: "Hostmodus > Advertenties > Jouw advertentie > Locatie > Vervoersmogelijkheden",
   },
   11: {
     label: "Recensies",
     uitleg: "Plak hier minimaal 5 recensies (inclusief eventuele hostrespons). Hoe meer, hoe beter.",
     veld: "recensies",
-    airbnbUitleg: "Ga naar de publieke pagina van jouw advertentie → scroll naar 'Recensies'. Kopieer de tekst inclusief jouw reacties.",
+    airbnbUitleg: "Vul je Airbnb URL in om je reviews automatisch op te halen",
   },
   12: {
     label: "Host profiel",
     uitleg: "Plak de tekst van jouw hostprofiel. Wat vertel je over jezelf?",
     veld: "hostProfiel",
-    airbnbUitleg: "Hostmodus → Profiel → klik op jouw naam/foto → kopieer de profieltekst bij 'Over mij'",
+    airbnbUitleg: "Gastmodus > Menu > Profiel > Over mij",
   },
   13: {
     label: "Huisregels",
     uitleg: "Wat zijn de regels voor gasten? Inchecktijden, huisdieren, roken, feesten?",
     veld: "huisregels",
-    airbnbUitleg: "Hostmodus → Advertenties → jouw woning → Bewerken → 'Huisregels'",
+    airbnbUitleg: "Hostmodus > Advertenties > Aankomstgids > Huisregels — of open je advertentie als gast en scroll helemaal naar beneden",
   },
 };
 
