@@ -15,14 +15,17 @@ export default function HomePage() {
                 Meer uit jouw verhuur halen?
               </h1>
               <p className="text-text-secondary text-lg sm:text-xl mb-8 max-w-xl mx-auto md:mx-0">
-                Boni helpt Airbnb verhuurders met twee krachtige tools: een advertentie-analyse en een automatische review monitor.
+                Boni helpt Airbnb verhuurders met drie tools: optimaliseer je advertentie, monitor je reviews automatisch en bereken de optimale prijzen voor heel het jaar.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start flex-wrap">
                 <Link href="/listing-optimizer" className="btn-secondary text-center">
                   Listing Optimizer →
                 </Link>
                 <Link href="/review-monitor" className="btn-primary text-center">
                   Review Monitor →
+                </Link>
+                <Link href="/prijscalculator" className="btn-secondary text-center">
+                  Prijscalculator →
                 </Link>
               </div>
             </div>
@@ -30,7 +33,7 @@ export default function HomePage() {
               {/* Tekstwolkje */}
               <div className="relative bg-white border border-border rounded-2xl px-5 py-3 shadow-card max-w-[230px] text-center">
                 <p className="text-sm text-primary leading-snug">
-                  Hoi! Ik ben Boni. Ik analyseer jouw advertentie en help je meer gasten aan te trekken.
+                  Hoi! Ik ben Boni. Ik help je meer gasten aan te trekken, betere reviews te krijgen én de juiste prijzen te hanteren.
                 </p>
                 {/* Pijltje naar beneden */}
                 <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-5 h-5 bg-white border-r border-b border-border rotate-45" />
@@ -173,12 +176,15 @@ export default function HomePage() {
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">
             Waar wil je mee starten?
           </h2>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
             <Link href="/listing-optimizer" className="btn-secondary text-center">
               📋 Listing Optimizer
             </Link>
             <Link href="/review-monitor" className="btn-primary text-center">
               ⭐ Review Monitor
+            </Link>
+            <Link href="/prijscalculator" className="btn-secondary text-center">
+              💰 Prijscalculator
             </Link>
           </div>
         </div>
