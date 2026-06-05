@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+// eslint-disable-next-line @next/next/no-img-element
 
 interface VeldUitlegProps {
   tekst: string;
@@ -29,11 +29,10 @@ export function VeldUitleg({ tekst, screenshot }: VeldUitlegProps) {
       </div>
       {toonScreenshot && screenshot && (
         <div className="rounded-lg overflow-hidden border border-border">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={`/uitleg/${screenshot}`}
-            alt="Voorbeeld screenshot"
-            width={600}
-            height={400}
+            alt="Voorbeeld"
             className="w-full h-auto"
           />
         </div>
