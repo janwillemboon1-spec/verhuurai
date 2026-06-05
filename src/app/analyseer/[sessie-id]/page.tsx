@@ -501,47 +501,19 @@ function Stap2({
           De titel is een van de eerste dingen die gasten zien in de zoekresultaten. Maximaal 50 tekens.
         </p>
 
-        <div className="bg-background rounded-xl border border-border p-4 mb-4">
+        <div className="bg-background rounded-xl border border-border p-3 mb-4">
           <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">
             Voorbeeld zoekresultaat
           </p>
-          {/* Airbnb-stijl kaart */}
-          <div className="rounded-2xl overflow-hidden bg-white max-w-[280px]" style={{ fontFamily: "system-ui, sans-serif" }}>
-            {/* Foto */}
-            <div className="relative aspect-[4/3] bg-gradient-to-br from-stone-200 to-stone-300 flex items-center justify-center">
-              <span className="text-5xl">🏠</span>
-              {/* Favoriet badge */}
-              <div className="absolute top-3 left-3 bg-white rounded-full px-2 py-1 text-xs font-semibold text-gray-800 shadow">
-                Favoriet van gasten
-              </div>
-              {/* Hart */}
-              <div className="absolute top-3 right-3 text-lg">❤️</div>
-              {/* Paginering */}
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                {[0,1,2,3,4].map((i) => (
-                  <div key={i} className={`w-1 h-1 rounded-full ${i === 0 ? "bg-white" : "bg-white/50"}`} />
-                ))}
-              </div>
-            </div>
-            {/* Info */}
-            <div className="p-3 space-y-0.5">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">
-                  {titel || <span className="text-gray-400">Jouw titel verschijnt hier...</span>}
-                </p>
-                <div className="flex items-center gap-0.5 flex-shrink-0 text-xs font-semibold text-gray-900">
-                  <span>★</span><span>4,91</span>
-                  <span className="font-normal text-gray-500">(191)</span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">3 slaapkamers · 3 bedden · 1 badkamer</p>
-              <p className="text-xs text-gray-500">Zakelijke host</p>
-              <p className="text-xs text-gray-900 mt-1">
-                <span className="font-semibold">In totaal € 1.503</span>
-              </p>
-              <p className="text-xs text-gray-500 underline">Gratis annuleren</p>
-            </div>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/uitleg/airbnb-voorbeeld.png"
+            alt="Voorbeeld Airbnb zoekresultaat"
+            className="w-48 rounded-xl"
+          />
+          <p className="text-xs text-text-secondary mt-2">
+            ↑ Jouw titel komt te staan in het <span className="font-semibold text-red-500">rode vak</span>.
+          </p>
         </div>
 
         <input
