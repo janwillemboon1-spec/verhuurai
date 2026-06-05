@@ -37,6 +37,9 @@ export function Navbar() {
           <Link href="/review-monitor" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             Review Monitor
           </Link>
+          <Link href="/prijscalculator" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
+            Prijscalculator
+          </Link>
           <Link href="/gratis" className="text-accent font-semibold text-sm hover:underline">
             Gratis proberen
           </Link>
@@ -78,6 +81,9 @@ export function Navbar() {
           </Link>
           <Link href="/review-monitor" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             Review Monitor
+          </Link>
+          <Link href="/prijscalculator" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
+            Prijscalculator
           </Link>
           <Link href="/gratis" onClick={() => setOpen(false)} className="text-accent font-semibold">
             Gratis proberen
