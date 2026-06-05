@@ -94,7 +94,7 @@ export default function PrijscalculatorDemoPage() {
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs text-text-secondary font-semibold">Legenda:</span>
           {(["laag","tussen","hoog","vakantie","evenement"] as const).map(k => {
-            const m = MODIFIERS[k]; const kl = KLEUR[(m as any).kleur];
+            const m = MODIFIERS[k]; const kl = KLEUR[(m as any).kleur as keyof typeof KLEUR];
             return <span key={k} className={`text-xs font-semibold px-2.5 py-1 rounded-full ${kl.bg} ${kl.text}`}>{(m as any).icoon} {m.label}</span>;
           })}
         </div>
@@ -106,7 +106,7 @@ export default function PrijscalculatorDemoPage() {
             {MAANDEN.map((naam, mi) => {
               const m = mi + 1;
               const { seizoen, mod, wd, we } = maandPrijzen(m);
-              const kl = KLEUR[(mod as any).kleur];
+              const kl = KLEUR[(mod as any).kleur as keyof typeof KLEUR];
               const dagen = DEMO.bijzonder.filter(d => d.maand === m);
               return (
                 <div key={m} className={`card overflow-hidden border ${kl.border}`}>
@@ -150,7 +150,7 @@ export default function PrijscalculatorDemoPage() {
           <div className="divide-y divide-border">
             {DEMO.bijzonder.map((item, i) => {
               const evMod = MODIFIERS[item.type as keyof typeof MODIFIERS];
-              const kl = KLEUR[(evMod as any).kleur];
+              const kl = KLEUR[(evMod as any).kleur as keyof typeof KLEUR];
               return (
                 <div key={i} className="px-6 py-4 flex items-start justify-between gap-4 hover:bg-surface/50">
                   <div className="min-w-0 flex-1">
