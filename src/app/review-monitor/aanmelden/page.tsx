@@ -17,7 +17,10 @@ function AanmeldenForm() {
   const [airbnbUrl, setAirbnbUrl] = useState("");
   const [listingNaam, setListingNaam] = useState("");
   const [email, setEmail] = useState("");
-  const isEenmalig = searchParams.get("type") === "eenmalig";
+  const [typeRapport, setTypeRapport] = useState<"abonnement" | "eenmalig">(
+    searchParams.get("type") === "eenmalig" ? "eenmalig" : "abonnement"
+  );
+  const isEenmalig = typeRapport === "eenmalig";
   const [frequentie, setFrequentie] = useState<"monthly" | "weekly">(
     (searchParams.get("frequentie") as "monthly" | "weekly") || "monthly"
   );
@@ -178,15 +181,42 @@ function AanmeldenForm() {
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <BoniAvatar size={70} className="mx-auto mb-4" />
-          <h1 className="font-display text-3xl text-primary mb-2">
-            {isEenmalig ? "Eenmalig rapport aanvragen" : "Aanmelden Review Monitor"}
-          </h1>
-          <p className="text-text-secondary">
-            {isEenmalig ? "Betaal eenmalig €7,99 — geen abonnement." : "Je eerste rapport is gratis. Geen creditcard nodig."}
-          </p>
+          <h1 className="font-display text-3xl text-primary mb-2">Review Monitor</h1>
+          <p className="text-text-secondary">Kies een optie en vraag je rapport aan.</p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-6">
+
+          {/* Type rapport kiezen */}
+          <div className="space-y-3">
+            <h2 className="font-semibold text-primary">Wat wil je?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { waarde: "abonnement", label: "Eerste rapport gratis", prijs: "Dan €5,99 of €9,99/maand", omschrijving: "Automatisch elke week of maand", badge: "Populair" },
+                { waarde: "eenmalig", label: "Eenmalig rapport", prijs: "€7,99", omschrijving: "Geen abonnement, geen verlenging", badge: null },
+              ].map(({ waarde, label, prijs, omschrijving, badge }) => (
+                <button
+                  key={waarde}
+                  onClick={() => setTypeRapport(waarde as "abonnement" | "eenmalig")}
+                  className={`card p-4 text-left transition-all relative ${
+                    typeRapport === waarde ? "border-accent ring-2 ring-accent/30" : "hover:border-primary/20"
+                  }`}
+                >
+                  {badge && (
+                    <span className="absolute -top-2 right-3 bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {badge}
+                    </span>
+                  )}
+                  <p className="font-semibold text-primary text-sm">{label}</p>
+                  <p className="text-accent font-bold">{prijs}</p>
+                  <p className="text-xs text-text-secondary">{omschrijving}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-border" />
+
           {/* Stap 1 — Woning */}
           <div className="space-y-4">
             <h2 className="font-semibold text-primary flex items-center gap-2">
