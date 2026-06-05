@@ -153,11 +153,11 @@ export default function ReviewMonitorPage() {
 
           <div className="mt-8 max-w-2xl mx-auto card p-6 sm:p-8 space-y-4 border-accent/30 text-center">
             <h3 className="font-display text-xl text-primary">Benieuwd hoe een rapport eruitziet?</h3>
-            <div className="grid grid-cols-3 gap-3 text-center text-sm">
-              {[["📈", "Sentimenttrend"], ["💬", "Voorbeeldreacties"], ["🎯", "Verbeterpunten"]].map(([icoon, label]) => (
-                <div key={label} className="bg-primary/5 rounded-xl p-3">
-                  <div className="text-2xl mb-1">{icoon}</div>
-                  <p className="text-text-secondary text-xs font-semibold">{label}</p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {[["📈", "Sentiment-trend"], ["💬", "Voorbeeld-reacties"], ["🎯", "Verbeter-punten"]].map(([icoon, label]) => (
+                <div key={label} className="bg-primary/5 rounded-xl p-2 sm:p-3">
+                  <div className="text-xl sm:text-2xl mb-1">{icoon}</div>
+                  <p className="text-text-secondary text-[10px] sm:text-xs font-semibold leading-tight">{label}</p>
                 </div>
               ))}
             </div>
