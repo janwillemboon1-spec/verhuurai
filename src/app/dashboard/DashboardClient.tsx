@@ -133,7 +133,12 @@ export default function DashboardClient({
         {/* Listing Optimizer rapporten */}
         {listingRapporten.length > 0 && (
           <div className="space-y-3">
-            <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten</h2>
+              <Link href="/starten" className="btn-primary text-sm py-2">
+                + Nieuw rapport
+              </Link>
+            </div>
             <div className="card overflow-hidden">
               {listingRapporten.map((r) => (
                 <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-border last:border-0 hover:bg-surface/50 transition-colors">
@@ -157,7 +162,7 @@ export default function DashboardClient({
           <div className="flex items-center justify-between">
             <h2 className="font-display text-xl text-primary">Review Monitor rapporten</h2>
             <Link href="/review-monitor/aanmelden" className="btn-primary text-sm py-2">
-              + Woning toevoegen
+              + Nieuw rapport
             </Link>
           </div>
 
