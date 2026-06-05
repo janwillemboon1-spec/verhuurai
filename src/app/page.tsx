@@ -73,7 +73,7 @@ export default function HomePage() {
                   <Link href="/gratis" className="btn-secondary text-sm text-center flex items-center justify-center">Gratis proberen</Link>
                   <Link href="/listing-optimizer" className="btn-primary text-sm text-center flex items-center justify-center">Meer info →</Link>
                 </div>
-                <Link href="/rapport/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
+                <Link href="/rapport/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
               </div>
@@ -103,7 +103,7 @@ export default function HomePage() {
                   <Link href="/review-monitor/aanmelden" className="btn-primary text-sm flex-1 text-center">Aanmelden →</Link>
                   <Link href="/review-monitor" className="btn-secondary text-sm flex-1 text-center">Meer info →</Link>
                 </div>
-                <Link href="/review-monitor/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
+                <Link href="/review-monitor/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
               </div>
@@ -129,7 +129,7 @@ export default function HomePage() {
                 <Link href="/prijscalculator" className="btn-primary text-sm w-full text-center block">
                   Bereken mijn prijzen →
                 </Link>
-                <Link href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors">
+                <Link href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
               </div>
