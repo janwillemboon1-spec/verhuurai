@@ -19,7 +19,7 @@ export default async function AdminPage() {
   ] = await Promise.all([
     admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
-    admin.from("listing_rapporten").select("id, host_naam, aangemaakt_op, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
   ]);
 
   const statusKleur: Record<string, string> = {
@@ -137,6 +137,7 @@ export default async function AdminPage() {
                   <p className="font-semibold text-primary text-sm">{r.host_naam || "Analyse"}</p>
                   <p className="text-xs text-text-secondary">
                     {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                    {(r as any).email && <span className="ml-2 text-accent">· {(r as any).email}</span>}
                   </p>
                 </div>
                 <a

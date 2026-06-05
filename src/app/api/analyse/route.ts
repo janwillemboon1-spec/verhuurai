@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { buildBoniSystemPrompt } from "@/lib/boni-prompt";
 import { AnalyseFormulier } from "@/types/rapport";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 declare global {
@@ -127,13 +128,29 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
     const rapport = JSON.parse(raw);
 
     const sessie = global.sessies.get(sessieId);
+    const email = sessie?.email || "";
+    const naam = formData.hostNaam || sessie?.naam || "";
 
     global.rapporten.set(sessieId, {
       ...rapport,
-      hostNaam: formData.hostNaam,
+      hostNaam: naam,
       datum: new Date().toISOString(),
-      email: sessie?.email || "",
+      email,
     });
+
+    // Altijd opslaan in Supabase (ook zonder account)
+    try {
+      const admin = createAdminClient();
+      await admin.from("listing_rapporten").insert({
+        sessie_id: sessieId,
+        rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email },
+        host_naam: naam,
+        email,
+        user_id: null,
+      });
+    } catch (err) {
+      console.error("Supabase opslaan mislukt:", err);
+    }
     if (sessie) {
       sessie.gebruiktCredits += 1;
       global.sessies.set(sessieId, sessie);
