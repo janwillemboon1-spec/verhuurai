@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
+import { createClient } from "@/lib/supabase/client";
 
 export default function StartenPage() {
   const router = useRouter();
@@ -10,8 +11,19 @@ export default function StartenPage() {
   const [email, setEmail] = useState("");
   const [laden, setLaden] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
+  const [ingelogd, setIngelogd] = useState(false);
+  const [ingelogdEmail, setIngelogdEmail] = useState("");
 
-  const geldig = naam.trim().length > 0 && email.trim().includes("@");
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setIngelogd(true);
+        setIngelogdEmail(user.email ?? "");
+      }
+    });
+  }, []);
+
+  const geldig = ingelogd || (naam.trim().length > 0 && email.trim().includes("@"));
 
   const starten = async () => {
     if (!geldig) return;
@@ -21,7 +33,10 @@ export default function StartenPage() {
       const res = await fetch("/api/test-sessie", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ naam: naam.trim(), email: email.trim() }),
+        body: JSON.stringify({
+          naam: ingelogd ? (ingelogdEmail.split("@")[0]) : naam.trim(),
+          email: ingelogd ? ingelogdEmail : email.trim(),
+        }),
       });
       if (!res.ok) throw new Error();
       const { sessieId } = await res.json();
@@ -39,38 +54,51 @@ export default function StartenPage() {
           <BoniAvatar size={80} className="mx-auto mb-4" />
           <h1 className="font-display text-3xl text-primary mb-2">Start jouw analyse</h1>
           <p className="text-text-secondary">
-            Vul je naam en e-mailadres in en Boni gaat direct aan de slag.
+            {ingelogd ? `Ingelogd als ${ingelogdEmail}` : "Vul je naam en e-mailadres in en Boni gaat direct aan de slag."}
           </p>
           <p className="text-accent font-semibold mt-2">€9,99 per analyse — eenmalig</p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-5">
-          <div>
-            <label className="block text-sm font-semibold text-primary mb-1.5">
-              Voornaam <span className="text-accent">*</span>
-            </label>
-            <input
-              type="text"
-              value={naam}
-              onChange={(e) => setNaam(e.target.value)}
-              placeholder="Bijv. Sophie"
-              className="input"
-              autoFocus
-            />
-          </div>
+          {!ingelogd && (
+            <>
+              <div>
+                <label className="block text-sm font-semibold text-primary mb-1.5">
+                  Voornaam <span className="text-accent">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={naam}
+                  onChange={(e) => setNaam(e.target.value)}
+                  placeholder="Bijv. Sophie"
+                  className="input"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-primary mb-1.5">
+                  E-mailadres <span className="text-accent">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jij@voorbeeld.nl"
+                  className="input"
+                />
+              </div>
+            </>
+          )}
 
-          <div>
-            <label className="block text-sm font-semibold text-primary mb-1.5">
-              E-mailadres <span className="text-accent">*</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="jij@voorbeeld.nl"
-              className="input"
-            />
-          </div>
+          {ingelogd && (
+            <div className="bg-success/10 border border-success/20 rounded-xl p-4 flex items-center gap-3">
+              <span className="text-success text-xl">✓</span>
+              <div>
+                <p className="font-semibold text-success text-sm">Ingelogd</p>
+                <p className="text-xs text-text-secondary">{ingelogdEmail} — rapport wordt opgeslagen in je dashboard</p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-background rounded-xl p-4 flex items-center gap-3">
             <BoniAvatar size={50} />
@@ -88,9 +116,7 @@ export default function StartenPage() {
           <button
             onClick={starten}
             disabled={!geldig || laden}
-            className={`btn-primary w-full text-lg py-4 flex items-center justify-center gap-2 ${
-              !geldig || laden ? "opacity-40 cursor-not-allowed" : ""
-            }`}
+            className={`btn-primary w-full text-lg py-4 flex items-center justify-center gap-2 ${!geldig || laden ? "opacity-40 cursor-not-allowed" : ""}`}
           >
             {laden ? (
               <>
@@ -100,9 +126,7 @@ export default function StartenPage() {
                 </svg>
                 Bezig...
               </>
-            ) : (
-              "Analyse starten →"
-            )}
+            ) : "Analyse starten →"}
           </button>
         </div>
       </div>

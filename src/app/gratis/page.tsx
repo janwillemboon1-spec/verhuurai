@@ -31,10 +31,23 @@ export default function GratisPage() {
   const [scraping, setScraping] = useState(false);
   const [scrapeFout, setScrapeFout] = useState<string | null>(null);
   const [scrapeSucces, setScrapeSucces] = useState<number | null>(null);
+  const [email, setEmail] = useState("");
+  const [ingelogd, setIngelogd] = useState(false);
+  const [ingelogdEmail, setIngelogdEmail] = useState("");
+
+  // Check of gebruiker ingelogd is
+  useState(() => {
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      createClient().auth.getUser().then(({ data: { user } }) => {
+        if (user) { setIngelogd(true); setIngelogdEmail(user.email ?? ""); setEmail(user.email ?? ""); }
+      });
+    });
+  });
 
   const titelTeLang = titel.length > 50;
   const geldigeUrl = airbnbUrl.trim().includes("airbnb.");
-  const kanAnalyseren = titel.trim().length > 0 && !titelTeLang && geldigeUrl && !laden;
+  const geldigEmail = ingelogd || email.trim().includes("@");
+  const kanAnalyseren = titel.trim().length > 0 && !titelTeLang && geldigeUrl && geldigEmail && !laden;
 
   const haalReviewsOp = async () => {
     if (!airbnbUrl.trim()) return;
@@ -205,6 +218,29 @@ export default function GratisPage() {
               </div>
 
             </div>
+
+          {/* Email */}
+          {ingelogd ? (
+            <div className="bg-success/10 border border-success/20 rounded-xl p-3 flex items-center gap-2">
+              <span className="text-success">✓</span>
+              <p className="text-sm text-text-secondary">Ingelogd als <strong>{ingelogdEmail}</strong></p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-semibold text-primary mb-1.5">
+                E-mailadres <span className="text-accent">*</span>
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jij@voorbeeld.nl"
+                className="input"
+                disabled={laden}
+              />
+              <p className="text-xs text-text-secondary mt-1">We sturen je de analyse naar dit adres</p>
+            </div>
+          )}
 
           {/* Knop */}
           <button
