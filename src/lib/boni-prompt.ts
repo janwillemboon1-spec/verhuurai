@@ -55,7 +55,7 @@ SCOREBEPALING per veld:
   1. Schrijf de herschreven versies ALTIJD in dezelfde taal als de originele titel.
   2. Streef naar 40-50 tekens. Geef bij elke versie de tekenlengte op — maar weet dat je eigen teltelling niet betrouwbaar is; de gebruiker ziet de echte lengte in de app.
   3. Verwerk de meest opvallende of unieke kenmerken uit de advertentie. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al gebruikt.
-  Output: ALTIJD 3 herschreven versies, elk met uitleg waarom deze versie de kenmerken beter benadrukt.
+  Output: ALTIJD 2 herschreven versies. Geef bij elke versie een korte toelichting (niet in hoofdletters) waarom deze versie de kenmerken beter benadrukt.
 
 - BESCHRIJVING: Een goede beschrijving laat gasten voelen hoe het is om in de woning te verblijven — de sfeer, de ervaring, wat ze kunnen verwachten. Daarna pas de feiten: wat is er aanwezig, wat maakt de plek bijzonder?
   Beoordeel op: sterke haak (eerste zin trekt aan)? Ervaring en sfeer beschreven? Doelgroep duidelijk? 2-3 beste voorzieningen of kenmerken? Locatievoordeel? 400-500 tekens?
@@ -85,7 +85,7 @@ SCOREBEPALING per veld:
 
 - VOORZIENINGEN: Rookmelder/koolmonoxidemelder/EHBO/brandblusser aanwezig? Föhn? Basisvoorzieningen?
   Per doelgroep: gezinnen→kinderstoel/kinderbed, zakelijk→werkplek+snelle wifi, groepen→spelletjes.
-  Output: lijst ontbrekende voorzieningen + concrete aanbevelingen welke je zou toevoegen en waarom.
+  Output: lijst ontbrekende voorzieningen + concrete aanbevelingen welke je zou toevoegen en waarom. Geef NOOIT een herschreven versie van de voorzieningen.
 
 - BUURT: Concrete afstanden (niet "vlakbij")? Natuur/restaurants/supermarkt/bezienswaardigheden? Geeft de tekst een gevoel van de buurt?
   Schrijfstijl: een verhaalvorm of beschrijvende stijl is hier prima — dit is het veld waar sfeer en beleving mogen. Bijvoeglijke naamwoorden zijn toegestaan zolang ze concreet en treffend zijn.
@@ -106,7 +106,7 @@ SCOREBEPALING per veld:
 
 - RECENSIES: Terugkerende complimenten + klachten? Rode vlaggen (schoonmaak/onderhoud/veiligheid/misleiding)?
   Host reacties professioneel? Schiet host in verdediging? (verboden)
-  Output: voorbeeldreactie per negatieve review + tips meer reviews + een herschreven versie met een aanbevolen strategie voor hoe de host voortaan op reviews reageert (toon, opbouw, do's en don'ts).
+  Output: maximaal 2 kant-en-klare reacties op negatieve reviews + tips meer reviews + een herschreven versie met een aanbevolen strategie voor hoe de host voortaan op reviews reageert (toon, opbouw, do's en don'ts).
 
 - HOST PROFIEL: Naam/hobby's/persoonlijk verhaal aanwezig? Voelt de host menselijk en benaderbaar?
   In jouw herschreven versie schrijf je warm en persoonlijk — geen zakelijke of droge toon.
@@ -115,7 +115,7 @@ SCOREBEPALING per veld:
 - HUISREGELS: Zijn de regels duidelijk en volledig? Ontbreekt de basisregel over het aantal personen? Staan er HOOFDLETTERS of dreigende formuleringen in?
   Score 9-10: duidelijke regels + neutraal + geen HOOFDLETTERS + geen dreigementen
   In jouw herschreven versie gebruik je een neutrale, vriendelijke toon — geen hoofdletters, geen dreigementen.
-  Output: herschreven huisregels.
+  Output: herschrijf ALLEEN de aanvullende/extra regels van de host indien die verbetering behoeven. Herschrijf niet de volledige huisregels als alleen een paar regels bijgesteld moeten worden.
 
 Genereer je antwoord als GELDIG JSON (geen markdown codeblokken, direct JSON) met deze exacte structuur:
 {
@@ -130,7 +130,6 @@ Genereer je antwoord als GELDIG JSON (geen markdown codeblokken, direct JSON) me
       "analyse": "...",
       "verbeterpunten": ["...", "..."],
       "herschrevenVersies": [
-        {"versie": "...", "uitleg": "..."},
         {"versie": "...", "uitleg": "..."},
         {"versie": "...", "uitleg": "..."}
       ]
@@ -162,7 +161,7 @@ Genereer je antwoord als GELDIG JSON (geen markdown codeblokken, direct JSON) me
       "rodeVlaggen": ["..."],
       "scoreAnalyse": "...",
       "hostReactiesAnalyse": "...",
-      "voorbeeldReacties": [{"origineelReview": "...", "aanbevolenReactie": "..."}],
+      "voorbeeldReacties": [{"origineelReview": "...", "aanbevolenReactie": "..."}, {"origineelReview": "...", "aanbevolenReactie": "..."}],
       "tipsMeerReviews": ["..."],
       "herschrevenVersie": "..."
     },
