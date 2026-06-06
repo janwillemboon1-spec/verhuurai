@@ -98,9 +98,12 @@
 
 /* Print / PDF */
 @media print {
-  nav, footer, button, .btn-primary, .btn-secondary, .fixed { display: none !important; }
-  body { background: white !important; }
-  .card { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+  nav, footer, .print\:hidden, .fixed, .btn-primary, .btn-secondary { display: none !important; }
+  body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .card { box-shadow: none !important; border: 1px solid #e5e7eb !important; break-inside: avoid; }
+  .min-h-screen { min-height: unset !important; }
+  .space-y-8 > * + * { margin-top: 1rem !important; }
+  @page { margin: 1.5cm; }
 }
 
 /* Scroll reveal */
