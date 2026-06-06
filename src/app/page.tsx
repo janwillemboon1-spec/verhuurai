@@ -148,8 +148,8 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
-              { quote: "De herschreven titel van Boni leverde meteen 40% meer kliks op. Ongelofelijk.", naam: "Sophie", locatie: "Rotterdam" },
-              { quote: "De Review Monitor geeft me elke week inzicht in wat gasten vinden. Geen verrassingen meer.", naam: "Peter", locatie: "Utrecht" },
+              { quote: "Ik deed nooit iets met mijn prijzen, omdat ik geen idee had hoe ik die moest bepalen. Het rapport dat ik kreeg van Boni was ontzettend waardevol voor mij. Hij vond zelfs feestdagen waar ik het bestaan niet van wist.", naam: "Sophie", locatie: "Estepona" },
+              { quote: "De Review Monitor werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude" },
             ].map(({ quote, naam, locatie }) => (
               <div key={naam} className="card p-6 flex flex-col gap-4">
                 <p className="text-text-secondary leading-relaxed italic">"{quote}"</p>
