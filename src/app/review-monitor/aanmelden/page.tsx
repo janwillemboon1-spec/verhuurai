@@ -145,7 +145,7 @@ function AanmeldenForm() {
           <div className="text-5xl">📬</div>
           <h2 className="font-display text-2xl text-primary">Vul je inlogcode in</h2>
           <p className="text-text-secondary">
-            We stuurden een 6-cijferige code naar <strong>{email}</strong>.
+            We stuurden een inlogcode naar <strong>{email}</strong>.
           </p>
           <input
             type="text"
@@ -328,7 +328,7 @@ function AanmeldenForm() {
                 className="input"
               />
               <p className="text-xs text-text-secondary">
-                We sturen je een 6-cijferige inlogcode. Geen wachtwoord nodig.
+                We sturen je een inlogcode per email. Geen wachtwoord nodig.
               </p>
             </div>
           )}

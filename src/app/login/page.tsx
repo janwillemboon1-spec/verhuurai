@@ -62,7 +62,7 @@ export default function LoginPage() {
           <p className="text-text-secondary">
             {stap === "email"
               ? "Vul je e-mailadres in — we sturen je een inlogcode."
-              : `We hebben een 6-cijferige code gestuurd naar ${email}.`}
+              : `We hebben een inlogcode gestuurd naar ${email}.`}
           </p>
         </div>
 
