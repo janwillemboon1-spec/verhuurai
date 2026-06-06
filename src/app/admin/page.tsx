@@ -16,10 +16,12 @@ export default async function AdminPage() {
     { data: abonnementen },
     { data: reviewRapporten },
     { data: listingRapporten },
+    { data: calculatorRapporten },
   ] = await Promise.all([
     admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.from("prijscalculator_rapporten").select("id, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
   ]);
 
   const statusKleur: Record<string, string> = {
@@ -52,6 +54,7 @@ export default async function AdminPage() {
             { label: "Opgezegd", aantal: opgezegd, kleur: "text-text-secondary" },
             { label: "Review rapporten", aantal: reviewRapporten?.length ?? 0, kleur: "text-accent" },
             { label: "Listing rapporten", aantal: listingRapporten?.length ?? 0, kleur: "text-primary" },
+            { label: "Prijscalculator", aantal: calculatorRapporten?.length ?? 0, kleur: "text-success" },
           ].map(({ label, aantal, kleur }) => (
             <div key={label} className="card p-4 text-center">
               <p className={`text-3xl font-bold ${kleur}`}>{aantal}</p>
@@ -145,6 +148,38 @@ export default async function AdminPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-accent font-semibold hover:underline"
+                >
+                  Bekijk →
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Prijscalculator aanvragen */}
+        <div className="card overflow-hidden">
+          <div className="p-5 border-b border-border">
+            <h2 className="font-display text-xl text-primary">Prijscalculator aanvragen ({calculatorRapporten?.length ?? 0})</h2>
+          </div>
+          <div className="divide-y divide-border">
+            {calculatorRapporten?.length === 0 && (
+              <p className="p-5 text-sm text-text-secondary">Nog geen aanvragen.</p>
+            )}
+            {calculatorRapporten?.map(r => (
+              <div key={r.id} className="px-5 py-3 flex items-center justify-between hover:bg-surface/50 gap-4">
+                <div className="min-w-0">
+                  <p className="font-semibold text-primary text-sm">{r.locatie}, {r.land}</p>
+                  <p className="text-xs text-text-secondary">
+                    {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                    {r.email && <span className="ml-2 text-accent">· {r.email}</span>}
+                    <span className="ml-2">· €{r.basisprijs}/nacht</span>
+                  </p>
+                </div>
+                <a
+                  href={`${BASE_URL}/prijscalculator/resultaat/${r.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-accent font-semibold hover:underline flex-shrink-0"
                 >
                   Bekijk →
                 </a>

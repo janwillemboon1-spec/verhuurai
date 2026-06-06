@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BoniAvatar } from "@/components/BoniAvatar";
+import { DeelModal } from "@/components/DeelModal";
 
 // ── Configuratie ──────────────────────────────────────────────────────────────
 
@@ -55,18 +56,21 @@ export default function PrijscalculatorPage() {
   const [plaats, setPlaats] = useState("");
   const [basisprijs, setBasisprijs] = useState("");
   const [minNachten, setMinNachten] = useState("");
+  const [email, setEmail] = useState("");
   const [laden, setLaden] = useState(false);
   const [analyse, setAnalyse] = useState<Analyse | null>(null);
   const [fout, setFout] = useState<string | null>(null);
+  const [opgeslagenId, setOpgeslagenId] = useState<string | null>(null);
+  const [deelOpen, setDeelOpen] = useState(false);
 
   const basis = parseFloat(basisprijs) || 0;
   const minN = parseInt(minNachten) || 1;
   const locatie = [plaats, land].filter(Boolean).join(", ");
-  const gebruikBasisprijs = minN >= 6; // Geen weekdag/weekend toeslag bij ≥6 nachten
+  const gebruikBasisprijs = minN >= 6;
 
   const analyseer = async () => {
     if (!land.trim() || !plaats.trim() || !basis) return;
-    setLaden(true); setFout(null); setAnalyse(null);
+    setLaden(true); setFout(null); setAnalyse(null); setOpgeslagenId(null);
     try {
       const res = await fetch("/api/locatie-analyse", {
         method: "POST",
@@ -76,11 +80,32 @@ export default function PrijscalculatorPage() {
       const data = await res.json();
       if (!data.ok) throw new Error();
       setAnalyse(data.data);
+
+      // Opslaan in Supabase + email sturen
+      const saveRes = await fetch("/api/prijscalculator-opslaan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim() || null,
+          locatie: data.data.locatie,
+          land: data.data.land,
+          basisprijs: basis,
+          minNachten: minN,
+          jaar: JAAR,
+          resultaat: data.data,
+        }),
+      });
+      const saveData = await saveRes.json();
+      if (saveData.id) setOpgeslagenId(saveData.id);
     } catch {
       setFout("Analyse mislukt. Probeer een specifiekere locatie (bijv. 'Amsterdam' of 'Costa del Sol').");
     }
     setLaden(false);
   };
+
+  const resultaatUrl = opgeslagenId
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://verhuurai.nl"}/prijscalculator/resultaat/${opgeslagenId}`
+    : "";
 
   // Bouw bijzondere-dagen map per maand
   const bijzonderPerMaand: Record<number, Bijzonderedag[]> = {};
@@ -186,6 +211,20 @@ export default function PrijscalculatorPage() {
             </div>
           </div>
 
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-semibold text-primary mb-1.5">
+              E-mailadres <span className="text-text-secondary text-xs font-normal">(we sturen je rapport naar dit adres)</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="jij@voorbeeld.nl"
+              className="input"
+            />
+          </div>
+
           <div className="text-center">
             <a href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center gap-2">
               👁️ Bekijk een voorbeeldrapport (Estepona, Spanje) →
@@ -214,6 +253,18 @@ export default function PrijscalculatorPage() {
         {/* Resultaat */}
         {analyse && basis > 0 && (
           <div className="space-y-6">
+
+            {/* Deelknop */}
+            {opgeslagenId && (
+              <>
+                {deelOpen && <DeelModal onSluit={() => setDeelOpen(false)} overrideUrl={resultaatUrl} titel={`Prijsrapport ${analyse.locatie}`} />}
+                <div className="flex justify-end">
+                  <button onClick={() => setDeelOpen(true)} className="btn-secondary text-sm flex items-center gap-2">
+                    <span>↗</span> Rapport delen
+                  </button>
+                </div>
+              </>
+            )}
 
             {/* Marktanalyse */}
             <div className="card p-5 flex gap-4 items-start border-accent/30">
