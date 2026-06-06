@@ -96,9 +96,10 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
           {veld.herschrevenVersies.map((v, i) => (
             <div key={i} className="bg-surface rounded-xl p-4 border border-border space-y-2">
               {v.uitleg && (
-                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  {v.uitleg}
-                </p>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-xs font-bold text-accent flex-shrink-0 mt-0.5">Toelichting</span>
+                  <p className="text-xs text-text-secondary italic leading-relaxed">{v.uitleg}</p>
+                </div>
               )}
               <p className="text-sm text-primary leading-relaxed whitespace-pre-line">
                 {v.versie}
@@ -112,9 +113,10 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
       {veld.herschrevenVersie && !veld.herschrevenVersies?.length && (
         <div className="bg-surface rounded-xl p-4 border border-border space-y-2">
           {veld.herschrevenUitleg && (
-            <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-              {veld.herschrevenUitleg}
-            </p>
+            <div className="flex items-start gap-1.5">
+              <span className="text-xs font-bold text-accent flex-shrink-0 mt-0.5">Toelichting</span>
+              <p className="text-xs text-text-secondary italic leading-relaxed">{veld.herschrevenUitleg}</p>
+            </div>
           )}
           <p className="text-sm text-primary leading-relaxed whitespace-pre-line">
             {veld.herschrevenVersie}
