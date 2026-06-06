@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildBoniSystemPrompt } from "@/lib/boni-prompt";
 import { AnalyseFormulier } from "@/types/rapport";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getOrCreateUser } from "@/lib/supabase/get-or-create-user";
+import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 declare global {
@@ -138,18 +140,64 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
       email,
     });
 
-    // Altijd opslaan in Supabase (ook zonder account)
+    // Account aanmaken of vinden + rapport opslaan in Supabase
     try {
       const admin = createAdminClient();
-      await admin.from("listing_rapporten").insert({
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+
+      let userId: string | null = null;
+      let loginUrl: string | null = null;
+
+      if (email) {
+        const result = await getOrCreateUser(email);
+        userId = result.userId;
+        loginUrl = result.loginUrl;
+      }
+
+      const { data: opgeslagenRapport } = await admin.from("listing_rapporten").insert({
         sessie_id: sessieId,
         rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email },
         host_naam: naam,
         email,
-        user_id: null,
-      });
+        user_id: userId,
+      }).select().single();
+
+      // Gecombineerde email: rapport klaar + inloglink
+      if (email && opgeslagenRapport) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const rapportUrl = `${baseUrl}/dashboard/listing-rapporten/${opgeslagenRapport.id}`;
+        await resend.emails.send({
+          from: "Boni van VerhuurAI <boni@verhuurai.nl>",
+          to: email,
+          subject: `Je Listing Optimizer rapport is klaar! 🏠`,
+          html: `
+            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+              <div style="background:#1B2B4B;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;">
+                <h1 style="color:white;margin:0;font-size:22px;">🏠 VerhuurAI</h1>
+                <p style="color:#a5b4fc;margin:8px 0 0;">Listing Optimizer Rapport</p>
+              </div>
+              <p>Hey ${naam}! Je rapport is klaar. Bekijk je analyse en alle herschreven teksten via de knop hieronder.</p>
+              <div style="text-align:center;margin:32px 0;">
+                <a href="${rapportUrl}" style="background:#FF6B6B;color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px;">
+                  Bekijk mijn rapport →
+                </a>
+              </div>
+              ${loginUrl ? `
+              <div style="background:#f9fafb;border-radius:12px;padding:20px;margin-top:24px;">
+                <p style="margin:0 0 8px;font-weight:bold;color:#1B2B4B;">📊 Je dashboard</p>
+                <p style="margin:0 0 12px;color:#6b7280;font-size:14px;">We hebben automatisch een dashboard voor je aangemaakt. Log hier in om al je rapporten terug te vinden.</p>
+                <a href="${loginUrl}" style="background:#1B2B4B;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">
+                  Inloggen op dashboard →
+                </a>
+              </div>` : ""}
+              <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
+                VerhuurAI · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a>
+              </p>
+            </div>`,
+        });
+      }
     } catch (err) {
-      console.error("Supabase opslaan mislukt:", err);
+      console.error("Supabase/email fout:", err);
     }
     if (sessie) {
       sessie.gebruiktCredits += 1;
