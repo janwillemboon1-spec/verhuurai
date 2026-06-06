@@ -49,7 +49,6 @@ const GESCOORDE_VELDEN = [
   "voorzieningen",
   "buurt",
   "vervoer",
-  "fotos",
   "recensies",
   "hostProfiel",
   "huisregels",
