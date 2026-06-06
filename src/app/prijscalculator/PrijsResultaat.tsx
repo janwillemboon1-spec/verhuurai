@@ -178,7 +178,7 @@ export default function PrijsResultaat({ analyse, basis, minN, jaar, opgeslagenI
             <span className="text-2xl">💡</span>
             <div className="space-y-2">
               <p className="font-semibold text-primary">Deze prijzen zijn ter indicatie</p>
-              <p className="text-sm text-text-secondary">Een goede eerste stap. Voor echt optimale prijzen raden we een dynamic pricing tool aan.</p>
+              <p className="text-sm text-text-secondary">De bovenstaande prijzen zijn een goede eerste stap als je tot nu toe weinig of niets met je prijsstrategie hebt gedaan. Voor een echt optimale strategie raden we een dynamic pricing tool aan.</p>
             </div>
           </div>
           <div className="border-t border-warning/20 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

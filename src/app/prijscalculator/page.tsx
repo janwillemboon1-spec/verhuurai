@@ -420,7 +420,7 @@ export default function PrijscalculatorPage() {
                 <div className="space-y-2">
                   <p className="font-semibold text-primary">Deze prijzen zijn ter indicatie</p>
                   <p className="text-sm text-text-secondary leading-relaxed">
-                    De bovenstaande prijzen zijn een goede eerste stap als je tot nu toe weinig of niets met je prijsstrategie hebt gedaan. Ze geven je een solide basisstructuur op basis van seizoenen, weekenden en lokale evenementen.
+                    De bovenstaande prijzen zijn een goede eerste stap als je tot nu toe weinig of niets met je prijsstrategie hebt gedaan. Voor een echt optimale strategie raden we een dynamic pricing tool aan.
                   </p>
                   <p className="text-sm text-text-secondary leading-relaxed">
                     Wil je echt het maximale uit je verhuur halen? Dan is een <strong className="text-primary">dynamic pricing tool</strong> de volgende stap. Zulke tools passen je prijzen automatisch dagelijks aan op basis van tientallen factoren.
