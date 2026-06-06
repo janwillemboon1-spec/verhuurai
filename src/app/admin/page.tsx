@@ -47,9 +47,12 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="font-display text-3xl text-primary">Admin</h1>
-          <a href="/dashboard" className="btn-secondary text-sm">← Dashboard</a>
+          <div className="flex gap-3">
+            <a href="/admin/contacten" className="btn-primary text-sm">👥 Contacten & Export</a>
+            <a href="/dashboard" className="btn-secondary text-sm">← Dashboard</a>
+          </div>
         </div>
 
         {/* Statistieken */}
