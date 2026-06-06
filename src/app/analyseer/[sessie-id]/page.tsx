@@ -97,10 +97,11 @@ export default function AnalyseerPage() {
     setAnalyseVoortgang(0);
     setToonVoortgang(true);
     // Schat ~240 seconden totaal. Ga langzamer naarmate we 95% naderen.
+    // 0→50% in ~83 sec, 50→80% in ~75 sec, 80→95% in ~83 sec = ~4 minuten
     voortgangInterval.current = setInterval(() => {
       setAnalyseVoortgang(prev => {
         if (prev >= 95) return prev;
-        const stap = prev < 50 ? 0.3 : prev < 80 ? 0.18 : 0.05;
+        const stap = prev < 50 ? 0.30 : prev < 80 ? 0.20 : 0.09;
         return Math.min(prev + stap, 95);
       });
     }, 500);
