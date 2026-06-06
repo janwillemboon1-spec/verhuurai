@@ -98,12 +98,75 @@
 
 /* Print / PDF */
 @media print {
-  nav, footer, .print\:hidden, .fixed, .btn-primary, .btn-secondary { display: none !important; }
-  body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .card { box-shadow: none !important; border: 1px solid #e5e7eb !important; break-inside: avoid; }
+  /* Verberg navigatie en interactieve elementen */
+  nav, footer, .print\:hidden, .fixed, .btn-primary, .btn-secondary,
+  button, .boni-float { display: none !important; }
+
+  /* Forceer alle kleuren af te drukken */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  body {
+    background: #ffffff !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1B2B4B;
+    font-size: 11pt;
+  }
+
+  /* Pagina-instellingen */
+  @page { margin: 1.5cm 1.5cm 2cm 1.5cm; size: A4; }
+
+  /* Layout */
   .min-h-screen { min-height: unset !important; }
-  .space-y-8 > * + * { margin-top: 1rem !important; }
-  @page { margin: 1.5cm; }
+  .max-w-3xl, .max-w-2xl { max-width: 100% !important; padding: 0 !important; }
+  .py-10, .py-8 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+  .space-y-8 > * + * { margin-top: 1.25rem !important; }
+  .space-y-6 > * + * { margin-top: 1rem !important; }
+  .space-y-4 > * + * { margin-top: 0.75rem !important; }
+
+  /* Kaarten */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #E8E4DF !important;
+    break-inside: avoid;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+  }
+
+  /* Kleurbehoud voor achtergronden */
+  .bg-success\/10 { background-color: #f0fdf4 !important; }
+  .bg-warning\/10 { background-color: #fffbeb !important; }
+  .bg-danger\/10, .bg-danger\/5 { background-color: #fef2f2 !important; }
+  .bg-primary { background-color: #1B2B4B !important; }
+  .bg-primary\/5 { background-color: #eef1f7 !important; }
+  .bg-surface { background-color: #ffffff !important; }
+  .bg-accent\/10 { background-color: #fff0f0 !important; }
+
+  /* Tekstkleuren */
+  .text-primary { color: #1B2B4B !important; }
+  .text-accent { color: #FF6B6B !important; }
+  .text-success { color: #22C55E !important; }
+  .text-warning { color: #F59E0B !important; }
+  .text-danger { color: #EF4444 !important; }
+  .text-text-secondary { color: #6B7280 !important; }
+  .text-white { color: #ffffff !important; }
+
+  /* Borders */
+  .border-success\/20 { border-color: #bbf7d0 !important; }
+  .border-warning\/20 { border-color: #fde68a !important; }
+  .border-danger\/30 { border-color: #fca5a5 !important; }
+  .border-border { border-color: #E8E4DF !important; }
+
+  /* Score circles en badges */
+  .bg-success { background-color: #22C55E !important; }
+  .bg-warning { background-color: #F59E0B !important; }
+  .bg-danger { background-color: #EF4444 !important; }
+
+  /* Pagina-einden */
+  .space-y-8 > div { break-inside: avoid; }
+  h1, h2, h3 { break-after: avoid; color: #1B2B4B !important; }
+
+  /* Koptekst branding */
+  .font-display { font-weight: 700; }
 }
 
 /* Scroll reveal */
