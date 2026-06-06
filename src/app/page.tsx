@@ -147,7 +147,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Thomas", locatie: "Nederland" },
+              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
               { quote: "De herschreven titel van Boni leverde meteen 40% meer kliks op. Ongelofelijk.", naam: "Sophie", locatie: "Rotterdam" },
               { quote: "De Review Monitor geeft me elke week inzicht in wat gasten vinden. Geen verrassingen meer.", naam: "Peter", locatie: "Utrecht" },
             ].map(({ quote, naam, locatie }) => (
