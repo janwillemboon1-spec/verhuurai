@@ -79,15 +79,15 @@ function AanmeldenForm() {
       return;
     }
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { shouldCreateUser: true },
+    const res = await fetch("/api/otp-sturen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
     });
+    const data = await res.json();
 
-    if (error) {
-      const msg = error.message || error.status || JSON.stringify(error);
-      console.error("OTP fout:", error);
-      setFout(`Er ging iets mis: ${msg}`);
+    if (!res.ok) {
+      setFout(data.error || "Er ging iets mis. Probeer het opnieuw.");
     } else {
       setStap("code");
     }
@@ -99,17 +99,22 @@ function AanmeldenForm() {
     setLaden(true);
     setFout(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: "email",
+    const verRes = await fetch("/api/otp-verifieer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), code: code.trim() }),
     });
+    const verData = await verRes.json();
 
-    if (error) {
-      setFout(`Ongeldige code: ${error.message}`);
+    if (!verRes.ok) {
+      setFout(verData.error || "Ongeldige of verlopen code.");
       setLaden(false);
       return;
+    }
+
+    // Sessie starten via de login URL
+    if (verData.loginUrl) {
+      try { await fetch(verData.loginUrl, { redirect: "manual" }); } catch {}
     }
 
     const res = await fetch("/api/abonnement-aanmaken", {
