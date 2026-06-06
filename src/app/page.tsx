@@ -57,7 +57,7 @@ export default function HomePage() {
             <div className="card p-8 flex flex-col">
               <div className="text-5xl mb-5">📋</div>
               <h3 className="font-display text-2xl font-bold text-primary mb-2">Listing Optimizer</h3>
-              <p className="text-text-secondary leading-relaxed mb-5 min-h-[8rem]">
+              <p className="text-text-secondary leading-relaxed mb-5 min-h-[10rem]">
                 Boni analyseert alle 12 onderdelen van jouw advertentie en geeft je een score, concrete verbeterpunten en kant-en-klare herschreven teksten.
               </p>
               <ul className="space-y-2 flex-1">
@@ -87,7 +87,7 @@ export default function HomePage() {
               </div>
               <div className="text-5xl mb-5">⭐</div>
               <h3 className="font-display text-2xl font-bold text-primary mb-2">Review Monitor</h3>
-              <p className="text-text-secondary leading-relaxed mb-5 min-h-[8rem]">
+              <p className="text-text-secondary leading-relaxed mb-5 min-h-[10rem]">
                 Boni leest automatisch alle nieuwe reviews en stuurt je wekelijks of maandelijks een rapport met verbeterpunten en voorbeeldreacties.
               </p>
               <ul className="space-y-2 flex-1">
@@ -114,7 +114,7 @@ export default function HomePage() {
               <div className="absolute -top-3 right-6 bg-success text-white text-xs font-bold px-3 py-1 rounded-full">Gratis</div>
               <div className="text-5xl mb-5">💰</div>
               <h3 className="font-display text-2xl font-bold text-primary mb-2">Prijscalculator</h3>
-              <p className="text-text-secondary leading-relaxed mb-5 min-h-[8rem]">
+              <p className="text-text-secondary leading-relaxed mb-5 min-h-[10rem]">
                 Vul je locatie en basisprijs in. Boni berekent automatisch de optimale prijzen voor heel 2027 op basis van seizoenen, evenementen en feestdagen.
               </p>
               <ul className="space-y-2 flex-1">
@@ -126,10 +126,9 @@ export default function HomePage() {
               </ul>
               <div className="mt-6 pt-4 border-t border-border space-y-3">
                 <p className="text-success font-bold text-xl">Gratis</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Link href="/prijscalculator" className="btn-primary text-sm text-center flex items-center justify-center">Bereken →</Link>
-                  <Link href="/prijscalculator/demo" className="btn-secondary text-sm text-center flex items-center justify-center">Voorbeeld →</Link>
-                </div>
+                <Link href="/prijscalculator" className="btn-primary text-sm w-full text-center flex items-center justify-center py-3">
+                  Bereken mijn prijzen →
+                </Link>
                 <Link href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
