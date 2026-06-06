@@ -44,7 +44,7 @@ export default function ReviewMonitorPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { stap: "1", icoon: "🔗", titel: "Vul je Airbnb URL in", tekst: "Plak de link naar jouw Airbnb advertentie. Boni regelt de rest.", extra: "Binnenkort ook beschikbaar voor VRBO en Booking.com" },
+              { stap: "1", icoon: "🔗", titel: "Vul je Airbnb URL in", tekst: "Plak de link naar jouw Airbnb advertentie. Boni regelt de rest.", extra: "Binnenkort ook beschikbaar voor Booking.com" },
               { stap: "2", icoon: "🤖", titel: "Boni analyseert reviews", tekst: "Elke week of maand scrapt Boni alle nieuwe reviews en analyseert trends, klachten en complimenten." },
               { stap: "3", icoon: "📬", titel: "Rapport in je inbox", tekst: "Je ontvangt een helder rapport met verbeterpunten en kant-en-klare reacties op negatieve reviews." },
             ].map(({ stap, icoon, titel, tekst, extra }: any) => (
@@ -53,7 +53,11 @@ export default function ReviewMonitorPage() {
                 <div className="text-xs font-bold text-accent uppercase tracking-widest mb-2">Stap {stap}</div>
                 <h3 className="font-display text-xl font-bold text-primary mb-3">{titel}</h3>
                 <p className="text-text-secondary">{tekst}</p>
-                {extra && <p className="text-xs text-accent font-semibold mt-2">{extra}</p>}
+                {extra && (
+                  <span className="inline-block mt-3 text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary">
+                    {extra}
+                  </span>
+                )}
               </div>
             ))}
           </div>
