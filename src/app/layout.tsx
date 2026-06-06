@@ -23,9 +23,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VerhuurAI — Jouw Airbnb advertentie geoptimaliseerd door Boni",
+  title: "Boni - Jouw Airbnb advertentie geoptimaliseerd door een expert.",
   description:
-    "Upload je advertentie en ontvang binnen 60 seconden een professioneel analyse-rapport met concrete verbeterpunten en herschreven teksten.",
+    "Boni analyseert jouw Airbnb advertentie en geeft je concrete verbeterpunten, herschreven teksten en een eerlijk rapport.",
   keywords: "airbnb optimalisatie, advertentie verbeteren, verhuurder tips, boni analyse",
 };
 
