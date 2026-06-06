@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { DeelModal } from "@/components/DeelModal";
 import { useState } from "react";
+import { PRIJSCALCULATOR_DISCLAIMER, PRICELABS_URL, PRICELABS_AANBIEDING } from "@/lib/prijscalculator-config";
 
 const MAANDEN = ["Januari","Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"];
 
@@ -178,15 +179,15 @@ export default function PrijsResultaat({ analyse, basis, minN, jaar, opgeslagenI
             <span className="text-2xl">💡</span>
             <div className="space-y-2">
               <p className="font-semibold text-primary">Deze prijzen zijn ter indicatie</p>
-              <p className="text-sm text-text-secondary">De bovenstaande prijzen zijn een goede eerste stap als je tot nu toe weinig of niets met je prijsstrategie hebt gedaan. Voor een echt optimale strategie raden we een dynamic pricing tool aan.</p>
+              <p className="text-sm text-text-secondary">{PRIJSCALCULATOR_DISCLAIMER}</p>
             </div>
           </div>
           <div className="border-t border-warning/20 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <p className="font-semibold text-primary">Boni raadt PriceLabs aan</p>
-              <p className="text-xs text-text-secondary">Start via onze link: <strong>1 maand gratis + $10 credit</strong></p>
+              <p className="text-xs text-text-secondary">{PRICELABS_AANBIEDING}</p>
             </div>
-            <a href="https://pricelabs.co/users/sign_up?referral/NkFJkg" target="_blank" rel="noopener noreferrer" className="btn-primary whitespace-nowrap">
+            <a href={PRICELABS_URL} target="_blank" rel="noopener noreferrer" className="btn-primary whitespace-nowrap">
               Probeer PriceLabs →
             </a>
           </div>
