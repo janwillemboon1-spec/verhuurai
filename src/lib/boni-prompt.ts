@@ -80,7 +80,8 @@ SCOREBEPALING per veld:
   Let op: telefoonnummers, huisregels en check-in instructies horen hier niet thuis — vermeld dit als verbeterpunt als ze er wél instaan.
   Output: herschreven versie.
 
-- ANDERE INFO: Bijkomende kosten vermeld (KRITIEK)? Trappen? Dunne muren? Stadsgeluiden? Seizoensgebonden zaken? Praktische zaken die een gast moet weten vóór boeking?
+- ANDERE INFO: Trappen? Dunne muren? Stadsgeluiden? Seizoensgebonden zaken? Praktische zaken die een gast moet weten vóór boeking?
+  VERBODEN in dit veld: schoonmaakkosten en toeristenbelasting — die worden ingesteld via de Airbnb kalender/prijsinstellingen en horen niet in de advertentietekst.
   In jouw herschreven versie gebruik je een neutrale, feitelijke stijl — geen emotionele taal of verontschuldigingen.
   Output: herschreven versie.
 
