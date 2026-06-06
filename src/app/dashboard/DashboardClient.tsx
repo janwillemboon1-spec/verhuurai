@@ -30,16 +30,26 @@ interface ListingRapport {
   aangemaakt_op: string;
 }
 
+interface CalculatorRapport {
+  id: string;
+  locatie: string;
+  land: string;
+  basisprijs: number;
+  aangemaakt_op: string;
+}
+
 export default function DashboardClient({
   email,
   abonnementen: initieel,
   listingRapporten,
+  calculatorRapporten,
   welkom,
   resterendeCredits,
 }: {
   email: string;
   abonnementen: Abonnement[];
   listingRapporten: ListingRapport[];
+  calculatorRapporten: CalculatorRapport[];
   welkom: boolean;
   resterendeCredits?: number;
 }) {
@@ -151,6 +161,33 @@ export default function DashboardClient({
                   <a href={`/dashboard/listing-rapporten/${r.id}`} className="text-accent text-sm font-semibold">
                     Bekijk →
                   </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Prijscalculator rapporten */}
+        {calculatorRapporten.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-display text-xl text-primary">Prijscalculator rapporten</h2>
+              <Link href="/prijscalculator" className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0">
+                + Nieuw rapport
+              </Link>
+            </div>
+            <div className="card overflow-hidden">
+              {calculatorRapporten.map((r) => (
+                <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-border last:border-0 hover:bg-surface/50 transition-colors">
+                  <div>
+                    <p className="font-semibold text-primary text-sm">{r.locatie}, {r.land}</p>
+                    <p className="text-xs text-text-secondary">
+                      €{r.basisprijs}/nacht · {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                  <Link href={`/prijscalculator/resultaat/${r.id}`} className="text-accent text-sm font-semibold">
+                    Bekijk →
+                  </Link>
                 </div>
               ))}
             </div>

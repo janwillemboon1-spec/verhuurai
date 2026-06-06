@@ -17,6 +17,12 @@ export default async function DashboardPage({
     .eq("user_id", user.id)
     .order("aangemaakt_op", { ascending: false });
 
+  const { data: calculatorRapporten } = await supabase
+    .from("prijscalculator_rapporten")
+    .select("id, locatie, land, basisprijs, aangemaakt_op")
+    .eq("user_id", user.id)
+    .order("aangemaakt_op", { ascending: false });
+
   const { data: abonnementen } = await supabase
     .from("abonnementen")
     .select("*, rapporten(id, periode_omschrijving, aangemaakt_op, gearchiveerd)")
@@ -36,6 +42,7 @@ export default async function DashboardPage({
       email={user.email ?? ""}
       abonnementen={abonnementen ?? []}
       listingRapporten={listingRapporten ?? []}
+      calculatorRapporten={calculatorRapporten ?? []}
       welkom={!!searchParams.welkom}
       resterendeCredits={resterendeCredits}
     />
