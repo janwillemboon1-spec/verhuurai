@@ -80,6 +80,7 @@ export default function AnalyseerPage() {
   const [fotoPerStap, setFotoPerStap] = useState<FotoPerStap>({});
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const voortgangInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const MIJLPALEN = [10, 25, 40, 55, 70, 88];
   const BERICHTEN = [
@@ -205,8 +206,25 @@ export default function AnalyseerPage() {
         throw new Error("Kon analyse niet starten. Probeer het opnieuw.");
       }
 
-      // Direct doorsturen naar /laden — analyse loopt op de achtergrond
-      router.push(`/laden/${sessieId}`);
+      // Blijf op deze pagina en poll voor status
+      pollInterval.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/rapport-status/${sessieId}`);
+          const statusData = await statusRes.json();
+          if (statusData.status === "klaar") {
+            clearInterval(pollInterval.current!);
+            stopVoortgangsAnimatie();
+            setAnalyseVoortgang(100);
+            setTimeout(() => router.push(`/rapport/${sessieId}`), 500);
+          } else if (statusData.status === "fout") {
+            clearInterval(pollInterval.current!);
+            stopVoortgangsAnimatie();
+            setToonVoortgang(false);
+            setFout("Boni heeft een technisch probleem gehad. Probeer het opnieuw.");
+            setLaden(false);
+          }
+        } catch { /* blijf proberen */ }
+      }, 3000);
     } catch (e: unknown) {
       stopVoortgangsAnimatie();
       setToonVoortgang(false);
