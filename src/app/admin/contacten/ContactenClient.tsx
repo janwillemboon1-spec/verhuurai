@@ -39,7 +39,7 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
   };
 
   const downloadEmailsOnly = () => {
-    const emailLijst = [...new Set(contacten.map(c => c.email))].filter(Boolean);
+    const emailLijst = Array.from(new Set(contacten.map(c => c.email))).filter(Boolean);
     const csv = ["email", ...emailLijst].join("\n");
     const blob = new Blob([csv], { type: "text/plain;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -50,7 +50,7 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
     URL.revokeObjectURL(url);
   };
 
-  const unickeEmails = new Set(contacten.map(c => c.email)).size;
+  const unickeEmails = Array.from(new Set(contacten.map(c => c.email))).length;
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
