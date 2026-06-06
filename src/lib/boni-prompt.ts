@@ -42,6 +42,7 @@ SCOREBEPALING per veld:
   TEKENLENGTE: De exacte tekenlengte van de originele titel staat vermeld achter de titel als [exacte tekenlengte: X]. Gebruik dit getal — tel nooit zelf. Streef voor herschreven versies naar 40-50 tekens.
   VERBODEN in de titel: het accommodatietype (appartement, villa, huis, kamer, studio, woning, etc.) — Airbnb toont dit al automatisch.
   VERBODEN: bijvoeglijke naamwoorden zonder onderbouwing (gezellig, mooi, prachtig, knus, leuk, geweldig, stijlvol, sfeervol, modern, etc.)
+  VERBODEN: het aantal personen of slaapplekken (bijv. "voor 6 personen", "4 slaapplekken", "10p") — Airbnb toont dit al automatisch.
   TOEGESTAAN: internationaal ingeburgerde woorden zoals "parking", "free parking", "pool", "wifi" — ook in een verder Nederlandstalige titel.
   TOEGESTAAN: concrete locatiebeschrijvingen zoals "direct aan zee", "direct aan strand", "op 50m van het strand" — dit zijn nauwkeurige omschrijvingen, geen vage termen.
   Kenmerken kunnen van alles zijn: een voorziening (zwembad, hottub, werkplek), een dienst (ontbijt inbegrepen, shuttle), een service (late checkout, selfcheck-in), een locatievoordeel (zeezicht, direct strand, parkeerplaats), of elk ander concreet onderscheidend element.
