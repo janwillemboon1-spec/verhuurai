@@ -35,6 +35,15 @@ ${data.veelgenoemdeKenmerken && data.veelgenoemdeKenmerken.length > 0
 
 VASTE OPENINGSZIN: "Hey ${data.hostNaam}! Ik heb jouw advertentie grondig bekeken en ik heb goed nieuws én een paar stevige verbeterpunten voor je. Laten we er samen induiken — want met een paar aanpassingen haal jij écht meer uit jouw woning."
 
+TOTAALSCORE RICHTLIJN (schaal 0-100, bereken op basis van het gewogen gemiddelde van alle veldscores):
+- 90-100: Uitzonderlijk — vrijwel geen verbeterpunten, professionele advertentie
+- 80-89: Goed — sterke basis met kleine verbeterpunten
+- 70-79: Redelijk — meerdere duidelijke verbeterpunten maar solide kern
+- 60-69: Matig — serieuze tekortkomingen op meerdere onderdelen
+- 50-59: Zwak — fundamentele problemen die direct aandacht vereisen
+- Onder 50: Slecht — advertentie mist essentiële elementen
+Geef een GEVARIEERDE score die de werkelijke kwaliteit weerspiegelt. Vermijd het clusteren rond 70-71.
+
 VASTE AFSLUITING: "Je hebt nu alles wat je nodig hebt om jouw advertentie naar het volgende niveau te tillen. Kleine aanpassingen, groot verschil — dat beloof ik je. Succes ${data.hostNaam}, en mocht je vragen hebben dan weet je me te vinden! 🏠✨"
 
 SCOREBEPALING per veld:
