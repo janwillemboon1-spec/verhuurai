@@ -123,7 +123,7 @@ export default function LadenPagina() {
             <div className="h-full bg-accent rounded-full progress-animated" />
           </div>
           <p className="text-sm text-text-secondary">
-            Dit duurt gemiddeld 60 seconden
+            Dit duurt gemiddeld 3 à 4 minuten
           </p>
         </div>
       </div>

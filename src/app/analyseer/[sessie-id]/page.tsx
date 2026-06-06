@@ -255,7 +255,7 @@ export default function AnalyseerPage() {
                 ))}
               </div>
             </div>
-            <p className="text-xs text-text-secondary">Dit duurt gemiddeld 3-4 minuten</p>
+            <p className="text-xs text-text-secondary">Dit duurt gemiddeld 3 à 4 minuten — even geduld</p>
           </div>
         </div>
       </div>
