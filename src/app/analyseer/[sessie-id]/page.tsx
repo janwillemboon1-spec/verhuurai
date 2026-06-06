@@ -75,8 +75,39 @@ export default function AnalyseerPage() {
   const [huidigeStap, setHuidigeStap] = useState(1);
   const [fout, setFout] = useState<string | null>(null);
   const [laden, setLaden] = useState(false);
+  const [toonVoortgang, setToonVoortgang] = useState(false);
+  const [analyseVoortgang, setAnalyseVoortgang] = useState(0);
   const [fotoPerStap, setFotoPerStap] = useState<FotoPerStap>({});
   const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const voortgangInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const MIJLPALEN = [10, 25, 40, 55, 70, 88];
+  const BERICHTEN = [
+    { vanaf: 0,  tekst: "Boni analyseert je advertentietitel..." },
+    { vanaf: 15, tekst: "Boni leest je advertentiebeschrijving..." },
+    { vanaf: 30, tekst: "Boni bekijkt je accommodatie en voorzieningen..." },
+    { vanaf: 48, tekst: "Boni leest je reviews en hostprofiel..." },
+    { vanaf: 63, tekst: "Boni analyseert je locatie en buurt..." },
+    { vanaf: 76, tekst: "Boni schrijft je actiepunten..." },
+    { vanaf: 90, tekst: "Boni rondt het rapport af..." },
+  ];
+
+  const startVoortgangsAnimatie = () => {
+    setAnalyseVoortgang(0);
+    setToonVoortgang(true);
+    // Schat ~240 seconden totaal. Ga langzamer naarmate we 95% naderen.
+    voortgangInterval.current = setInterval(() => {
+      setAnalyseVoortgang(prev => {
+        if (prev >= 95) return prev;
+        const stap = prev < 50 ? 0.3 : prev < 80 ? 0.18 : 0.05;
+        return Math.min(prev + stap, 95);
+      });
+    }, 500);
+  };
+
+  const stopVoortgangsAnimatie = () => {
+    if (voortgangInterval.current) clearInterval(voortgangInterval.current);
+  };
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<AnalyseFormulier>({
     defaultValues: {
@@ -156,17 +187,28 @@ export default function AnalyseerPage() {
           fotos.push({ base64, mediaType, stap });
         }
       }
+
+      // Direct voortgangsoverlay tonen
+      startVoortgangsAnimatie();
+
       const payload = { sessieId, formData: data, fotos };
       const res = await fetch("/api/analyse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      stopVoortgangsAnimatie();
+
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
+        setToonVoortgang(false);
         throw new Error(json.error || "Er ging iets mis. Probeer het opnieuw.");
       }
-      router.push(`/laden/${sessieId}`);
+
+      // Naar 100% en dan doorsturen
+      setAnalyseVoortgang(100);
+      setTimeout(() => router.push(`/laden/${sessieId}`), 600);
     } catch (e: unknown) {
       setFout(e instanceof Error ? e.message : "Er ging iets mis. Probeer het opnieuw.");
       setLaden(false);
@@ -174,6 +216,51 @@ export default function AnalyseerPage() {
   };
 
   const voortgang = Math.round(((huidigeStap - 1) / TOTAAL_STAPPEN) * 100);
+
+  if (toonVoortgang) {
+    const huidigBericht = BERICHTEN.filter(b => analyseVoortgang >= b.vanaf).pop()?.tekst ?? "";
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <BoniAvatar size={100} animate className="mx-auto boni-float" />
+          <div>
+            <h2 className="font-display text-2xl text-primary mb-1">Boni analyseert jouw advertentie</h2>
+            <p className="text-text-secondary text-sm min-h-[1.25rem] transition-all duration-500">
+              {analyseVoortgang < 100 ? huidigBericht : "✅ Klaar! Rapport wordt geladen..."}
+            </p>
+          </div>
+
+          {/* Voortgangsbalk met mijlpalen */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">Voortgang</span>
+              <span className="font-mono font-bold text-accent">{Math.round(analyseVoortgang)}%</span>
+            </div>
+            <div className="relative">
+              <div className="h-3 bg-border rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent rounded-full transition-all duration-500"
+                  style={{ width: `${analyseVoortgang}%` }}
+                />
+              </div>
+              <div className="absolute inset-0 flex items-center">
+                {MIJLPALEN.map((pct) => (
+                  <div key={pct} className="absolute -translate-x-1/2" style={{ left: `${pct}%` }}>
+                    <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+                      analyseVoortgang >= pct
+                        ? "bg-success border-success"
+                        : "bg-background border-border"
+                    }`} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-text-secondary">Dit duurt gemiddeld 3-4 minuten</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
