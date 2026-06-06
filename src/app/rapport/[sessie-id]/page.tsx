@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { ScoreCircle, VeldScore } from "@/components/ScoreCircle";
 import { CopyButton } from "@/components/CopyButton";
+import { DeelModal } from "@/components/DeelModal";
 import { BoniRapport, VeldRapport, scoreKleur, scoreBgKleur } from "@/types/rapport";
 
 const VELD_ICONEN: Record<string, string> = {
@@ -186,6 +187,8 @@ export default function RapportPagina() {
   const [emailStatus, setEmailStatus] = useState<"idle" | "verstuurd" | "fout">("idle");
   const [emailInvoer, setEmailInvoer] = useState("");
   const [toonEmailInvoer, setToonEmailInvoer] = useState(false);
+  const [deelOpen, setDeelOpen] = useState(false);
+  const rapportUrl = typeof window !== "undefined" ? window.location.href : "";
   const [dashboardOpgeslagen, setDashboardOpgeslagen] = useState(false);
 
   useEffect(() => {
@@ -271,9 +274,20 @@ export default function RapportPagina() {
   const velden = rapport.velden;
 
 
+  const rapportPubliekUrl = `${typeof window !== "undefined" ? window.location.origin : "https://verhuurai.nl"}/dashboard/listing-rapporten/${sessieId}`;
+
   return (
     <div className="min-h-screen bg-background">
+      {deelOpen && <DeelModal onSluit={() => setDeelOpen(false)} overrideUrl={rapportPubliekUrl} titel="Listing Optimizer Rapport" />}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+
+        {/* Navigatie */}
+        <div className="flex items-center justify-between">
+          <a href="/dashboard" className="btn-secondary text-sm">← Dashboard</a>
+          <button onClick={() => setDeelOpen(true)} className="btn-secondary text-sm flex items-center gap-2">
+            <span>↗</span> Rapport delen
+          </button>
+        </div>
 
         {dashboardOpgeslagen && (
           <div className="card p-4 bg-success/10 border-success/30 flex items-center gap-3">

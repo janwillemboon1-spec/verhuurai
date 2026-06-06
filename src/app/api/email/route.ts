@@ -72,8 +72,23 @@ export async function POST(request: Request) {
     }
 
     const sessie = global.sessies.get(sessieId);
-    const email = emailOverride || rapport.email || sessie?.email || "";
+
+    // Probeer email op te halen: override → rapport → sessie → ingelogde gebruiker
+    let email = emailOverride || rapport.email || sessie?.email || "";
+
+    // Als nog geen email, check of gebruiker ingelogd is via Supabase
+    if (!email) {
+      try {
+        const { createClient } = await import("@/lib/supabase/server");
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) email = user.email;
+      } catch {}
+    }
+
     const naam = rapport.hostNaam || sessie?.naam || "Host";
+
+    console.log(`[Email] Versturen naar: "${email}" voor sessie: ${sessieId}`);
 
     if (!email) {
       return NextResponse.json({ error: "Geen e-mailadres gevonden" }, { status: 400 });
@@ -202,14 +217,19 @@ export async function POST(request: Request) {
 
     const fromAdres = process.env.RESEND_FROM_EMAIL || "Boni van VerhuurAI <boni@verhuurai.nl>";
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    const { error: resendError } = await resend.emails.send({
       from: fromAdres,
       to: email,
       subject: "Jouw VerhuurAI rapport is klaar! 📊",
       html,
     });
 
-    return NextResponse.json({ ok: true });
+    if (resendError) {
+      console.error("Resend fout:", resendError);
+      return NextResponse.json({ error: `Email sturen mislukt: ${resendError.message}` }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, verstuurdNaar: email });
   } catch (error) {
     console.error("Email sturen fout:", error);
     return NextResponse.json(
