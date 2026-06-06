@@ -85,7 +85,9 @@ function AanmeldenForm() {
     });
 
     if (error) {
-      setFout(`Er ging iets mis: ${error.message}`);
+      const msg = error.message || error.status || JSON.stringify(error);
+      console.error("OTP fout:", error);
+      setFout(`Er ging iets mis: ${msg}`);
     } else {
       setStap("code");
     }
