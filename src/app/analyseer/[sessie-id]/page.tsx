@@ -191,37 +191,26 @@ export default function AnalyseerPage() {
       // Direct voortgangsoverlay tonen
       startVoortgangsAnimatie();
 
+      // Start analyse op achtergrond — keert direct terug
       const payload = { sessieId, formData: data, fotos };
-      const res = await fetch("/api/analyse", {
+      const res = await fetch("/api/start-analyse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      stopVoortgangsAnimatie();
-
       if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
+        stopVoortgangsAnimatie();
         setToonVoortgang(false);
-        const status = res.status;
-        if (status === 504 || status === 524) {
-          throw new Error("De analyse duurde te lang (timeout). Probeer het opnieuw — het lukt meestal bij een tweede poging.");
-        }
-        throw new Error(json.error || `Er ging iets mis (${status}). Probeer het opnieuw.`);
+        throw new Error("Kon analyse niet starten. Probeer het opnieuw.");
       }
 
-      // Naar 100% en dan doorsturen
-      setAnalyseVoortgang(100);
-      setTimeout(() => router.push(`/laden/${sessieId}`), 600);
+      // Direct doorsturen naar /laden — analyse loopt op de achtergrond
+      router.push(`/laden/${sessieId}`);
     } catch (e: unknown) {
       stopVoortgangsAnimatie();
       setToonVoortgang(false);
-      const msg = e instanceof Error ? e.message : "Er ging iets mis. Probeer het opnieuw.";
-      if (msg.includes("fetch") || msg.includes("network") || msg.toLowerCase().includes("failed")) {
-        setFout("Verbinding verbroken — de analyse duurde waarschijnlijk te lang. Probeer het opnieuw.");
-      } else {
-        setFout(msg);
-      }
+      setFout(e instanceof Error ? e.message : "Er ging iets mis. Probeer het opnieuw.");
       setLaden(false);
     }
   };
