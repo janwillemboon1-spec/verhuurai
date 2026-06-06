@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "logo": "VerhuurAI",
+    "listingOptimizer": "Listing Optimizer",
+    "reviewMonitor": "Review Monitor",
+    "prijscalculator": "Prijscalculator",
+    "gratisProberen": "Gratis proberen",
+    "inloggen": "Inloggen",
+    "mijnDashboard": "Mijn dashboard",
+    "analyseer": "Analyseer mijn advertentie"
+  },
+  "home": {
+    "hero": {
+      "title": "Meer uit jouw verhuur halen?",
+      "subtitle": "Als je verhuur tegenvalt ligt dat vrijwel altijd aan één van deze drie onderdelen: Advertentie, Prijzen of Hosting skills. Boni helpt je met drie krachtige tools om al deze onderdelen te optimaliseren.",
+      "boniSpeech": "Hoi! Ik ben Boni. Ik help je meer gasten aan te trekken, betere reviews te krijgen én de juiste prijzen te hanteren."
+    },
+    "section": {
+      "title": "Drie tools, één doel",
+      "subtitle": "Meer boekingen, betere reviews, hogere omzet"
+    },
+    "cta": {
+      "title": "Waar wil je mee starten?"
+    },
+    "tools": {
+      "listingOptimizer": {
+        "title": "Listing Optimizer",
+        "description": "Boni analyseert alle 12 onderdelen van jouw advertentie en geeft je een score, concrete verbeterpunten en kant-en-klare herschreven teksten.",
+        "price": "€9,99 — eenmalig",
+        "features": [
+          "Score per onderdeel",
+          "Herschreven teksten met kopieerknop",
+          "Actieplan: vandaag, deze week, deze maand",
+          "Eenmalige betaling — geen abonnement"
+        ],
+        "btnFree": "Gratis proberen",
+        "btnInfo": "Meer info →",
+        "btnDemo": "👁️ Bekijk voorbeeldrapport"
+      },
+      "reviewMonitor": {
+        "title": "Review Monitor",
+        "description": "Boni leest automatisch alle nieuwe reviews en stuurt je wekelijks of maandelijks een rapport met verbeterpunten en voorbeeldreacties.",
+        "price": "Vanaf €5,99/maand",
+        "badge1": "Eerste rapport gratis",
+        "badge2": "Nieuw",
+        "features": [
+          "Automatisch reviews bijhouden",
+          "Sentimenttrend + terugkerende punten",
+          "Verbeterpunten + kant-en-klare reacties",
+          "Kies je eigen dag en tijdstip"
+        ],
+        "btnSignup": "Aanmelden →",
+        "btnInfo": "Meer info →",
+        "btnDemo": "👁️ Bekijk voorbeeldrapport"
+      },
+      "prijscalculator": {
+        "title": "Prijscalculator",
+        "description": "Vul je locatie en basisprijs in. Boni berekent automatisch de optimale prijzen voor heel 2027 op basis van seizoenen, evenementen en feestdagen.",
+        "price": "Gratis",
+        "badge": "Gratis",
+        "features": [
+          "Seizoensgebonden prijsadvies",
+          "Lokale evenementen en feestdagen",
+          "Weekdag vs. weekend onderscheid",
+          "Volledig gratis te gebruiken"
+        ],
+        "btnCalculate": "Bereken mijn prijzen →",
+        "btnDemo": "👁️ Bekijk voorbeeldrapport"
+      }
+    }
+  },
+  "common": {
+    "loading": "Bezig...",
+    "error": "Er ging iets mis. Probeer het opnieuw.",
+    "copy": "Kopieer",
+    "copied": "Gekopieerd!",
+    "share": "Rapport delen",
+    "back": "← Terug",
+    "dashboard": "← Dashboard",
+    "newReport": "+ Nieuw rapport",
+    "viewReport": "Bekijk →",
+    "archive": "Archiveer",
+    "restore": "Herstel",
+    "cancel": "Opzeggen",
+    "delete": "Verwijder",
+    "deleteAll": "Verwijder alles",
+    "logOut": "Uitloggen",
+    "logIn": "Inloggen",
+    "email": "E-mailadres",
+    "emailPlaceholder": "jij@voorbeeld.nl",
+    "emailRequired": "E-mailadres *",
+    "sendCode": "Stuur inlogcode →",
+    "checkEmail": "Check je inbox!",
+    "toelichting": "Toelichting",
+    "whereToFind": "📍 Waar te vinden:"
+  },
+  "footer": {
+    "tagline": "Jouw advertentie geoptimaliseerd door Boni.",
+    "privacy": "Privacy",
+    "terms": "Voorwaarden",
+    "contact": "Contact",
+    "copyright": "© {year} VerhuurAI — Alle rechten voorbehouden"
+  }
+}

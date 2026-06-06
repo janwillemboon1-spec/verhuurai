@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "logo": "VerhuurAI",
+    "listingOptimizer": "Listing Optimizer",
+    "reviewMonitor": "Review Monitor",
+    "prijscalculator": "Price Calculator",
+    "gratisProberen": "Try for free",
+    "inloggen": "Log in",
+    "mijnDashboard": "My dashboard",
+    "analyseer": "Analyse my listing"
+  },
+  "home": {
+    "hero": {
+      "title": "Get more out of your rental?",
+      "subtitle": "When your rental underperforms, it's almost always one of three things: your listing, your pricing, or your hosting skills. Boni helps you optimise all three.",
+      "boniSpeech": "Hi! I'm Boni. I help you attract more guests, get better reviews and set the right prices."
+    },
+    "section": {
+      "title": "Three tools, one goal",
+      "subtitle": "More bookings, better reviews, higher revenue"
+    },
+    "cta": {
+      "title": "Where do you want to start?"
+    },
+    "tools": {
+      "listingOptimizer": {
+        "title": "Listing Optimizer",
+        "description": "Boni analyses all 12 sections of your listing and gives you a score, concrete improvements and ready-to-use rewritten texts.",
+        "price": "€9.99 — one-time",
+        "features": [
+          "Score per section",
+          "Rewritten texts with copy button",
+          "Action plan: today, this week, this month",
+          "One-time payment — no subscription"
+        ],
+        "btnFree": "Try for free",
+        "btnInfo": "More info →",
+        "btnDemo": "👁️ View example report"
+      },
+      "reviewMonitor": {
+        "title": "Review Monitor",
+        "description": "Boni automatically reads all new reviews and sends you a weekly or monthly report with improvements and ready-made responses.",
+        "price": "From €5.99/month",
+        "badge1": "First report free",
+        "badge2": "New",
+        "features": [
+          "Automatically track reviews",
+          "Sentiment trend + recurring points",
+          "Improvements + ready-made responses",
+          "Choose your own day and time"
+        ],
+        "btnSignup": "Sign up →",
+        "btnInfo": "More info →",
+        "btnDemo": "👁️ View example report"
+      },
+      "prijscalculator": {
+        "title": "Price Calculator",
+        "description": "Enter your location and base price. Boni automatically calculates optimal prices for the whole year based on seasons, events and holidays.",
+        "price": "Free",
+        "badge": "Free",
+        "features": [
+          "Season-based pricing advice",
+          "Local events and holidays",
+          "Weekday vs. weekend distinction",
+          "Completely free to use"
+        ],
+        "btnCalculate": "Calculate my prices →",
+        "btnDemo": "👁️ View example report"
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "share": "Share report",
+    "back": "← Back",
+    "dashboard": "← Dashboard",
+    "newReport": "+ New report",
+    "viewReport": "View →",
+    "archive": "Archive",
+    "restore": "Restore",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteAll": "Delete all",
+    "logOut": "Log out",
+    "logIn": "Log in",
+    "email": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "emailRequired": "Email address *",
+    "sendCode": "Send login code →",
+    "checkEmail": "Check your inbox!",
+    "toelichting": "Note",
+    "whereToFind": "📍 Where to find:"
+  },
+  "footer": {
+    "tagline": "Your listing optimised by Boni.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "copyright": "© {year} VerhuurAI — All rights reserved"
+  }
+}

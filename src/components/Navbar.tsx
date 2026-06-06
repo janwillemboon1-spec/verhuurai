@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 export function Navbar() {
+  const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   const [ingelogd, setIngelogd] = useState(false);
 
@@ -26,34 +28,34 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-display font-bold text-xl text-primary">
           <span className="text-2xl">🏠</span>
-          <span>VerhuurAI</span>
+          <span>{t("logo")}</span>
         </Link>
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-6">
           <Link href="/listing-optimizer" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            Listing Optimizer
+            {t("listingOptimizer")}
           </Link>
           <Link href="/review-monitor" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            Review Monitor
+            {t("reviewMonitor")}
           </Link>
           <Link href="/prijscalculator" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            Prijscalculator
+            {t("prijscalculator")}
           </Link>
           <Link href="/gratis" className="text-accent font-semibold text-sm hover:underline">
-            Gratis proberen
+            {t("gratisProberen")}
           </Link>
           {ingelogd ? (
             <Link href="/dashboard" className="btn-secondary text-sm py-2 px-4">
-              Mijn dashboard
+              {t("mijnDashboard")}
             </Link>
           ) : (
             <Link href="/login" className="btn-secondary text-sm py-2 px-4">
-              Inloggen
+              {t("inloggen")}
             </Link>
           )}
           <Link href="/starten" className="btn-primary text-sm py-2 px-4">
-            Analyseer mijn advertentie
+            {t("analyseer")}
           </Link>
         </div>
 
@@ -77,28 +79,28 @@ export function Navbar() {
       {open && (
         <div className="md:hidden bg-background border-t border-border px-4 py-4 flex flex-col gap-4">
           <Link href="/listing-optimizer" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            Listing Optimizer
+            {t("listingOptimizer")}
           </Link>
           <Link href="/review-monitor" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            Review Monitor
+            {t("reviewMonitor")}
           </Link>
           <Link href="/prijscalculator" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            Prijscalculator
+            {t("prijscalculator")}
           </Link>
           <Link href="/gratis" onClick={() => setOpen(false)} className="text-accent font-semibold">
-            Gratis proberen
+            {t("gratisProberen")}
           </Link>
           {ingelogd ? (
             <Link href="/dashboard" onClick={() => setOpen(false)} className="btn-secondary text-center">
-              Mijn dashboard
+              {t("mijnDashboard")}
             </Link>
           ) : (
             <Link href="/login" onClick={() => setOpen(false)} className="btn-secondary text-center">
-              Inloggen
+              {t("inloggen")}
             </Link>
           )}
           <Link href="/starten" onClick={() => setOpen(false)} className="btn-primary text-center">
-            Analyseer mijn advertentie
+            {t("analyseer")}
           </Link>
         </div>
       )}
