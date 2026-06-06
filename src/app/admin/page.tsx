@@ -21,7 +21,7 @@ export default async function AdminPage() {
   ] = await Promise.all([
     admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
-    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, rapport_json->totaalscore").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("prijscalculator_rapporten").select("id, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
@@ -142,31 +142,42 @@ export default async function AdminPage() {
           <div className="p-5 border-b border-border">
             <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten ({listingRapporten?.length ?? 0})</h2>
           </div>
-          <div className="divide-y divide-border">
-            {listingRapporten?.length === 0 && (
-              <p className="p-5 text-sm text-text-secondary">Nog geen rapporten.</p>
-            )}
-            {listingRapporten?.map(r => (
-              <div key={r.id} className="px-5 py-3 flex items-center justify-between hover:bg-surface/50">
-                <div>
-                  <p className="font-semibold text-primary text-sm">{r.host_naam || "Analyse"}</p>
-                  <p className="text-xs text-text-secondary">
-                    {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
-                    <span className="ml-2 text-accent">
-                      · {(r as any).email || userEmailMap[(r as any).user_id] || "—"}
-                    </span>
-                  </p>
-                </div>
-                <a
-                  href={`${BASE_URL}/dashboard/listing-rapporten/${r.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-accent font-semibold hover:underline"
-                >
-                  Bekijk →
-                </a>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-surface border-b border-border">
+                <tr>
+                  {["Naam", "Email", "Datum", "Score", ""].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {listingRapporten?.length === 0 && (
+                  <tr><td colSpan={5} className="px-5 py-4 text-sm text-text-secondary">Nog geen rapporten.</td></tr>
+                )}
+                {listingRapporten?.map(r => {
+                  const score = (r as any).totaalscore;
+                  const scoreKleur = score >= 70 ? "text-success" : score >= 50 ? "text-warning" : "text-danger";
+                  return (
+                    <tr key={r.id} className="hover:bg-surface/50">
+                      <td className="px-4 py-3 font-semibold text-primary">{r.host_naam || "—"}</td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">{(r as any).email || userEmailMap[(r as any).user_id] || "—"}</td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">
+                        {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
+                      </td>
+                      <td className="px-4 py-3">
+                        {score != null ? <span className={`font-bold ${scoreKleur}`}>{score}/100</span> : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <a href={`${BASE_URL}/dashboard/listing-rapporten/${r.id}`} target="_blank" rel="noopener noreferrer" className="text-accent text-sm font-semibold hover:underline">
+                          Bekijk →
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
