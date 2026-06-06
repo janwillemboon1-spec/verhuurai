@@ -17,12 +17,18 @@ export default async function AdminPage() {
     { data: reviewRapporten },
     { data: listingRapporten },
     { data: calculatorRapporten },
+    { data: usersData },
   ] = await Promise.all([
     admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("prijscalculator_rapporten").select("id, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
+
+  // Map van user_id → email
+  const userEmailMap: Record<string, string> = {};
+  (usersData?.users ?? []).forEach(u => { if (u.id && u.email) userEmailMap[u.id] = u.email; });
 
   const statusKleur: Record<string, string> = {
     active: "bg-success/10 text-success",
@@ -72,7 +78,7 @@ export default async function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-surface border-b border-border">
                 <tr>
-                  {["Woning", "Status", "Frequentie", "Volgende rapport", "Rapporten"].map(h => (
+                  {["Woning", "Email", "Status", "Frequentie", "Volgende rapport", "Rapporten"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
                   ))}
                 </tr>
@@ -85,6 +91,9 @@ export default async function AdminPage() {
                       <td className="px-4 py-3">
                         <p className="font-semibold text-primary">{abo.listing_naam || "—"}</p>
                         <p className="text-xs text-text-secondary truncate max-w-[180px]">{abo.airbnb_url}</p>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">
+                        {userEmailMap[abo.user_id] || "—"}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusKleur[abo.status] || ""}`}>
@@ -140,7 +149,9 @@ export default async function AdminPage() {
                   <p className="font-semibold text-primary text-sm">{r.host_naam || "Analyse"}</p>
                   <p className="text-xs text-text-secondary">
                     {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
-                    {(r as any).email && <span className="ml-2 text-accent">· {(r as any).email}</span>}
+                    <span className="ml-2 text-accent">
+                      · {(r as any).email || userEmailMap[(r as any).user_id] || "—"}
+                    </span>
                   </p>
                 </div>
                 <a
