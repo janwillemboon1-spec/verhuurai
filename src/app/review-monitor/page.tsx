@@ -54,7 +54,7 @@ export default function ReviewMonitorPage() {
                 <h3 className="font-display text-xl font-bold text-primary mb-3">{titel}</h3>
                 <p className="text-text-secondary">{tekst}</p>
                 {extra && (
-                  <span className="inline-block mt-3 text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary">
+                  <span className="inline-block mt-3 text-xs font-semibold px-3 py-1 rounded-full text-white" style={{ backgroundColor: "#003580" }}>
                     {extra}
                   </span>
                 )}
