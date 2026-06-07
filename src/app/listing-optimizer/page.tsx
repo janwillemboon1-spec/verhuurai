@@ -19,7 +19,7 @@ export default function ListingOptimizerPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <Link href="/gratis" className="btn-secondary text-center">Gratis proberen (alleen titel)</Link>
-                <Link href="/starten" className="btn-primary text-center">Volledig rapport — €9,99</Link>
+                <Link href="/starten" className="btn-primary text-center">Volledig rapport — €14,99</Link>
               </div>
             </div>
             <div className="flex justify-center flex-shrink-0">
@@ -121,7 +121,7 @@ export default function ListingOptimizerPage() {
               <h3 className="font-display text-2xl font-bold text-primary">Volledige advertentie-analyse</h3>
               <p className="text-text-secondary">Score, verbeterpunten en herschreven teksten voor alle 12 onderdelen van jouw advertentie.</p>
               <div className="py-4">
-                <p className="text-5xl font-bold text-accent">€9,99</p>
+                <p className="text-5xl font-bold text-accent">€14,99</p>
                 <p className="text-text-secondary text-sm mt-1">per analyse — eenmalig</p>
               </div>
               <Link href="/starten" className="btn-primary w-full text-center block">Analyse starten →</Link>
@@ -146,7 +146,7 @@ export default function ListingOptimizerPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/gratis" className="btn-secondary text-center">Gratis proberen</Link>
-            <Link href="/starten" className="btn-primary text-center">Volledig rapport — €9,99</Link>
+            <Link href="/starten" className="btn-primary text-center">Volledig rapport — €14,99</Link>
           </div>
         </div>
       </section>

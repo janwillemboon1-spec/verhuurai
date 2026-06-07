@@ -56,7 +56,7 @@ export default function StartenPage() {
           <p className="text-text-secondary">
             {ingelogd ? `Ingelogd als ${ingelogdEmail}` : "Vul je naam en e-mailadres in en Boni gaat direct aan de slag."}
           </p>
-          <p className="text-accent font-semibold mt-2">€9,99 per analyse — eenmalig</p>
+          <p className="text-accent font-semibold mt-2">€14,99 per analyse — eenmalig</p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-5">

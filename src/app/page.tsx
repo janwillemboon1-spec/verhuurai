@@ -68,7 +68,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <div className="mt-6 pt-4 border-t border-border space-y-3">
-                <p className="text-accent font-bold text-xl">€9,99 — eenmalig</p>
+                <p className="text-accent font-bold text-xl">€14,99 — eenmalig</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Link href="/gratis" className="btn-secondary text-sm text-center flex items-center justify-center">Gratis proberen</Link>
                   <Link href="/listing-optimizer" className="btn-primary text-sm text-center flex items-center justify-center">Meer info →</Link>
