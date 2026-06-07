@@ -50,15 +50,17 @@ SCOREBEPALING per veld:
 - TITEL: Het enige doel van een goede titel is dat de meest onderscheidende en unieke kenmerken van de woning direct zichtbaar zijn voor potentiële gasten.
   TEKENLENGTE: De exacte tekenlengte van de originele titel staat vermeld achter de titel als [exacte tekenlengte: X]. Gebruik dit getal — tel nooit zelf. Streef voor herschreven versies naar 40-50 tekens.
   VERBODEN in de titel: het accommodatietype (appartement, villa, huis, kamer, studio, woning, etc.) — Airbnb toont dit al automatisch.
-  VERBODEN: bijvoeglijke naamwoorden zonder onderbouwing (gezellig, mooi, prachtig, knus, leuk, geweldig, stijlvol, sfeervol, modern, etc.)
+  VERBODEN: de naam van het huis, tenzij die naam een merk is dat ook terugkomt op een eigen direct booking website van de host.
   VERBODEN: het aantal personen of slaapplekken (bijv. "voor 6 personen", "4 slaapplekken", "10p") — Airbnb toont dit al automatisch.
+  VERBODEN: de plaatsnaam van de woning zelf — die is al zichtbaar in de zoekresultaten.
+  VERBODEN: bijvoeglijke naamwoorden zonder onderbouwing (gezellig, mooi, prachtig, knus, leuk, geweldig, stijlvol, sfeervol, modern, etc.)
   TOEGESTAAN: internationaal ingeburgerde woorden zoals "parking", "free parking", "pool", "wifi" — ook in een verder Nederlandstalige titel.
   TOEGESTAAN: concrete locatiebeschrijvingen zoals "direct aan zee", "direct aan strand", "op 50m van het strand" — dit zijn nauwkeurige omschrijvingen, geen vage termen.
   Kenmerken kunnen van alles zijn: een voorziening (zwembad, hottub, werkplek), een dienst (ontbijt inbegrepen, shuttle), een service (late checkout, selfcheck-in), een locatievoordeel (zeezicht, direct strand, parkeerplaats), of elk ander concreet onderscheidend element.
   LAY-OUT AANBEVELING (geen verplichting, geen scorepunt): een structuur met scheidingstekens (|, •, -, .) maakt de titel scanbaar. Geef dit als tip, niet als kritiek. Beoordeel de huidige lay-out niet negatief als de kenmerken wél duidelijk aanwezig zijn.
-  Score 9-10: concrete unieke kenmerken aanwezig + geen accommodatietype + geen loze bijv.naamwoorden + 40-50 tekens
+  Score 9-10: concrete unieke kenmerken aanwezig + geen accommodatietype + geen huisnaam (tenzij merk) + geen persoonenaantal + geen plaatsnaam + geen loze bijv.naamwoorden + 40-50 tekens
   Score 7-8: goede kenmerken maar kleine afwijking (bijv. iets te lang/kort)
-  Score 5-6: bijvoeglijke naamwoorden zonder onderbouwing aanwezig OF accommodatietype erin
+  Score 5-6: loze bijvoeglijke naamwoorden OF accommodatietype OF persoonenaantal OF plaatsnaam erin
   Score 3-4: geen onderscheidende kenmerken of volledig generiek
   Score 1-2: misleidend, leeg of volledig irrelevant
   HERSCHREVEN VERSIES — regels:
@@ -218,6 +220,9 @@ De meest unieke en onderscheidende kenmerken van de woning moeten direct zichtba
 
 VERBODEN in de titel:
 - Het accommodatietype (appartement, villa, huis, kamer, studio, woning) — het platform toont dit automatisch
+- De naam van het huis, tenzij die naam een merk is dat ook terugkomt op een eigen direct booking website van de host
+- Het aantal personen of slaapplekken (bijv. "voor 6 personen", "4 slaapplekken", "10p") — het platform toont dit automatisch
+- De plaatsnaam van de woning zelf — die is al zichtbaar in de zoekresultaten
 - Loze bijvoeglijke naamwoorden (gezellig, mooi, prachtig, knus, leuk, geweldig, stijlvol, sfeervol, modern)
 
 TOEGESTAAN:
@@ -229,9 +234,9 @@ LAY-OUT TIP (aanbeveling, geen verplichting):
 Een structuur met scheidingstekens (|, •, -, .) maakt de titel scanbaar. Geef dit als tip als het ontbreekt, maar reken de host hier niet op af als de kenmerken wél duidelijk aanwezig zijn.
 
 SCORES (schaal 1-10):
-- 9-10: concrete unieke kenmerken + geen accommodatietype + geen loze bijv.naamwoorden + 40-50 tekens
+- 9-10: concrete unieke kenmerken + geen accommodatietype + geen huisnaam (tenzij merk) + geen persoonenaantal + geen plaatsnaam + geen loze bijv.naamwoorden + 40-50 tekens
 - 7-8: goede kenmerken, kleine afwijking
-- 5-6: loze bijvoeglijke naamwoorden OF accommodatietype aanwezig
+- 5-6: loze bijvoeglijke naamwoorden OF accommodatietype OF persoonenaantal OF plaatsnaam aanwezig
 - 3-4: geen onderscheidende kenmerken of volledig generiek
 - 1-2: misleidend of leeg
 
