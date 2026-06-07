@@ -65,7 +65,7 @@ SCOREBEPALING per veld:
   Score 1-2: misleidend, leeg of volledig irrelevant
   HERSCHREVEN VERSIES — regels:
   1. Schrijf de herschreven versies ALTIJD in dezelfde taal als de originele titel.
-  2. HARDE MAXIMUMLIMIET: elke herschreven titel mag NOOIT meer dan 50 tekens bevatten. Tel van de eerste letter van het eerste woord tot en met de laatste letter van het laatste woord — inclusief alle spaties en scheidingstekens daartussen. Voorbeeld: "Zeezicht | Hottub | 5 min van Leiden" = 37 tekens. Als een versie meer dan 50 tekens telt, schrap je woorden of kenmerken totdat je op 50 of minder uitkomt. Streef naar 40-50 tekens.
+  2. HARDE MAXIMUMLIMIET: elke herschreven titel mag NOOIT meer dan 50 tekens bevatten. Tel van de eerste letter van het eerste woord tot en met de laatste letter van het laatste woord — inclusief alle spaties en scheidingstekens daartussen. Voorbeeld: "Zeezicht | Hottub | 5 min van Leiden" = 36 tekens. Als een versie meer dan 50 tekens telt, schrap je woorden of kenmerken totdat je op 50 of minder uitkomt. Streef naar 40-50 tekens.
   3. Alle verboden-regels gelden ook voor de herschreven versies: geen accommodatietype, geen huisnaam (tenzij merk), geen persoonenaantal, geen eigen plaatsnaam, geen loze bijvoeglijke naamwoorden.
   4. Verwerk de meest opvallende of unieke kenmerken uit de advertentie. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al gebruikt.
   Output: ALTIJD 2 herschreven versies. Geef bij elke versie de tekenlengte op en een korte toelichting (niet in hoofdletters) waarom deze versie de kenmerken beter benadrukt.
@@ -243,7 +243,7 @@ SCORES (schaal 1-10):
 
 HERSCHREVEN VERSIES:
 1. Schrijf de versies in DEZELFDE TAAL als de originele titel.
-2. HARDE MAXIMUMLIMIET: elke herschreven titel mag NOOIT meer dan 50 tekens bevatten. Tel van de eerste letter van het eerste woord tot en met de laatste letter van het laatste woord — inclusief alle spaties en scheidingstekens daartussen. Voorbeeld: "Zeezicht | Hottub | 5 min van Leiden" = 37 tekens. Als een versie meer dan 50 tekens telt, schrap je woorden of kenmerken totdat je op 50 of minder uitkomt. Streef naar 40-50 tekens.
+2. HARDE MAXIMUMLIMIET: elke herschreven titel mag NOOIT meer dan 50 tekens bevatten. Tel van de eerste letter van het eerste woord tot en met de laatste letter van het laatste woord — inclusief alle spaties en scheidingstekens daartussen. Voorbeeld: "Zeezicht | Hottub | 5 min van Leiden" = 36 tekens. Als een versie meer dan 50 tekens telt, schrap je woorden of kenmerken totdat je op 50 of minder uitkomt. Streef naar 40-50 tekens.
 3. Alle verboden-regels gelden ook voor de herschreven versies: geen accommodatietype, geen huisnaam (tenzij merk), geen persoonenaantal, geen eigen plaatsnaam, geen loze bijvoeglijke naamwoorden.
 4. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al hanteert.
 ${recensies ? "5. Verwerk de meest genoemde positieve kenmerken uit de reviews als inspiratie." : ""}
