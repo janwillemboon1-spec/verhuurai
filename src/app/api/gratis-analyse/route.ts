@@ -2,6 +2,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildTitelPrompt } from "@/lib/boni-prompt";
 import { NextResponse } from "next/server";
 
+function kapTitelAf(titel: string): string {
+  if (titel.length <= 50) return titel;
+  const afgekapt = titel.slice(0, 50);
+  const lastSpace = afgekapt.lastIndexOf(" ");
+  return lastSpace > 30 ? afgekapt.slice(0, lastSpace).trimEnd() : afgekapt.trimEnd();
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -35,6 +42,13 @@ export async function POST(request: Request) {
 
     const raw = content.text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
     const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed.herschreven_versies)) {
+      parsed.herschreven_versies = parsed.herschreven_versies.map((v: { versie: string; tekens: number; uitleg: string }) => {
+        const versie = kapTitelAf(v.versie);
+        return { ...v, versie, tekens: versie.length };
+      });
+    }
 
     return NextResponse.json(parsed);
   } catch (error) {

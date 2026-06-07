@@ -6,6 +6,13 @@ import { getOrCreateUser } from "@/lib/supabase/get-or-create-user";
 import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
+function kapTitelAf(titel: string): string {
+  if (titel.length <= 50) return titel;
+  const afgekapt = titel.slice(0, 50);
+  const lastSpace = afgekapt.lastIndexOf(" ");
+  return lastSpace > 30 ? afgekapt.slice(0, lastSpace).trimEnd() : afgekapt.trimEnd();
+}
+
 declare global {
   var sessies: Map<string, any>;
   var rapporten: Map<string, any>;
@@ -128,6 +135,12 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
 
     const raw = content.text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
     const rapport = JSON.parse(raw);
+
+    if (Array.isArray(rapport?.velden?.titel?.herschrevenVersies)) {
+      rapport.velden.titel.herschrevenVersies = rapport.velden.titel.herschrevenVersies.map(
+        (v: { versie: string; uitleg: string }) => ({ ...v, versie: kapTitelAf(v.versie) })
+      );
+    }
 
     const sessie = global.sessies.get(sessieId);
     const email = sessie?.email || "";
