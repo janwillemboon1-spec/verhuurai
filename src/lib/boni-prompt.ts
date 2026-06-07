@@ -52,7 +52,7 @@ SCOREBEPALING per veld:
   VERBODEN in de titel: het accommodatietype (appartement, villa, huis, kamer, studio, woning, etc.) — Airbnb toont dit al automatisch.
   VERBODEN: de naam van het huis, tenzij die naam een merk is dat ook terugkomt op een eigen direct booking website van de host.
   VERBODEN: het aantal personen of slaapplekken (bijv. "voor 6 personen", "4 slaapplekken", "10p") — Airbnb toont dit al automatisch.
-  VERBODEN: de plaatsnaam van de woning zelf — die is al zichtbaar in de zoekresultaten.
+  VERBODEN: de plaatsnaam van de woning zelf — die is al zichtbaar in de zoekresultaten. Omliggende plaatsen als referentiepunt zijn WEL toegestaan (bijv. "5 min van Amsterdam" of "Vlakbij Utrecht"), maar niet de eigen locatieplaats (bijv. niet "in Amsterdam" als de woning in Amsterdam staat).
   VERBODEN: bijvoeglijke naamwoorden zonder onderbouwing (gezellig, mooi, prachtig, knus, leuk, geweldig, stijlvol, sfeervol, modern, etc.)
   TOEGESTAAN: internationaal ingeburgerde woorden zoals "parking", "free parking", "pool", "wifi" — ook in een verder Nederlandstalige titel.
   TOEGESTAAN: concrete locatiebeschrijvingen zoals "direct aan zee", "direct aan strand", "op 50m van het strand" — dit zijn nauwkeurige omschrijvingen, geen vage termen.
