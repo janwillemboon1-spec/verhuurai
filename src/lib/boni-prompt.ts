@@ -65,9 +65,10 @@ SCOREBEPALING per veld:
   Score 1-2: misleidend, leeg of volledig irrelevant
   HERSCHREVEN VERSIES — regels:
   1. Schrijf de herschreven versies ALTIJD in dezelfde taal als de originele titel.
-  2. Streef naar 40-50 tekens. Geef bij elke versie de tekenlengte op — maar weet dat je eigen teltelling niet betrouwbaar is; de gebruiker ziet de echte lengte in de app.
-  3. Verwerk de meest opvallende of unieke kenmerken uit de advertentie. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al gebruikt.
-  Output: ALTIJD 2 herschreven versies. Geef bij elke versie een korte toelichting (niet in hoofdletters) waarom deze versie de kenmerken beter benadrukt.
+  2. HARDE MAXIMUMLIMIET: elke herschreven titel mag NOOIT meer dan 50 tekens bevatten. Tel exact. Als een versie langer is, schrap je woorden totdat je onder de 50 tekens zit. Streef naar 40-50 tekens.
+  3. Alle verboden-regels gelden ook voor de herschreven versies: geen accommodatietype, geen huisnaam (tenzij merk), geen persoonenaantal, geen eigen plaatsnaam, geen loze bijvoeglijke naamwoorden.
+  4. Verwerk de meest opvallende of unieke kenmerken uit de advertentie. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al gebruikt.
+  Output: ALTIJD 2 herschreven versies. Geef bij elke versie de tekenlengte op en een korte toelichting (niet in hoofdletters) waarom deze versie de kenmerken beter benadrukt.
 
 - BESCHRIJVING: Een goede beschrijving laat gasten voelen hoe het is om in de woning te verblijven — de sfeer, de ervaring, wat ze kunnen verwachten. Daarna pas de feiten: wat is er aanwezig, wat maakt de plek bijzonder?
   Beoordeel op: sterke haak (eerste zin trekt aan)? Ervaring en sfeer beschreven? Doelgroep duidelijk? 2-3 beste voorzieningen of kenmerken? Locatievoordeel? 400-500 tekens?
@@ -242,9 +243,10 @@ SCORES (schaal 1-10):
 
 HERSCHREVEN VERSIES:
 1. Schrijf de versies in DEZELFDE TAAL als de originele titel.
-2. Streef naar 40-50 tekens. Geef de tekenlengte op per versie.
-3. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al hanteert.
-${recensies ? "4. Verwerk de meest genoemde positieve kenmerken uit de reviews als inspiratie." : ""}
+2. HARDE MAXIMUMLIMIET: elke herschreven titel mag NOOIT meer dan 50 tekens bevatten. Tel exact. Als een versie langer is, schrap je woorden totdat je onder de 50 tekens zit. Streef naar 40-50 tekens.
+3. Alle verboden-regels gelden ook voor de herschreven versies: geen accommodatietype, geen huisnaam (tenzij merk), geen persoonenaantal, geen eigen plaatsnaam, geen loze bijvoeglijke naamwoorden.
+4. Gebruik hetzelfde of een vergelijkbaar scheidingsteken als de host al hanteert.
+${recensies ? "5. Verwerk de meest genoemde positieve kenmerken uit de reviews als inspiratie." : ""}
 
 Geef je antwoord als JSON zonder markdown code blocks, direct geldig JSON:
 {
