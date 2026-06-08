@@ -21,8 +21,6 @@ function naarComUrl(url: string): string {
   return url.replace(/airbnb\.[a-z]{2,3}\//, "airbnb.com/");
 }
 
-// ── Browser-headers voor directe HTML-fetch ───────────────────────────────────
-
 const BROWSER_HEADERS: Record<string, string> = {
   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -38,186 +36,302 @@ const BROWSER_HEADERS: Record<string, string> = {
   "Upgrade-Insecure-Requests": "1",
 };
 
-// ── JSON-extractors ───────────────────────────────────────────────────────────
+// ── HTML-tekst hulpfuncties ───────────────────────────────────────────────────
 
-// Zoek recursief naar een object dat eruitziet als een Airbnb-listing
-function vindListingObject(obj: any, diepte = 0): Record<string, any> | null {
-  if (diepte > 10 || !obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+function stripHtml(str: string): string {
+  return str.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
 
-  // Dit object ziet eruit als een listing
-  if (
-    typeof obj.name === "string" && obj.name.length > 3 &&
-    (typeof obj.description === "string" || typeof obj.htmlDescription === "object") &&
-    (obj.amenities || obj.houseRules || obj.host || obj.personCapacity || obj.roomType)
-  ) {
-    return obj;
-  }
+function htmlTekst(obj: any): string {
+  if (!obj) return "";
+  if (typeof obj === "string") return stripHtml(obj);
+  if (obj.htmlText) return stripHtml(obj.htmlText);
+  if (obj.html?.htmlText) return stripHtml(obj.html.htmlText);
+  if (obj.translatedText) return stripHtml(obj.translatedText);
+  return "";
+}
 
-  // Bekende paden eerst (sneller)
-  const prioriteit = ["listing", "listingInfo", "pdpData", "homePDP", "roomDetails", "sections"];
-  for (const key of prioriteit) {
-    if (obj[key]) {
-      const r = vindListingObject(obj[key], diepte + 1);
+// ── Sections zoeken en mappen ─────────────────────────────────────────────────
+
+function vindSections(obj: any, diepte = 0): any[] | null {
+  if (diepte > 8 || !obj || typeof obj !== "object") return null;
+  if (Array.isArray(obj)) {
+    if (obj.length > 0 && obj[0]?.sectionComponentType) return obj;
+    for (const item of obj) {
+      const r = vindSections(item, diepte + 1);
       if (r) return r;
     }
+    return null;
   }
-
-  // Rest van de keys
-  for (const key of Object.keys(obj)) {
-    if (prioriteit.includes(key)) continue;
-    const r = vindListingObject(obj[key], diepte + 1);
+  for (const k of Object.keys(obj)) {
+    const r = vindSections(obj[k], diepte + 1);
     if (r) return r;
   }
-
   return null;
 }
 
-// Extraheer tekst uit Airbnb's htmlDescription object {htmlText: "..."}
-function htmlNaarTekst(val: any): string {
-  if (!val) return "";
-  if (typeof val === "string") return val;
-  if (typeof val === "object") {
-    return val.htmlText ?? val.translatedText ?? val.description ?? val.value ?? "";
+function bouwSectieMap(sections: any[]): Record<string, any> {
+  const map: Record<string, any> = {};
+  for (const container of sections) {
+    const type = container.sectionComponentType;
+    if (type && container.section) {
+      map[type] = container.section;
+    }
   }
-  return "";
+  return map;
 }
 
-// Zoek diep in een groot JSON-object naar een string-waarde via meerdere sleutelnames
-function diepZoek(obj: any, sleutels: string[], diepte = 0): string {
-  if (diepte > 8 || !obj || typeof obj !== "object") return "";
-  for (const k of sleutels) {
-    if (obj[k]) {
-      const v = htmlNaarTekst(obj[k]);
-      if (v) return v;
-    }
-  }
-  for (const k of Object.keys(obj)) {
-    if (Array.isArray(obj[k])) {
-      for (const item of obj[k]) {
-        const r = diepZoek(item, sleutels, diepte + 1);
-        if (r) return r;
-      }
-    } else {
-      const r = diepZoek(obj[k], sleutels, diepte + 1);
-      if (r) return r;
-    }
-  }
-  return "";
+// ── Veld-extractors ───────────────────────────────────────────────────────────
+
+function extractBeschrijving(s: Record<string, any>): string {
+  return htmlTekst(s.DESCRIPTION_DEFAULT?.htmlDescription) || "";
 }
 
-// Verzamel amenities uit geneste sectie-data
-function vindAmenities(obj: any, diepte = 0): string[] {
-  if (diepte > 8 || !obj || typeof obj !== "object") return [];
-  const resultaten: string[] = [];
-
-  if (Array.isArray(obj)) {
-    for (const item of obj) {
-      if (typeof item === "string") resultaten.push(item);
-      else if (item?.name && typeof item.name === "string") resultaten.push(item.name);
-      else if (item?.title && typeof item.title === "string") resultaten.push(item.title);
-      else resultaten.push(...vindAmenities(item, diepte + 1));
-    }
-    return resultaten;
-  }
-
-  for (const k of ["amenities", "seeAllAmenitiesGroups", "previewAmenitiesGroups", "amenitiesGroups"]) {
-    if (obj[k]) return vindAmenities(obj[k], diepte + 1);
-  }
-
-  for (const k of Object.keys(obj)) {
-    resultaten.push(...vindAmenities(obj[k], diepte + 1));
-  }
-
-  return resultaten.filter(Boolean);
+function extractDescriptionModalItems(s: Record<string, any>): string[] {
+  const items: any[] = s.PDP_DESCRIPTION_MODAL?.items ?? [];
+  return items.map((item: any) => {
+    const title = item.anchor?.title || item.title || "";
+    const tekst = htmlTekst(item.html || item.htmlDescription || item.content || "");
+    return tekst ? `${title ? title + "\n" : ""}${tekst}` : "";
+  });
 }
 
-// ── HTML ophalen en parsen ────────────────────────────────────────────────────
+function extractBuurtEnVervoer(s: Record<string, any>): { buurt: string; vervoer: string } {
+  const loc = s.LOCATION_PDP;
+  if (!loc) return { buurt: "", vervoer: "" };
 
-async function scraapListingHtml(url: string): Promise<Record<string, any> | null> {
-  const comUrl = naarComUrl(url);
-  console.log("[Pro HTML] Ophalen:", comUrl);
+  const formatDetails = (details: any[]): string =>
+    (details ?? []).map((d: any) => {
+      const title = d.title || "";
+      const content = htmlTekst(d.content || "");
+      const items = (d.items ?? []).map((i: any) => htmlTekst(i.title || i.content || i)).filter(Boolean).join(", ");
+      return [title, content, items].filter(Boolean).join(": ");
+    }).filter(Boolean).join("\n");
 
-  try {
-    const res = await fetch(comUrl, { headers: BROWSER_HEADERS });
-    console.log("[Pro HTML] HTTP status:", res.status);
-    if (!res.ok) return null;
+  const alle = formatDetails([...(loc.previewLocationDetails ?? []), ...(loc.seeAllLocationDetails ?? [])]);
 
-    const html = await res.text();
-    console.log("[Pro HTML] HTML-lengte:", html.length);
+  // Vervoer staat typisch in een item met "Getting around" of "Vervoer" als titel
+  const vervoerItem = [...(loc.previewLocationDetails ?? []), ...(loc.seeAllLocationDetails ?? [])]
+    .find((d: any) => {
+      const t = (d.title || "").toLowerCase();
+      return t.includes("vervoer") || t.includes("getting around") || t.includes("transit") || t.includes("transport");
+    });
 
-    // Strategie 1: __NEXT_DATA__
-    const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (nextDataMatch?.[1]) {
-      try {
-        const data = JSON.parse(nextDataMatch[1]);
-        const listing = vindListingObject(data?.props ?? data);
-        if (listing) {
-          console.log("[Pro HTML] Listing via __NEXT_DATA__, velden:", Object.keys(listing).slice(0, 12));
-          return { ...listing, _bron: "next_data" };
-        }
-      } catch (e) {
-        console.error("[Pro HTML] __NEXT_DATA__ parse-fout:", e);
-      }
-    }
+  const vervoer = vervoerItem
+    ? formatDetails([vervoerItem])
+    : "";
 
-    // Strategie 2: niobeMinimalClientData (nieuwere Airbnb-pagina's)
-    const niobeMatch = html.match(/niobeMinimalClientData\s*=\s*(\[[\s\S]*?\]);/);
-    if (niobeMatch?.[1]) {
-      try {
-        const data = JSON.parse(niobeMatch[1]);
-        const listing = vindListingObject(data);
-        if (listing) {
-          console.log("[Pro HTML] Listing via niobeMinimalClientData, velden:", Object.keys(listing).slice(0, 12));
-          return { ...listing, _bron: "niobe" };
-        }
-      } catch {}
-    }
+  const buurtItems = [...(loc.previewLocationDetails ?? []), ...(loc.seeAllLocationDetails ?? [])]
+    .filter((d: any) => {
+      const t = (d.title || "").toLowerCase();
+      return !t.includes("vervoer") && !t.includes("getting around") && !t.includes("transit");
+    });
 
-    // Strategie 3: alle application/json script-tags
-    const scriptRegex = /<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g;
-    let scriptMatch;
-    let pogingNr = 0;
-    while ((scriptMatch = scriptRegex.exec(html)) !== null && pogingNr < 20) {
-      pogingNr++;
-      try {
-        const data = JSON.parse(scriptMatch[1]);
-        const listing = vindListingObject(data);
-        if (listing) {
-          console.log("[Pro HTML] Listing via JSON script-tag #" + pogingNr + ", velden:", Object.keys(listing).slice(0, 12));
-          return { ...listing, _bron: "json_script" };
-        }
-      } catch {}
-    }
-
-    // Strategie 4: OG-metatags als minimale fallback
-    const metaData = extractMetaTags(html);
-    if (metaData?.name) {
-      console.log("[Pro HTML] Alleen OG-metatags gevonden");
-      return { ...metaData, _bron: "meta_only" };
-    }
-
-    console.error("[Pro HTML] Geen listing-data gevonden in HTML");
-    return null;
-  } catch (err) {
-    console.error("[Pro HTML] Fetch-fout:", err);
-    return null;
-  }
-}
-
-function extractMetaTags(html: string): Record<string, any> | null {
-  const get = (property: string) =>
-    html.match(new RegExp(`<meta[^>]*property="${property}"[^>]*content="([^"]*)"`))?.[1] ??
-    html.match(new RegExp(`<meta[^>]*content="([^"]*)"[^>]*property="${property}"`))?.[1] ?? "";
-
-  const name = get("og:title");
-  if (!name) return null;
   return {
-    name,
-    description: get("og:description"),
+    buurt: formatDetails(buurtItems) || alle,
+    vervoer,
   };
 }
 
-// ── Apify reviews scrapen (bestaande, ongewijzigd) ────────────────────────────
+function extractHuisregels(s: Record<string, any>): string {
+  const pol = s.POLICIES_DEFAULT;
+  if (!pol) return "";
+  const regels: string[] = [];
+
+  if (Array.isArray(pol.houseRules)) {
+    regels.push(...pol.houseRules.map((r: any) => r.title || "").filter(Boolean));
+  }
+  if (Array.isArray(pol.houseRulesSections)) {
+    for (const sect of pol.houseRulesSections) {
+      if (sect.title) regels.push(`\n${sect.title}:`);
+      if (Array.isArray(sect.items)) {
+        regels.push(...sect.items.map((i: any) => `• ${i.title || ""}`).filter(Boolean));
+      }
+    }
+  }
+  return regels.join("\n");
+}
+
+function extractVoorzieningen(s: Record<string, any>, volledigData: any): string {
+  // Zoek recursief naar een array met amenity-objecten (name of title + icon)
+  const zoek = (obj: any, diepte = 0): string[] => {
+    if (diepte > 8 || !obj || typeof obj !== "object") return [];
+    if (Array.isArray(obj)) {
+      const namen = obj
+        .map((a: any) => (typeof a === "string" ? a : a.name || a.title || a.localizedName || ""))
+        .filter((n: string) => n.length > 1 && n.length < 80);
+      if (namen.length >= 3) return namen;
+      for (const item of obj) {
+        const r = zoek(item, diepte + 1);
+        if (r.length >= 3) return r;
+      }
+      return [];
+    }
+    for (const k of ["amenities", "seeAllAmenitiesGroups", "previewAmenitiesGroups", "amenityGroups", "amenitiesGroups"]) {
+      if (obj[k]) {
+        const r = zoek(obj[k], diepte + 1);
+        if (r.length >= 3) return r;
+      }
+    }
+    for (const k of Object.keys(obj)) {
+      const r = zoek(obj[k], diepte + 1);
+      if (r.length >= 3) return r;
+    }
+    return [];
+  };
+
+  const uit = s.AMENITIES_DEFAULT ? zoek(s.AMENITIES_DEFAULT) : [];
+  if (uit.length >= 3) return Array.from(new Set(uit)).slice(0, 60).join(", ");
+
+  const uitVolledig = zoek(volledigData);
+  return Array.from(new Set(uitVolledig)).slice(0, 60).join(", ");
+}
+
+function extractAnnulering(s: Record<string, any>): string {
+  const cancModal = s.CANCELLATION_POLICY_PICKER_MODAL;
+  if (cancModal?.title) return cancModal.title;
+  const cancButton = cancModal?.button?.title;
+  if (cancButton) return cancButton;
+  return "";
+}
+
+function extractStadLand(s: Record<string, any>): { stad: string; land: string } {
+  const subtitle = s.LOCATION_PDP?.subtitle || ""; // "Vinkeveen, Utrecht, Nederland"
+  const delen = subtitle.split(",").map((d: string) => d.trim());
+  return {
+    stad: delen[0] || "",
+    land: delen[delen.length - 1] || "Nederland",
+  };
+}
+
+// ── Hoofdscraper ──────────────────────────────────────────────────────────────
+
+async function scraapListingHtml(url: string): Promise<Record<string, any> | null> {
+  const comUrl = naarComUrl(url);
+  console.log("[Pro] Ophalen:", comUrl);
+
+  try {
+    const res = await fetch(comUrl, { headers: BROWSER_HEADERS });
+    console.log("[Pro] HTTP status:", res.status);
+    if (!res.ok) return null;
+
+    const html = await res.text();
+    console.log("[Pro] HTML-lengte:", html.length);
+
+    // Zoek script tag met niobeClientData
+    const jsonScripts = Array.from(html.matchAll(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g));
+
+    for (const scriptMatch of jsonScripts) {
+      if (!scriptMatch[1].includes("niobeClientData")) continue;
+      try {
+        const parsed = JSON.parse(scriptMatch[1]);
+        const niobeRaw: any[] = parsed.niobeClientData ?? [];
+
+        // Zoek het StaysPdpSections cache-paar
+        for (const paar of niobeRaw) {
+          if (!Array.isArray(paar) || paar.length < 2) continue;
+          const cacheKey = String(paar[0]);
+          if (!cacheKey.startsWith("StaysPdp")) continue;
+
+          const cacheWaarde = paar[1];
+          const sections = vindSections(cacheWaarde);
+          if (!sections) continue;
+
+          const sectieMap = bouwSectieMap(sections);
+          console.log("[Pro] Secties gevonden:", Object.keys(sectieMap).join(", "));
+
+          return { sectieMap, volledigData: cacheWaarde, _bron: "niobe" };
+        }
+      } catch (e) {
+        console.error("[Pro] Parse-fout niobe script:", e);
+      }
+    }
+
+    console.error("[Pro] Geen niobeClientData met StaysPdpSections gevonden");
+    return null;
+  } catch (err) {
+    console.error("[Pro] Fetch-fout:", err);
+    return null;
+  }
+}
+
+// ── Niobe data → AnalyseFormulier ─────────────────────────────────────────────
+
+function mapNaarFormulier(
+  raw: { sectieMap: Record<string, any>; volledigData: any },
+  naam: string,
+  recensies: string,
+  airbnbUrl: string
+): AnalyseFormulier {
+  const s = raw.sectieMap;
+
+  const { stad, land } = extractStadLand(s);
+  const { buurt, vervoer } = extractBuurtEnVervoer(s);
+  const huisregels = extractHuisregels(s);
+  const beschrijving = extractBeschrijving(s);
+  const voorzieningen = extractVoorzieningen(s, raw.volledigData);
+
+  // Titel: listingTitle in de agenda-sectie
+  const titel =
+    s.STAYS_PDP_AVAILABILITY_CALENDAR_INLINE?.listingTitle ||
+    s.AVAILABILITY_CALENDAR_DEFAULT?.listingTitle || "";
+
+  // Beschrijving-modal items: [De ruimte, Toegang, Interactie, Andere info]
+  const modalItems = extractDescriptionModalItems(s);
+  const accommodatie = modalItems[0] || "";
+  const toegang      = modalItems[1] || "";
+  const interactie   = modalItems[2] || "";
+  const andereInfo   = modalItems[3] || "";
+
+  // Host
+  const hostSectie = s.MEET_YOUR_HOST;
+  const hostNaamScrape = hostSectie?.cardData?.name || hostSectie?.cardData?.firstName || "";
+  const hostAbout = hostSectie?.about || "";
+  const hostProfiel = hostAbout
+    ? `${hostNaamScrape ? hostNaamScrape + "\n" : ""}${hostAbout}`
+    : hostNaamScrape || "";
+
+  // Annuleringsbeleid
+  const annuleringsbeleid = extractAnnulering(s);
+
+  // Rating + max gasten
+  const rating = s.REVIEWS_DEFAULT?.overallRating;
+  const maxGasten = s.BOOK_IT_SIDEBAR?.maxGuestCapacity || s.BOOK_IT_FLOATING_FOOTER?.maxGuestCapacity;
+
+  console.log("[Pro] Mapping klaar — titel:", titel.slice(0, 60));
+  console.log("[Pro] Beschrijving:", beschrijving.slice(0, 80));
+  console.log("[Pro] Accommodatie:", accommodatie.slice(0, 60));
+  console.log("[Pro] Voorzieningen:", voorzieningen.slice(0, 80));
+
+  return {
+    hostNaam: naam,
+    rapportTaal: "nl",
+    woningType: "Woning",
+    doelgroep: ["couples", "families"],
+    land,
+    stad,
+    prijsPerNacht: undefined,
+    bezettingsgraad: rating ? Math.round(rating * 10) : undefined,
+    airbnbUrl,
+    titel,
+    beschrijving,
+    accommodatie,
+    toegang,
+    interactie,
+    andereInfo,
+    voorzieningen,
+    buurt,
+    vervoer,
+    recensies,
+    hostProfiel,
+    huisregels,
+    directBoeken: undefined,
+    annuleringsbeleid,
+    sterkstePunt: maxGasten ? `Max ${maxGasten} gasten` : undefined,
+  };
+}
+
+// ── Apify reviews ─────────────────────────────────────────────────────────────
 
 async function scraapReviews(url: string): Promise<string> {
   if (!APIFY_TOKEN) return "";
@@ -244,10 +358,10 @@ async function scraapReviews(url: string): Promise<string> {
     const reviews = (items?.[0]?.reviews ?? items) as any[];
     if (!reviews?.length) return "";
     return reviews.slice(0, 50).map((r: any, i: number) => {
-      const naam = r.reviewer?.firstName || r.reviewer?.name || "Gast";
+      const reviewNaam = r.reviewer?.firstName || r.reviewer?.name || "Gast";
       const datum = r.createdAt ? new Date(r.createdAt).toLocaleDateString("nl-NL", { month: "long", year: "numeric" }) : r.date || "";
       const sterren = r.rating ? "★".repeat(Math.min(Math.round(r.rating), 5)) : "";
-      let tekst = `Review ${i + 1} — ${naam}${datum ? ` · ${datum}` : ""}${sterren ? ` · ${sterren}` : ""}\n`;
+      let tekst = `Review ${i + 1} — ${reviewNaam}${datum ? ` · ${datum}` : ""}${sterren ? ` · ${sterren}` : ""}\n`;
       tekst += r.comments || r.reviewText || r.text || "(geen tekst)";
       if (r.response) tekst += `\n→ Reactie host: ${r.response}`;
       return tekst;
@@ -257,95 +371,6 @@ async function scraapReviews(url: string): Promise<string> {
   }
 }
 
-// ── Listing-data → AnalyseFormulier ──────────────────────────────────────────
-
-function mapNaarFormulier(listing: Record<string, any>, naam: string, recensies: string): AnalyseFormulier {
-  // Amenities: probeer meerdere bronnen
-  const amenitiesRaw: any[] = listing.amenities ?? listing.amenityIds ?? [];
-  let voorzieningen = amenitiesRaw
-    .map((a: any) => (typeof a === "string" ? a : a.name ?? a.title ?? ""))
-    .filter(Boolean)
-    .join(", ");
-
-  // Als amenities leeg zijn, zoek diep in het object
-  if (!voorzieningen) {
-    const gevonden = vindAmenities(listing);
-    voorzieningen = Array.from(new Set(gevonden)).slice(0, 50).join(", ");
-  }
-
-  // Huisregels
-  const huisregelsRaw = listing.houseRules ?? listing.house_rules ?? "";
-  const huisregels = Array.isArray(huisregelsRaw)
-    ? huisregelsRaw.map((r: any) => (typeof r === "string" ? r : r.title ?? r.body ?? "")).filter(Boolean).join("\n")
-    : String(huisregelsRaw);
-
-  // Annuleringsbeleid
-  const annulering =
-    listing.cancellationPolicy ?? listing.cancellation_policy ??
-    listing.cancellationPolicies?.[0]?.policyName ?? "";
-
-  // Prijs
-  const prijs = listing.price?.rate ?? listing.pricing?.rate?.amount ?? listing.priceString ?? undefined;
-
-  // Host
-  const host = listing.host ?? listing.primaryHost ?? {};
-  const hostNaamScrape = host.name ?? host.firstName ?? host.hostName ?? "";
-  const hostProfiel = htmlNaarTekst(host.about ?? host.description ?? host.hostAbout ?? "");
-
-  // Stad + land
-  const stad = listing.city ?? listing.address?.city ?? listing.location?.city ?? "";
-  const land = listing.country ?? listing.address?.country ?? listing.location?.country ?? "Nederland";
-  const rating = listing.rating ?? listing.starRating ?? undefined;
-
-  // Velden met diep zoeken als direct niet beschikbaar
-  const beschrijving = htmlNaarTekst(listing.description ?? listing.summary ?? "") ||
-    diepZoek(listing, ["description", "htmlDescription", "summary", "aboutThisListing"]);
-
-  const accommodatie = htmlNaarTekst(listing.space ?? listing.spaceDescription ?? listing.the_space ?? "") ||
-    diepZoek(listing, ["space", "spaceDescription", "the_space", "roomOverview"]);
-
-  const toegang = htmlNaarTekst(listing.access ?? listing.guestAccess ?? listing.guest_access ?? "") ||
-    diepZoek(listing, ["access", "guestAccess", "guest_access"]);
-
-  const interactie = htmlNaarTekst(listing.interaction ?? listing.interactionWithGuests ?? "") ||
-    diepZoek(listing, ["interaction", "interactionWithGuests", "interaction_with_guests"]);
-
-  const andereInfo = htmlNaarTekst(listing.notes ?? listing.otherNotes ?? listing.other_notes ?? "") ||
-    diepZoek(listing, ["notes", "otherNotes", "other_notes", "additionalHouseRules"]);
-
-  const buurt = htmlNaarTekst(listing.neighborhoodOverview ?? listing.neighborhood_overview ?? "") ||
-    diepZoek(listing, ["neighborhoodOverview", "neighborhood_overview", "neighborhoodDescription"]);
-
-  const vervoer = htmlNaarTekst(listing.transit ?? listing.transitInformation ?? "") ||
-    diepZoek(listing, ["transit", "transitInformation", "transit_information", "gettingAround"]);
-
-  return {
-    hostNaam: naam,
-    rapportTaal: "nl",
-    woningType: listing.roomType ?? listing.room_type ?? listing.propertyType ?? "Woning",
-    doelgroep: ["couples", "families"],
-    land,
-    stad,
-    prijsPerNacht: prijs ? Number(prijs) : undefined,
-    bezettingsgraad: rating ? Math.round(rating * 10) : undefined,
-    airbnbUrl: listing.url ?? listing.listingUrl ?? undefined,
-    titel: listing.name ?? listing.title ?? "",
-    beschrijving,
-    accommodatie,
-    toegang,
-    interactie,
-    andereInfo,
-    voorzieningen,
-    buurt,
-    vervoer,
-    recensies,
-    hostProfiel: hostProfiel || (hostNaamScrape ? `Host: ${hostNaamScrape}` : ""),
-    huisregels,
-    directBoeken: undefined,
-    annuleringsbeleid: String(annulering),
-  };
-}
-
 // ── Hoofdroute ────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -353,7 +378,6 @@ export async function POST(request: Request) {
   try {
     const { sessieId: sid } = await request.json();
     sessieId = sid;
-
     if (!sessieId) return NextResponse.json({ error: "sessieId is verplicht" }, { status: 400 });
 
     const sessie = global.sessies.get(sessieId);
@@ -362,14 +386,12 @@ export async function POST(request: Request) {
     const { naam, email, airbnbUrl } = sessie;
     global.rapportStatus.set(sessieId, "verwerking");
 
-    // HTML-scrape listing + Apify reviews parallel
-    const [listing, recensies] = await Promise.all([
+    const [rawListing, recensies] = await Promise.all([
       scraapListingHtml(airbnbUrl),
       scraapReviews(airbnbUrl),
     ]);
 
-    if (!listing) {
-      console.error("[Pro] Listing null na HTML-scrape voor:", airbnbUrl);
+    if (!rawListing) {
       global.rapportStatus.set(sessieId, "fout");
       return NextResponse.json(
         { error: "Airbnb advertentie kon niet worden opgehaald. Probeer de standaard Listing Optimizer." },
@@ -377,11 +399,8 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("[Pro] Listing opgehaald via:", listing._bron, "| titel:", listing.name?.slice(0, 50));
+    const formData = mapNaarFormulier(rawListing as any, naam, recensies, airbnbUrl);
 
-    const formData: AnalyseFormulier = mapNaarFormulier(listing, naam, recensies);
-
-    // Claude analyse
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     const userTextContent = `
@@ -429,23 +448,19 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
     const raw = content.text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
     const rapport = JSON.parse(raw);
 
-    // Titellengte server-side afdwingen
     if (Array.isArray(rapport?.velden?.titel?.herschrevenVersies)) {
       rapport.velden.titel.herschrevenVersies = rapport.velden.titel.herschrevenVersies.map(
         (v: { versie: string; uitleg: string }) => {
-          const versie = v.versie.length <= 50 ? v.versie : (() => {
-            const afgekapt = v.versie.slice(0, 50);
-            const lastSpace = afgekapt.lastIndexOf(" ");
-            return lastSpace > 30 ? afgekapt.slice(0, lastSpace).trimEnd() : afgekapt.trimEnd();
-          })();
-          return { ...v, versie };
+          if (v.versie.length <= 50) return v;
+          const afgekapt = v.versie.slice(0, 50);
+          const lastSpace = afgekapt.lastIndexOf(" ");
+          return { ...v, versie: lastSpace > 30 ? afgekapt.slice(0, lastSpace).trimEnd() : afgekapt.trimEnd() };
         }
       );
     }
 
     global.rapporten.set(sessieId, { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email, isPro: true });
 
-    // Opslaan + email
     try {
       const admin = createAdminClient();
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
@@ -478,7 +493,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
               <h1 style="color:white;margin:0;font-size:22px;">🏠 VerhuurAI</h1>
               <p style="color:#a5b4fc;margin:8px 0 0;">Listing Optimizer Pro Rapport</p>
             </div>
-            <p>Hey ${naam}! Boni heeft jouw advertentie automatisch opgehaald en geanalyseerd. Bekijk je rapport:</p>
+            <p>Hey ${naam}! Boni heeft jouw advertentie automatisch opgehaald en geanalyseerd.</p>
             <div style="text-align:center;margin:32px 0;">
               <a href="${rapportUrl}" style="background:#FF6B6B;color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px;">Bekijk mijn Pro rapport →</a>
             </div>
@@ -497,11 +512,8 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
     global.rapportStatus.set(sessieId, "klaar");
     return NextResponse.json({ ok: true, rapportId: sessieId });
   } catch (error) {
-    console.error("[Pro] Analyse fout:", error);
+    console.error("[Pro] Fout:", error);
     if (sessieId) global.rapportStatus.set(sessieId, "fout");
-    return NextResponse.json(
-      { error: "Boni heeft even een technisch probleem. Probeer het zo nog eens!" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Boni heeft even een technisch probleem." }, { status: 500 });
   }
 }
