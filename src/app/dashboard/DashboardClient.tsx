@@ -28,6 +28,7 @@ interface ListingRapport {
   id: string;
   host_naam: string | null;
   aangemaakt_op: string;
+  gearchiveerd: boolean;
 }
 
 interface CalculatorRapport {
@@ -55,6 +56,8 @@ export default function DashboardClient({
 }) {
   const router = useRouter();
   const [abonnementen, setAbonnementen] = useState(initieel);
+  const [listingRapportenState, setListingRapportenState] = useState(listingRapporten);
+  const [toonListingArchief, setToonListingArchief] = useState(false);
   const [toonArchief, setToonArchief] = useState<Record<string, boolean>>({});
   const [bezig, setBezig] = useState<string | null>(null);
   const [wijzigMenu, setWijzigMenu] = useState<string | null>(null);
@@ -114,6 +117,19 @@ export default function DashboardClient({
     setBezig(null);
   };
 
+  const archiveerListingRapport = async (rapportId: string, gearchiveerd: boolean) => {
+    setBezig(rapportId);
+    await fetch("/api/listing-rapport-archiveren", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rapportId, gearchiveerd }),
+    });
+    setListingRapportenState((prev) =>
+      prev.map((r) => r.id === rapportId ? { ...r, gearchiveerd } : r)
+    );
+    setBezig(null);
+  };
+
   return (
     <div className="min-h-screen bg-background" onClick={wijzigMenu ? sluitWijzigMenu : undefined}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
@@ -141,7 +157,7 @@ export default function DashboardClient({
         </div>
 
         {/* Listing Optimizer rapporten */}
-        {listingRapporten.length > 0 && (
+        {listingRapportenState.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten</h2>
@@ -150,19 +166,65 @@ export default function DashboardClient({
               </Link>
             </div>
             <div className="card overflow-hidden">
-              {listingRapporten.map((r) => (
-                <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-border last:border-0 hover:bg-surface/50 transition-colors">
-                  <div>
+              {listingRapportenState.filter((r) => !r.gearchiveerd).length === 0 && (
+                <p className="px-5 py-4 text-sm text-text-secondary">Alle rapporten zijn gearchiveerd.</p>
+              )}
+              {listingRapportenState.filter((r) => !r.gearchiveerd).map((r) => (
+                <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-border last:border-0 hover:bg-surface/50 transition-colors gap-3">
+                  <div className="min-w-0">
                     <p className="font-semibold text-primary text-sm">{r.host_naam || "Advertentie-analyse"}</p>
                     <p className="text-xs text-text-secondary">
                       {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
                     </p>
                   </div>
-                  <a href={`/dashboard/listing-rapporten/${r.id}`} className="text-accent text-sm font-semibold">
-                    Bekijk →
-                  </a>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <button
+                      onClick={() => archiveerListingRapport(r.id, true)}
+                      disabled={bezig === r.id}
+                      className="text-xs text-text-secondary hover:text-danger transition-colors"
+                    >
+                      {bezig === r.id ? "..." : "Archiveer"}
+                    </button>
+                    <a href={`/dashboard/listing-rapporten/${r.id}`} className="text-accent text-sm font-semibold">
+                      Bekijk →
+                    </a>
+                  </div>
                 </div>
               ))}
+
+              {listingRapportenState.filter((r) => r.gearchiveerd).length > 0 && (
+                <div className="border-t border-border">
+                  <button
+                    onClick={() => setToonListingArchief((v) => !v)}
+                    className="w-full px-5 py-3 text-xs text-text-secondary hover:text-primary flex items-center gap-2 transition-colors"
+                  >
+                    <span>{toonListingArchief ? "▲" : "▼"}</span>
+                    Archief ({listingRapportenState.filter((r) => r.gearchiveerd).length})
+                  </button>
+                  {toonListingArchief && listingRapportenState.filter((r) => r.gearchiveerd).map((r) => (
+                    <div key={r.id} className="flex items-center justify-between px-5 py-3 border-t border-border bg-surface/50 gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-text-secondary">{r.host_naam || "Advertentie-analyse"}</p>
+                        <p className="text-xs text-text-secondary">
+                          {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <button
+                          onClick={() => archiveerListingRapport(r.id, false)}
+                          disabled={bezig === r.id}
+                          className="text-xs text-text-secondary hover:text-primary transition-colors"
+                        >
+                          {bezig === r.id ? "..." : "Herstel"}
+                        </button>
+                        <a href={`/dashboard/listing-rapporten/${r.id}`} className="text-accent text-sm font-semibold">
+                          Bekijk →
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

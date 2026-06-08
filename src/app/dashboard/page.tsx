@@ -13,7 +13,7 @@ export default async function DashboardPage({
 
   const { data: listingRapporten } = await supabase
     .from("listing_rapporten")
-    .select("id, host_naam, aangemaakt_op")
+    .select("id, host_naam, aangemaakt_op, gearchiveerd")
     .eq("user_id", user.id)
     .order("aangemaakt_op", { ascending: false });
 
