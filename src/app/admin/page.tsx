@@ -78,13 +78,13 @@ export default async function AdminPage() {
         {/* Abonnementen */}
         <div className="card overflow-hidden">
           <div className="p-5 border-b border-border">
-            <h2 className="font-display text-xl text-primary">Review Monitor abonnees ({abonnementen?.length ?? 0})</h2>
+            <h2 className="font-display text-xl text-primary">Review Monitor ({abonnementen?.length ?? 0})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-surface border-b border-border">
                 <tr>
-                  {["Woning", "Email", "Status", "Frequentie", "Volgende rapport", "Rapporten"].map(h => (
+                  {["Naam", "Woning", "Email", "Status", "Frequentie", "Betaling", "Volgende rapport", "Rapporten"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
                   ))}
                 </tr>
@@ -92,11 +92,24 @@ export default async function AdminPage() {
               <tbody className="divide-y divide-border">
                 {abonnementen?.map((abo) => {
                   const aboRapporten = reviewRapporten?.filter(r => r.abonnement_id === abo.id) ?? [];
+                  const frequentieLabel =
+                    abo.frequentie === "weekly" ? "Wekelijks" :
+                    abo.frequentie === "eenmalig" ? "Eenmalig" :
+                    "Maandelijks";
+                  const betalingLabel =
+                    abo.frequentie === "eenmalig" ? "—" :
+                    abo.billing_interval === "year" ? "Jaarlijks" : "Maandelijks";
                   return (
                     <tr key={abo.id} className="hover:bg-surface/50">
+                      <td className="px-4 py-3 font-semibold text-primary text-sm">
+                        {abo.listing_naam || "—"}
+                      </td>
                       <td className="px-4 py-3">
-                        <p className="font-semibold text-primary">{abo.listing_naam || "—"}</p>
-                        <p className="text-xs text-text-secondary truncate max-w-[180px]">{abo.airbnb_url}</p>
+                        {abo.airbnb_url
+                          ? <a href={abo.airbnb_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline truncate block max-w-[160px]">
+                              {abo.airbnb_url.replace(/^https?:\/\/(www\.)?/, "")}
+                            </a>
+                          : <span className="text-xs text-text-secondary">—</span>}
                       </td>
                       <td className="px-4 py-3 text-xs text-text-secondary">
                         {userEmailMap[abo.user_id] || "—"}
@@ -106,10 +119,8 @@ export default async function AdminPage() {
                           {statusLabel[abo.status] || abo.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-text-secondary text-xs">
-                        {abo.frequentie === "weekly" ? "Wekelijks" : "Maandelijks"}<br />
-                        {abo.billing_interval === "year" ? "Jaarlijks" : "Maandelijks"} betaald
-                      </td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">{frequentieLabel}</td>
+                      <td className="px-4 py-3 text-text-secondary text-xs">{betalingLabel}</td>
                       <td className="px-4 py-3 text-text-secondary text-xs">
                         {abo.volgende_rapport_datum
                           ? new Date(abo.volgende_rapport_datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
