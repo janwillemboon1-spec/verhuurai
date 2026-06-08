@@ -36,6 +36,9 @@ export function Navbar() {
           <Link href="/listing-optimizer" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("listingOptimizer")}
           </Link>
+          <Link href="/listing-optimizer-pro" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium flex items-center gap-1">
+            Listing Optimizer Pro <span className="text-xs font-bold text-accent">⚡</span>
+          </Link>
           <Link href="/review-monitor" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("reviewMonitor")}
           </Link>
@@ -80,6 +83,9 @@ export function Navbar() {
         <div className="md:hidden bg-background border-t border-border px-4 py-4 flex flex-col gap-4">
           <Link href="/listing-optimizer" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("listingOptimizer")}
+          </Link>
+          <Link href="/listing-optimizer-pro" onClick={() => setOpen(false)} className="text-text-secondary font-medium flex items-center gap-1">
+            Listing Optimizer Pro <span className="text-xs font-bold text-accent">⚡</span>
           </Link>
           <Link href="/review-monitor" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("reviewMonitor")}
