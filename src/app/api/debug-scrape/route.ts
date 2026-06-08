@@ -177,16 +177,38 @@ export async function GET(request: Request) {
           grootte: script6[1].length,
           topLevelSleutels: Object.keys(data),
         };
-        const niobeData = data.niobeClientData ?? data.niobeMinimalClientData;
-        if (niobeData) {
-          resultaat.script6.niobeSleutels = Array.isArray(niobeData)
-            ? `[Array ${niobeData.length}]`
-            : Object.keys(niobeData).slice(0, 20);
-          const sections = vindSections(niobeData);
-          if (sections) {
-            resultaat.script6.sections = dumpSections(sections);
-          } else {
-            resultaat.script6.niobeSamenvatting = samenvat(niobeData, 0);
+        // niobeClientData = [[cacheKey (string), actualData], ...]
+        const niobeRaw: any[] = data.niobeClientData ?? data.niobeMinimalClientData ?? [];
+        resultaat.script6.niobeAantalParen = niobeRaw.length;
+
+        // Toon alle cache-keys zodat we weten wat er is
+        resultaat.script6.cacheParen = niobeRaw.map((paar: any, i: number) => ({
+          index: i,
+          key: typeof paar?.[0] === "string" ? paar[0].slice(0, 120) : String(paar?.[0]).slice(0, 120),
+          valueType: Array.isArray(paar?.[1]) ? `Array(${paar[1].length})` : typeof paar?.[1],
+          valueSleutels: paar?.[1] && typeof paar[1] === "object" && !Array.isArray(paar[1])
+            ? Object.keys(paar[1]).slice(0, 20)
+            : null,
+        }));
+
+        // Zoek het paar met StaysPdpSections of sections data
+        for (const paar of niobeRaw) {
+          if (!Array.isArray(paar) || paar.length < 2) continue;
+          const key = String(paar[0]);
+          const waarde = paar[1];
+          if (key.startsWith("StaysPdp") || key.includes("sections") || key.includes("Sections")) {
+            resultaat.script6.gevondenPaarKey = key.slice(0, 200);
+            resultaat.script6.gevondenPaarSleutels = waarde && typeof waarde === "object"
+              ? Object.keys(waarde).slice(0, 30)
+              : String(waarde).slice(0, 200);
+
+            const sections = vindSections(waarde);
+            if (sections) {
+              resultaat.script6.sections = dumpSections(sections);
+            } else {
+              resultaat.script6.waardeInhoud = samenvat(waarde, 0);
+            }
+            break;
           }
         }
       } catch (e: any) {
