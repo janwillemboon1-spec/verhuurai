@@ -84,7 +84,7 @@ export default async function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-surface border-b border-border">
                 <tr>
-                  {["Voornaam", "Woning", "Email", "Status", "Frequentie", "Betaling", "Volgende rapport", "Rapporten"].map(h => (
+                  {["Voornaam", "Woning", "Email", "Status", "Frequentie", "Betaling", "Rapporten"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
                   ))}
                 </tr>
@@ -97,7 +97,7 @@ export default async function AdminPage() {
                     abo.frequentie === "eenmalig" ? "Eenmalig" :
                     "Maandelijks";
                   const betalingLabel =
-                    abo.frequentie === "eenmalig" ? "—" :
+                    abo.frequentie === "eenmalig" ? "Eenmalig" :
                     abo.billing_interval === "year" ? "Jaarlijks" : "Maandelijks";
                   return (
                     <tr key={abo.id} className="hover:bg-surface/50">
@@ -122,12 +122,6 @@ export default async function AdminPage() {
                       </td>
                       <td className="px-4 py-3 text-text-secondary text-xs">{frequentieLabel}</td>
                       <td className="px-4 py-3 text-text-secondary text-xs">{betalingLabel}</td>
-                      <td className="px-4 py-3 text-text-secondary text-xs">
-                        {abo.volgende_rapport_datum
-                          ? new Date(abo.volgende_rapport_datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })
-                          : "—"}
-                        {abo.rapport_tijd && ` · ${abo.rapport_tijd}u`}
-                      </td>
                       <td className="px-4 py-3">
                         <div className="space-y-1">
                           {aboRapporten.length === 0 && <span className="text-xs text-text-secondary">Geen</span>}
