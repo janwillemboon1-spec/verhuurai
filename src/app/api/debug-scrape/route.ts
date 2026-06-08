@@ -97,11 +97,11 @@ export async function GET(request: Request) {
       resultaat.niobeData = { gevonden: false };
     }
 
-    // Tel application/json script-tags
+    // Tel application/json script-tags + dump de grote
     const jsonScripts = Array.from(html.matchAll(/<script[^>]*type="application\/json"[^>]*>([\s\S]*?)<\/script>/g));
     resultaat.jsonScriptTags = {
       aantal: jsonScripts.length,
-      tags: jsonScripts.slice(0, 5).map((m, i) => {
+      tags: jsonScripts.slice(0, 10).map((m, i) => {
         try {
           const data = JSON.parse(m[1]);
           return {
@@ -114,6 +114,61 @@ export async function GET(request: Request) {
         }
       }),
     };
+
+    // Dump de inhoud van de grootste script tag (de SPA-state)
+    const grootsteScript = jsonScripts.reduce((a, b) => (a[1].length > b[1].length ? a : b), jsonScripts[0]);
+    if (grootsteScript) {
+      try {
+        const data = JSON.parse(grootsteScript[1]);
+
+        // Zoek de rooms-route key
+        const roomsKey = Object.keys(data).find(k => k.includes("/rooms/") || k.includes("rooms"));
+        const rootKey = Object.keys(data).find(k => k.startsWith("root >"));
+
+        resultaat.grootsteScriptTag = {
+          grootte: grootsteScript[1].length,
+          topLevelSleutels: Object.keys(data),
+          roomsKey: roomsKey ?? null,
+          rootKey: rootKey ?? null,
+        };
+
+        // Navigeer naar de rooms data
+        const roomsData = roomsKey ? data[roomsKey] : (rootKey ? data[rootKey] : null);
+        if (roomsData) {
+          resultaat.roomsDataSleutels = Object.keys(roomsData).slice(0, 20);
+
+          // Zoek sections array
+          const vindSections = (obj: any, diepte = 0): any[] | null => {
+            if (diepte > 5 || !obj || typeof obj !== "object") return null;
+            if (Array.isArray(obj) && obj[0]?.sectionComponentType) return obj;
+            for (const k of Object.keys(obj)) {
+              const r = vindSections(obj[k], diepte + 1);
+              if (r) return r;
+            }
+            return null;
+          };
+
+          const sections = vindSections(roomsData);
+          if (sections) {
+            resultaat.sectionsGevonden = true;
+            resultaat.sectionTypes = sections.map((s: any) => s.sectionComponentType).filter(Boolean);
+
+            // Dump de inhoud van elke sectie (beperkt)
+            resultaat.sectiesInhoud = {};
+            for (const sectie of sections) {
+              const type = sectie.sectionComponentType;
+              if (!type) continue;
+              resultaat.sectiesInhoud[type] = samenvat(sectie, 0);
+            }
+          } else {
+            resultaat.sectionsGevonden = false;
+            resultaat.roomsDataSamenvatting = samenvat(roomsData, 0);
+          }
+        }
+      } catch (e: any) {
+        resultaat.grootsteScriptTagFout = e.message;
+      }
+    }
 
     // OG meta tags
     const ogTitle = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]*)"/)?.[1] ?? "";
