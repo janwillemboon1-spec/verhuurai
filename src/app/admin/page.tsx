@@ -241,33 +241,37 @@ export default async function AdminPage() {
           <div className="p-5 border-b border-border">
             <h2 className="font-display text-xl text-primary">Prijscalculator aanvragen ({calculatorRapporten?.length ?? 0})</h2>
           </div>
-          <div className="divide-y divide-border">
-            {calculatorRapporten?.length === 0 && (
-              <p className="p-5 text-sm text-text-secondary">Nog geen aanvragen.</p>
-            )}
-            {calculatorRapporten?.map(r => (
-              <div key={r.id} className="px-5 py-3 flex items-center justify-between hover:bg-surface/50 gap-4">
-                <div className="min-w-0">
-                  <p className="font-semibold text-primary text-sm">
-                    {(r as any).voornaam && <span className="mr-2">{(r as any).voornaam}</span>}
-                    {r.locatie}, {r.land}
-                  </p>
-                  <p className="text-xs text-text-secondary">
-                    {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
-                    {r.email && <span className="ml-2 text-accent">· {r.email}</span>}
-                    <span className="ml-2">· €{r.basisprijs}/nacht</span>
-                  </p>
-                </div>
-                <a
-                  href={`${BASE_URL}/prijscalculator/resultaat/${r.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-accent font-semibold hover:underline flex-shrink-0"
-                >
-                  Bekijk →
-                </a>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-surface border-b border-border">
+                <tr>
+                  {["Naam", "Locatie", "Email", "Datum", "Prijs", ""].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {calculatorRapporten?.length === 0 && (
+                  <tr><td colSpan={6} className="px-5 py-4 text-sm text-text-secondary">Nog geen aanvragen.</td></tr>
+                )}
+                {calculatorRapporten?.map(r => (
+                  <tr key={r.id} className="hover:bg-surface/50">
+                    <td className="px-4 py-3 font-semibold text-primary text-sm">{(r as any).voornaam || "—"}</td>
+                    <td className="px-4 py-3 text-sm text-primary">{r.locatie}, {r.land}</td>
+                    <td className="px-4 py-3 text-xs text-text-secondary">{r.email || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-text-secondary whitespace-nowrap">
+                      {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-text-secondary">€{r.basisprijs}/nacht</td>
+                    <td className="px-4 py-3 text-right">
+                      <a href={`${BASE_URL}/prijscalculator/resultaat/${r.id}`} target="_blank" rel="noopener noreferrer" className="text-accent text-sm font-semibold hover:underline">
+                        Bekijk →
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
