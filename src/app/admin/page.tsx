@@ -17,12 +17,14 @@ export default async function AdminPage() {
     { data: reviewRapporten },
     { data: listingRapporten },
     { data: calculatorRapporten },
+    { data: gratisRapporten },
     { data: usersData },
   ] = await Promise.all([
     admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
-    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, rapport_json->totaalscore").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, airbnb_url, rapport_json->totaalscore").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("prijscalculator_rapporten").select("id, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.from("gratis_rapporten").select("id, naam, email, airbnb_url, titel, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -63,6 +65,7 @@ export default async function AdminPage() {
             { label: "Opgezegd", aantal: opgezegd, kleur: "text-text-secondary" },
             { label: "Review rapporten", aantal: reviewRapporten?.length ?? 0, kleur: "text-accent" },
             { label: "Listing rapporten", aantal: listingRapporten?.length ?? 0, kleur: "text-primary" },
+            { label: "Gratis analyses", aantal: gratisRapporten?.length ?? 0, kleur: "text-accent" },
             { label: "Prijscalculator", aantal: calculatorRapporten?.length ?? 0, kleur: "text-success" },
           ].map(({ label, aantal, kleur }) => (
             <div key={label} className="card p-4 text-center">
@@ -146,22 +149,28 @@ export default async function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-surface border-b border-border">
                 <tr>
-                  {["Naam", "Email", "Datum", "Score", ""].map(h => (
+                  {["Naam", "Email", "Airbnb URL", "Datum", "Score", ""].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {listingRapporten?.length === 0 && (
-                  <tr><td colSpan={5} className="px-5 py-4 text-sm text-text-secondary">Nog geen rapporten.</td></tr>
+                  <tr><td colSpan={6} className="px-5 py-4 text-sm text-text-secondary">Nog geen rapporten.</td></tr>
                 )}
                 {listingRapporten?.map(r => {
                   const score = (r as any).totaalscore;
                   const scoreKleur = score >= 70 ? "text-success" : score >= 50 ? "text-warning" : "text-danger";
+                  const airbnbUrl = (r as any).airbnb_url;
                   return (
                     <tr key={r.id} className="hover:bg-surface/50">
                       <td className="px-4 py-3 font-semibold text-primary">{r.host_naam || "—"}</td>
                       <td className="px-4 py-3 text-xs text-text-secondary">{(r as any).email || userEmailMap[(r as any).user_id] || "—"}</td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">
+                        {airbnbUrl
+                          ? <a href={airbnbUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate block max-w-[160px]">{airbnbUrl.replace(/^https?:\/\/(www\.)?/, "")}</a>
+                          : "—"}
+                      </td>
                       <td className="px-4 py-3 text-xs text-text-secondary">
                         {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
                       </td>
@@ -176,6 +185,46 @@ export default async function AdminPage() {
                     </tr>
                   );
                 })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Gratis titelanalyses */}
+        <div className="card overflow-hidden">
+          <div className="p-5 border-b border-border">
+            <h2 className="font-display text-xl text-primary">Gratis titelanalyses ({gratisRapporten?.length ?? 0})</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-surface border-b border-border">
+                <tr>
+                  {["Naam", "Email", "Datum", "Airbnb URL", "Titel"].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {(!gratisRapporten || gratisRapporten.length === 0) && (
+                  <tr><td colSpan={5} className="px-5 py-4 text-sm text-text-secondary">Nog geen analyses.</td></tr>
+                )}
+                {gratisRapporten?.map(r => (
+                  <tr key={r.id} className="hover:bg-surface/50">
+                    <td className="px-4 py-3 font-semibold text-primary">{(r as any).naam || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-text-secondary">{(r as any).email || "—"}</td>
+                    <td className="px-4 py-3 text-xs text-text-secondary whitespace-nowrap">
+                      {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-text-secondary">
+                      {(r as any).airbnb_url
+                        ? <a href={(r as any).airbnb_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate block max-w-[160px]">
+                            {(r as any).airbnb_url.replace(/^https?:\/\/(www\.)?/, "")}
+                          </a>
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-text-secondary max-w-[200px] truncate">{(r as any).titel || "—"}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

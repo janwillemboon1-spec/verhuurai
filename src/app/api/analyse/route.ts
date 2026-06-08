@@ -173,6 +173,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
         host_naam: naam,
         email,
         user_id: userId,
+        airbnb_url: formData.airbnbUrl || null,
       }).select().single();
 
       // Gecombineerde email: rapport klaar + inloglink

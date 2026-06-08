@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { buildTitelPrompt } from "@/lib/boni-prompt";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 function kapTitelAf(titel: string): string {
@@ -12,7 +13,7 @@ function kapTitelAf(titel: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { titel, airbnbUrl, recensies } = body;
+    const { titel, airbnbUrl, recensies, naam, email } = body;
 
     if (!titel || typeof titel !== "string") {
       return NextResponse.json({ error: "Titel is verplicht" }, { status: 400 });
@@ -48,6 +49,19 @@ export async function POST(request: Request) {
         const versie = kapTitelAf(v.versie);
         return { ...v, versie, tekens: versie.length };
       });
+    }
+
+    // Opslaan in Supabase (fire-and-forget, blokkeer response niet)
+    try {
+      const admin = createAdminClient();
+      await admin.from("gratis_rapporten").insert({
+        naam: naam?.trim() || null,
+        email: email?.trim() || null,
+        airbnb_url: airbnbUrl?.trim() || null,
+        titel: titel.trim(),
+      });
+    } catch (e) {
+      console.error("Gratis rapport opslaan mislukt:", e);
     }
 
     return NextResponse.json(parsed);
