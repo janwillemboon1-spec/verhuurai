@@ -20,7 +20,7 @@ export default async function AdminPage() {
     { data: gratisRapporten },
     { data: usersData },
   ] = await Promise.all([
-    admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
+    admin.from("abonnementen").select("*, voornaam").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, airbnb_url, rapport_json->totaalscore").order("aangemaakt_op", { ascending: false }),
     admin.from("prijscalculator_rapporten").select("id, voornaam, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
@@ -84,7 +84,7 @@ export default async function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-surface border-b border-border">
                 <tr>
-                  {["Naam", "Woning", "Email", "Status", "Frequentie", "Betaling", "Volgende rapport", "Rapporten"].map(h => (
+                  {["Voornaam", "Woning", "Email", "Status", "Frequentie", "Betaling", "Volgende rapport", "Rapporten"].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">{h}</th>
                   ))}
                 </tr>
@@ -101,10 +101,11 @@ export default async function AdminPage() {
                     abo.billing_interval === "year" ? "Jaarlijks" : "Maandelijks";
                   return (
                     <tr key={abo.id} className="hover:bg-surface/50">
-                      <td className="px-4 py-3 font-semibold text-primary text-sm">
-                        {abo.listing_naam || "—"}
+                      <td className="px-4 py-3 text-sm text-primary">
+                        {abo.voornaam || "—"}
                       </td>
                       <td className="px-4 py-3">
+                        <p className="font-semibold text-primary text-sm">{abo.listing_naam || "—"}</p>
                         {abo.airbnb_url
                           ? <a href={abo.airbnb_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline truncate block max-w-[160px]">
                               {abo.airbnb_url.replace(/^https?:\/\/(www\.)?/, "")}

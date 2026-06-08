@@ -14,6 +14,7 @@ const MAAND_DAGEN = [
 function AanmeldenForm() {
   const searchParams = useSearchParams();
 
+  const [voornaam, setVoornaam] = useState("");
   const [airbnbUrl, setAirbnbUrl] = useState("");
   const [listingNaam, setListingNaam] = useState("");
   const [email, setEmail] = useState("");
@@ -58,6 +59,7 @@ function AanmeldenForm() {
         body: JSON.stringify({
           airbnb_url: airbnbUrl.trim(),
           naam: listingNaam.trim(),
+          voornaam: voornaam.trim() || null,
           frequentie,
           interval,
         }),
@@ -123,6 +125,7 @@ function AanmeldenForm() {
       body: JSON.stringify({
         airbnb_url: airbnbUrl.trim(),
         naam: listingNaam.trim(),
+        voornaam: voornaam.trim() || null,
         frequentie,
         interval,
       }),
@@ -313,13 +316,20 @@ function AanmeldenForm() {
 
           <div className="border-t border-border" />
 
-          {/* Stap 3 — Email (alleen als niet ingelogd) */}
+          {/* Stap 3 — Voornaam + Email (alleen als niet ingelogd) */}
           {!isIngelogd && (
             <div className="space-y-3">
               <h2 className="font-semibold text-primary flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">3</span>
-                Jouw e-mailadres
+                Jouw gegevens
               </h2>
+              <input
+                type="text"
+                value={voornaam}
+                onChange={(e) => setVoornaam(e.target.value)}
+                placeholder="Voornaam"
+                className="input"
+              />
               <input
                 type="email"
                 value={email}
