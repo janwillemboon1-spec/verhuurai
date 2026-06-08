@@ -115,58 +115,82 @@ export async function GET(request: Request) {
       }),
     };
 
-    // Dump de inhoud van de grootste script tag (de SPA-state)
-    const grootsteScript = jsonScripts.reduce((a, b) => (a[1].length > b[1].length ? a : b), jsonScripts[0]);
-    if (grootsteScript) {
+    // Zoek sections in een willekeurig object
+    const vindSections = (obj: any, diepte = 0): any[] | null => {
+      if (diepte > 6 || !obj || typeof obj !== "object") return null;
+      if (Array.isArray(obj)) {
+        if (obj.length > 0 && obj[0]?.sectionComponentType) return obj;
+        for (const item of obj) {
+          const r = vindSections(item, diepte + 1);
+          if (r) return r;
+        }
+        return null;
+      }
+      for (const k of Object.keys(obj)) {
+        const r = vindSections(obj[k], diepte + 1);
+        if (r) return r;
+      }
+      return null;
+    };
+
+    const dumpSections = (sections: any[]) => ({
+      sectionTypes: sections.map((s: any) => s.sectionComponentType).filter(Boolean),
+      sectiesInhoud: Object.fromEntries(
+        sections
+          .filter((s: any) => s.sectionComponentType)
+          .map((s: any) => [s.sectionComponentType, samenvat(s, 0)])
+      ),
+    });
+
+    // ── Script tag 4: SPA route state ──────────────────────────────────────────
+    const script4 = jsonScripts[4];
+    if (script4) {
       try {
-        const data = JSON.parse(grootsteScript[1]);
-
-        // Zoek de rooms-route key
-        const roomsKey = Object.keys(data).find(k => k.includes("/rooms/") || k.includes("rooms"));
-        const rootKey = Object.keys(data).find(k => k.startsWith("root >"));
-
-        resultaat.grootsteScriptTag = {
-          grootte: grootsteScript[1].length,
+        const data = JSON.parse(script4[1]);
+        const roomsRouteKey = Object.keys(data).find(k => k.includes("/rooms/"));
+        resultaat.script4 = {
+          grootte: script4[1].length,
           topLevelSleutels: Object.keys(data),
-          roomsKey: roomsKey ?? null,
-          rootKey: rootKey ?? null,
+          roomsRouteKey: roomsRouteKey ?? null,
         };
-
-        // Navigeer naar de rooms data
-        const roomsData = roomsKey ? data[roomsKey] : (rootKey ? data[rootKey] : null);
-        if (roomsData) {
-          resultaat.roomsDataSleutels = Object.keys(roomsData).slice(0, 20);
-
-          // Zoek sections array
-          const vindSections = (obj: any, diepte = 0): any[] | null => {
-            if (diepte > 5 || !obj || typeof obj !== "object") return null;
-            if (Array.isArray(obj) && obj[0]?.sectionComponentType) return obj;
-            for (const k of Object.keys(obj)) {
-              const r = vindSections(obj[k], diepte + 1);
-              if (r) return r;
-            }
-            return null;
-          };
-
-          const sections = vindSections(roomsData);
+        if (roomsRouteKey) {
+          const routeData = data[roomsRouteKey];
+          resultaat.script4.routeDataSleutels = Object.keys(routeData ?? {}).slice(0, 20);
+          const sections = vindSections(routeData);
           if (sections) {
-            resultaat.sectionsGevonden = true;
-            resultaat.sectionTypes = sections.map((s: any) => s.sectionComponentType).filter(Boolean);
-
-            // Dump de inhoud van elke sectie (beperkt)
-            resultaat.sectiesInhoud = {};
-            for (const sectie of sections) {
-              const type = sectie.sectionComponentType;
-              if (!type) continue;
-              resultaat.sectiesInhoud[type] = samenvat(sectie, 0);
-            }
+            resultaat.script4.sections = dumpSections(sections);
           } else {
-            resultaat.sectionsGevonden = false;
-            resultaat.roomsDataSamenvatting = samenvat(roomsData, 0);
+            resultaat.script4.routeDataSamenvatting = samenvat(routeData, 0);
           }
         }
       } catch (e: any) {
-        resultaat.grootsteScriptTagFout = e.message;
+        resultaat.script4 = { fout: e.message };
+      }
+    }
+
+    // ── Script tag 6: niobeClientData ──────────────────────────────────────────
+    const script6 = jsonScripts[6];
+    if (script6) {
+      try {
+        const data = JSON.parse(script6[1]);
+        resultaat.script6 = {
+          grootte: script6[1].length,
+          topLevelSleutels: Object.keys(data),
+        };
+        const niobeData = data.niobeClientData ?? data.niobeMinimalClientData;
+        if (niobeData) {
+          resultaat.script6.niobeSleutels = Array.isArray(niobeData)
+            ? `[Array ${niobeData.length}]`
+            : Object.keys(niobeData).slice(0, 20);
+          const sections = vindSections(niobeData);
+          if (sections) {
+            resultaat.script6.sections = dumpSections(sections);
+          } else {
+            resultaat.script6.niobeSamenvatting = samenvat(niobeData, 0);
+          }
+        }
+      } catch (e: any) {
+        resultaat.script6 = { fout: e.message };
       }
     }
 
