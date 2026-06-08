@@ -57,6 +57,7 @@ export default function PrijscalculatorPage() {
   const [plaats, setPlaats] = useState("");
   const [basisprijs, setBasisprijs] = useState("");
   const [minNachten, setMinNachten] = useState("");
+  const [voornaam, setVoornaam] = useState("");
   const [email, setEmail] = useState("");
   const [laden, setLaden] = useState(false);
   const [analyse, setAnalyse] = useState<Analyse | null>(null);
@@ -87,6 +88,7 @@ export default function PrijscalculatorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          voornaam: voornaam.trim() || null,
           email: email.trim() || null,
           locatie: data.data.locatie,
           land: data.data.land,
@@ -212,19 +214,31 @@ export default function PrijscalculatorPage() {
             </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-semibold text-primary mb-1.5">
-              E-mailadres <span className="text-accent">*</span> <span className="text-text-secondary text-xs font-normal">(we sturen je rapport naar dit adres)</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="jij@voorbeeld.nl"
-              className="input"
-              required
-            />
+          {/* Voornaam + Email */}
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-semibold text-primary mb-1.5">Voornaam</label>
+              <input
+                type="text"
+                value={voornaam}
+                onChange={e => setVoornaam(e.target.value)}
+                placeholder="Bijv. Sophie"
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-primary mb-1.5">
+                E-mailadres <span className="text-accent">*</span>
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="jij@voorbeeld.nl"
+                className="input"
+                required
+              />
+            </div>
           </div>
 
           <div className="text-center">

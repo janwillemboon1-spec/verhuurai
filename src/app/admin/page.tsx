@@ -23,7 +23,7 @@ export default async function AdminPage() {
     admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, airbnb_url, rapport_json->totaalscore").order("aangemaakt_op", { ascending: false }).limit(100),
-    admin.from("prijscalculator_rapporten").select("id, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
+    admin.from("prijscalculator_rapporten").select("id, voornaam, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("gratis_rapporten").select("id, naam, email, airbnb_url, titel, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
@@ -253,7 +253,10 @@ export default async function AdminPage() {
             {calculatorRapporten?.map(r => (
               <div key={r.id} className="px-5 py-3 flex items-center justify-between hover:bg-surface/50 gap-4">
                 <div className="min-w-0">
-                  <p className="font-semibold text-primary text-sm">{r.locatie}, {r.land}</p>
+                  <p className="font-semibold text-primary text-sm">
+                    {(r as any).voornaam && <span className="mr-2">{(r as any).voornaam}</span>}
+                    {r.locatie}, {r.land}
+                  </p>
                   <p className="text-xs text-text-secondary">
                     {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
                     {r.email && <span className="ml-2 text-accent">· {r.email}</span>}

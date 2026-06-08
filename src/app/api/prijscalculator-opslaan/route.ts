@@ -4,7 +4,7 @@ import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const { email, locatie, land, basisprijs, minNachten, jaar, resultaat } = await request.json();
+  const { voornaam, email, locatie, land, basisprijs, minNachten, jaar, resultaat } = await request.json();
   const admin = createAdminClient();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await admin
     .from("prijscalculator_rapporten")
-    .insert({ email: email || null, locatie, land, basisprijs, min_nachten: minNachten || 1, jaar, resultaat_json: resultaat, user_id: userId })
+    .insert({ voornaam: voornaam || null, email: email || null, locatie, land, basisprijs, min_nachten: minNachten || 1, jaar, resultaat_json: resultaat, user_id: userId })
     .select()
     .single();
 
