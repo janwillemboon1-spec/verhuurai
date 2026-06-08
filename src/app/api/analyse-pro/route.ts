@@ -19,35 +19,74 @@ if (!global.rapportStatus) global.rapportStatus = new Map();
 
 // ── Apify: volledige listing scrapen ─────────────────────────────────────────
 
-async function scraapListing(url: string): Promise<Record<string, any> | null> {
-  if (!APIFY_TOKEN) return null;
-  try {
-    const runRes = await fetch(
-      `https://api.apify.com/v2/acts/tri_angle~airbnb-scraper/runs?token=${APIFY_TOKEN}&waitForFinish=120`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startUrls: [{ url }],
-          maxListings: 1,
-          proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"] },
-        }),
-      }
-    );
-    if (!runRes.ok) return null;
-    const runData = await runRes.json();
-    const datasetId = runData.data?.defaultDatasetId;
-    if (!datasetId) return null;
+// Converteer airbnb.nl/.be/.de/etc naar airbnb.com (sommige actors vereisen .com)
+function naarComUrl(url: string): string {
+  return url.replace(/airbnb\.[a-z]{2,3}\//, "airbnb.com/");
+}
 
-    const dataRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&limit=1`
-    );
-    if (!dataRes.ok) return null;
-    const items = await dataRes.json();
-    return items?.[0] ?? null;
-  } catch {
+async function scraapListing(url: string): Promise<Record<string, any> | null> {
+  if (!APIFY_TOKEN) {
+    console.error("[Pro] Geen APIFY_TOKEN");
     return null;
   }
+  const comUrl = naarComUrl(url);
+  console.log("[Pro] Listing scrapen:", comUrl);
+
+  // Probeer eerst zonder residential proxy (werkt op alle Apify-plannen)
+  const pogingen = [
+    { proxyConfiguration: { useApifyProxy: true } },
+    { proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"] } },
+    {},
+  ];
+
+  for (const proxyBody of pogingen) {
+    try {
+      const runRes = await fetch(
+        `https://api.apify.com/v2/acts/tri_angle~airbnb-scraper/runs?token=${APIFY_TOKEN}&waitForFinish=120`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startUrls: [{ url: comUrl }],
+            maxListings: 1,
+            ...proxyBody,
+          }),
+        }
+      );
+
+      if (!runRes.ok) {
+        const errText = await runRes.text();
+        console.error("[Pro] Actor start mislukt:", runRes.status, errText);
+        continue;
+      }
+
+      const runData = await runRes.json();
+      console.log("[Pro] Run status:", runData.data?.status, "id:", runData.data?.id);
+
+      const datasetId = runData.data?.defaultDatasetId;
+      if (!datasetId) {
+        console.error("[Pro] Geen datasetId in run response");
+        continue;
+      }
+
+      const dataRes = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}&limit=1`
+      );
+      if (!dataRes.ok) {
+        console.error("[Pro] Dataset ophalen mislukt:", dataRes.status);
+        continue;
+      }
+
+      const items = await dataRes.json();
+      console.log("[Pro] Items ontvangen:", items?.length ?? 0, "eerste sleutels:", items?.[0] ? Object.keys(items[0]).slice(0, 10) : "leeg");
+
+      if (items?.[0]) return items[0];
+    } catch (err) {
+      console.error("[Pro] Poging mislukt:", err);
+    }
+  }
+
+  return null;
 }
 
 // ── Apify: reviews scrapen ────────────────────────────────────────────────────
@@ -234,12 +273,14 @@ export async function POST(request: Request) {
     ]);
 
     if (!listing) {
+      console.error("[Pro] Listing is null na alle pogingen voor:", airbnbUrl);
       global.rapportStatus.set(sessieId, "fout");
       return NextResponse.json(
-        { error: "Airbnb advertentie kon niet worden opgehaald. Probeer de standaard Listing Optimizer." },
+        { error: "Airbnb advertentie kon niet worden opgehaald. Probeer de standaard Listing Optimizer.", reden: "listing_null" },
         { status: 422 }
       );
     }
+    console.log("[Pro] Listing succesvol opgehaald, velden:", Object.keys(listing).slice(0, 15));
 
     const formData: AnalyseFormulier = mapNaarFormulier(listing, naam, recensies);
 
