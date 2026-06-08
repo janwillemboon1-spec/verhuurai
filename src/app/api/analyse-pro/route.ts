@@ -270,7 +270,7 @@ function mapNaarFormulier(listing: Record<string, any>, naam: string, recensies:
   // Als amenities leeg zijn, zoek diep in het object
   if (!voorzieningen) {
     const gevonden = vindAmenities(listing);
-    voorzieningen = [...new Set(gevonden)].slice(0, 50).join(", ");
+    voorzieningen = Array.from(new Set(gevonden)).slice(0, 50).join(", ");
   }
 
   // Huisregels
