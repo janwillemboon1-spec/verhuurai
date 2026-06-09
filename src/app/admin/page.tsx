@@ -57,7 +57,8 @@ export default async function AdminPage() {
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="font-display text-3xl text-primary">Admin</h1>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <a href="/admin/listing-optimizer" className="btn-secondary text-sm">📊 LO Statistieken</a>
             <a href="/admin/contacten" className="btn-primary text-sm">👥 Contacten & Export</a>
             <a href="/dashboard" className="btn-secondary text-sm">← Dashboard</a>
           </div>
