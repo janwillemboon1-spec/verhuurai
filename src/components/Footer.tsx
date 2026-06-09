@@ -30,7 +30,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-white/10 text-center text-xs text-white/40">
-          © 2024 Host Boni — Alle rechten voorbehouden
+          © {new Date().getFullYear()} Host Boni — Alle rechten voorbehouden
         </div>
       </div>
     </footer>
