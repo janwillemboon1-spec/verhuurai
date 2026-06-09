@@ -17,12 +17,12 @@ export function Footer() {
           </div>
 
           {/* Links */}
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-wrap gap-6 text-sm justify-center">
             <Link href="/privacy" className="hover:text-white transition-colors">
               Privacy
             </Link>
-            <Link href="/voorwaarden" className="hover:text-white transition-colors">
-              Voorwaarden
+            <Link href="/algemene-voorwaarden" className="hover:text-white transition-colors">
+              Algemene voorwaarden
             </Link>
             <Link href="/contact" className="hover:text-white transition-colors">
               Contact
