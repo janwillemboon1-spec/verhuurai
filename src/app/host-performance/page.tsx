@@ -17,7 +17,7 @@ export default function ReviewMonitorPage() {
                 Host Performance Audit
               </h1>
               <p className="text-text-secondary text-lg mb-8 max-w-xl mx-auto md:mx-0">
-                Boni analyseert al jouw reviews en geeft je een helder rapport met sentimenttrend, terugkerende punten, concrete verbeterpunten en kant-en-klare reacties.
+                Boni analyseert al jouw reviews en geeft je een helder rapport met sentimenttrend, terugkerende punten, concrete verbeterpunten, kant-en-klare reacties en een Superhost Score Tracker.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-center">
