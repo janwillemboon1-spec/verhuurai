@@ -15,18 +15,24 @@ export default async function AdminPage() {
   const [
     { data: abonnementen },
     { data: reviewRapporten },
-    { data: listingRapporten },
+    { data: listingRapportenRaw },
     { data: calculatorRapporten },
     { data: gratisRapporten },
     { data: usersData },
   ] = await Promise.all([
-    admin.from("abonnementen").select("*, voornaam").order("aangemaakt_op", { ascending: false }),
+    admin.from("abonnementen").select("*").order("aangemaakt_op", { ascending: false }),
     admin.from("rapporten").select("id, abonnement_id, aangemaakt_op, periode_omschrijving, user_id").order("aangemaakt_op", { ascending: false }).limit(100),
-    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, airbnb_url, rapport_json->totaalscore").order("aangemaakt_op", { ascending: false }),
+    admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id, airbnb_url, rapport_json").order("aangemaakt_op", { ascending: false }),
     admin.from("prijscalculator_rapporten").select("id, voornaam, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.from("gratis_rapporten").select("id, naam, email, airbnb_url, titel, aangemaakt_op").order("aangemaakt_op", { ascending: false }).limit(100),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
+
+  // Extraheer totaalscore uit rapport_json
+  const listingRapporten = (listingRapportenRaw ?? []).map((r: any) => ({
+    ...r,
+    totaalscore: r.rapport_json?.totaalscore ?? null,
+  }));
 
   // Map van user_id → email
   const userEmailMap: Record<string, string> = {};
@@ -164,14 +170,14 @@ export default async function AdminPage() {
                 {listingRapporten?.length === 0 && (
                   <tr><td colSpan={6} className="px-5 py-4 text-sm text-text-secondary">Nog geen rapporten.</td></tr>
                 )}
-                {listingRapporten?.map(r => {
-                  const score = (r as any).totaalscore;
+                {listingRapporten?.map((r: any) => {
+                  const score = r.totaalscore;
                   const scoreKleur = score >= 70 ? "text-success" : score >= 50 ? "text-warning" : "text-danger";
-                  const airbnbUrl = (r as any).airbnb_url;
+                  const airbnbUrl = r.airbnb_url;
                   return (
                     <tr key={r.id} className="hover:bg-surface/50">
                       <td className="px-4 py-3 font-semibold text-primary">{r.host_naam || "—"}</td>
-                      <td className="px-4 py-3 text-xs text-text-secondary">{(r as any).email || userEmailMap[(r as any).user_id] || "—"}</td>
+                      <td className="px-4 py-3 text-xs text-text-secondary">{r.email || userEmailMap[r.user_id] || "—"}</td>
                       <td className="px-4 py-3 text-xs text-text-secondary">
                         {airbnbUrl
                           ? <a href={airbnbUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate block max-w-[160px]">{airbnbUrl.replace(/^https?:\/\/(www\.)?/, "")}</a>
@@ -188,6 +194,7 @@ export default async function AdminPage() {
                           Bekijk →
                         </a>
                       </td>
+
                     </tr>
                   );
                 })}
