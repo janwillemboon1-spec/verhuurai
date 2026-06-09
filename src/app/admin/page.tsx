@@ -70,7 +70,7 @@ export default async function AdminPage() {
             { label: "Actief", aantal: actief, kleur: "text-success" },
             { label: "Proefperiode", aantal: proef, kleur: "text-warning" },
             { label: "Opgezegd", aantal: opgezegd, kleur: "text-text-secondary" },
-            { label: "Review rapporten", aantal: reviewRapporten?.length ?? 0, kleur: "text-accent" },
+            { label: "Host Performance", aantal: reviewRapporten?.length ?? 0, kleur: "text-accent" },
             { label: "Listing rapporten", aantal: listingRapporten?.length ?? 0, kleur: "text-primary" },
             { label: "Gratis analyses", aantal: gratisRapporten?.length ?? 0, kleur: "text-accent" },
             { label: "Prijscalculator", aantal: calculatorRapporten?.length ?? 0, kleur: "text-success" },
@@ -85,7 +85,7 @@ export default async function AdminPage() {
         {/* Abonnementen */}
         <div className="card overflow-hidden">
           <div className="p-5 border-b border-border">
-            <h2 className="font-display text-xl text-primary">Review Monitor ({abonnementen?.length ?? 0})</h2>
+            <h2 className="font-display text-xl text-primary">Host Performance ({abonnementen?.length ?? 0})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

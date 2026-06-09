@@ -45,10 +45,10 @@ export default async function ContactenPage() {
     voegToe((r as any).host_naam || "", email, "Listing Optimizer", "", r.aangemaakt_op);
   }
 
-  // Review Monitor
+  // Host Performance Audit
   for (const a of abonnementen ?? []) {
     const email = userEmailMap[(a as any).user_id] || "";
-    voegToe((a as any).listing_naam || "", email, "Review Monitor", "", a.aangemaakt_op);
+    voegToe((a as any).listing_naam || "", email, "Host Performance Audit", "", a.aangemaakt_op);
   }
 
   // Prijscalculator
