@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
+import { SuperhostTracker } from "@/components/SuperhostTracker";
 import RapportActions from "./RapportActions";
 import { notFound } from "next/navigation";
 
@@ -134,6 +135,10 @@ export default async function RapportPagina({ params }: { params: { id: string }
             <BoniAvatar size={50} className="flex-shrink-0" />
             <p className="text-text-secondary leading-relaxed italic">{r.afsluiting}</p>
           </div>
+        )}
+
+        {Array.isArray(r.reviewsRaw) && r.reviewsRaw.length > 0 && (
+          <SuperhostTracker reviewsRaw={r.reviewsRaw} />
         )}
 
       </div>

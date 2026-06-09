@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     // Reviews scrapen via Apify + filteren
     let recensies = "";
     let nieuwAantalReviews = (abo as any).laatste_review_count || 0;
+    let alleReviewsRaw: Array<{ createdAt: string | null; rating: number | null }> = [];
     try {
       const scrapeRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/scrape-reviews`, {
         method: "POST",
@@ -49,6 +50,11 @@ export async function POST(request: Request) {
       });
       const scrapeData = await scrapeRes.json();
       if (scrapeData.ok && scrapeData.reviewsRaw) {
+        // Sla alle reviews op voor Superhost-berekening
+        alleReviewsRaw = scrapeData.reviewsRaw.map((r: any) => ({
+          createdAt: r.createdAt || null,
+          rating: typeof r.rating === "number" ? r.rating : null,
+        }));
         const { gefilterd, aantalTotaal, filterMethode } = filterReviews(
           scrapeData.reviewsRaw,
           (abo as any).laatste_review_count || 0,
@@ -87,7 +93,7 @@ export async function POST(request: Request) {
       .insert({
         abonnement_id: abonnementId,
         user_id: user.id,
-        rapport_json: rapport,
+        rapport_json: { ...rapport, reviewsRaw: alleReviewsRaw },
         periode_omschrijving: periodeOmschrijving,
       })
       .select()

@@ -1,6 +1,30 @@
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
+import { SuperhostTracker } from "@/components/SuperhostTracker";
 import Link from "next/link";
+
+// Demo reviewsRaw — 18 reviews verspreid over de lopende periode (apr 2025 – jun 2026)
+// Gemiddelde ≈ 4.72 (net onder de 4.8 grens)
+const DEMO_REVIEWS_RAW = [
+  { createdAt: "2025-04-10T10:00:00Z", rating: 5 },
+  { createdAt: "2025-05-03T12:00:00Z", rating: 5 },
+  { createdAt: "2025-05-18T09:00:00Z", rating: 4 },
+  { createdAt: "2025-06-07T14:00:00Z", rating: 5 },
+  { createdAt: "2025-06-22T11:00:00Z", rating: 5 },
+  { createdAt: "2025-07-05T10:00:00Z", rating: 4 },
+  { createdAt: "2025-07-19T16:00:00Z", rating: 5 },
+  { createdAt: "2025-08-02T13:00:00Z", rating: 5 },
+  { createdAt: "2025-08-20T10:00:00Z", rating: 5 },
+  { createdAt: "2025-09-06T09:00:00Z", rating: 4 },
+  { createdAt: "2025-09-24T15:00:00Z", rating: 5 },
+  { createdAt: "2025-10-11T11:00:00Z", rating: 5 },
+  { createdAt: "2025-11-03T10:00:00Z", rating: 4 },
+  { createdAt: "2025-12-14T14:00:00Z", rating: 5 },
+  { createdAt: "2026-01-08T12:00:00Z", rating: 5 },
+  { createdAt: "2026-02-19T10:00:00Z", rating: 5 },
+  { createdAt: "2026-04-05T11:00:00Z", rating: 4 },
+  { createdAt: "2026-05-22T13:00:00Z", rating: 5 },
+];
 
 const DEMO = {
   rapportTitel: "Host Performance Audit",
@@ -160,6 +184,9 @@ export default function ReviewMonitorDemoPage() {
           <BoniAvatar size={50} className="flex-shrink-0" />
           <p className="text-text-secondary leading-relaxed italic">{DEMO.afsluiting}</p>
         </div>
+
+        {/* Superhost tracker */}
+        <SuperhostTracker reviewsRaw={DEMO_REVIEWS_RAW} />
 
         {/* CTA */}
         <div className="card p-8 bg-primary border-0 text-center space-y-4">
