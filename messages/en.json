@@ -2,7 +2,7 @@
   "nav": {
     "logo": "VerhuurAI",
     "listingOptimizer": "Listing Optimizer",
-    "reviewMonitor": "Review Monitor",
+    "reviewMonitor": "Host Performance",
     "prijscalculator": "Price Calculator",
     "gratisProberen": "Try for free",
     "inloggen": "Log in",
@@ -38,18 +38,18 @@
         "btnDemo": "👁️ View example report"
       },
       "reviewMonitor": {
-        "title": "Review Monitor",
-        "description": "Boni automatically reads all new reviews and sends you a weekly or monthly report with improvements and ready-made responses.",
-        "price": "From €5.99/month",
-        "badge1": "First report free",
+        "title": "Host Performance Audit",
+        "description": "Boni analyses all your reviews and gives you a clear report with sentiment trend, recurring points, improvements and ready-made responses.",
+        "price": "€7.99 — one-time",
+        "badge1": "One-time",
         "badge2": "New",
         "features": [
-          "Automatically track reviews",
+          "Automatically analyse all reviews",
           "Sentiment trend + recurring points",
           "Improvements + ready-made responses",
-          "Choose your own day and time"
+          "One-time payment — no subscription"
         ],
-        "btnSignup": "Sign up →",
+        "btnSignup": "Request report →",
         "btnInfo": "More info →",
         "btnDemo": "👁️ View example report"
       },

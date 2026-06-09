@@ -11,17 +11,17 @@ export default function ReviewMonitorPage() {
           <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
             <div className="flex-1 text-center md:text-left">
               <span className="badge-intro mb-4 inline-flex">
-                Eerste rapport gratis
+                €7,99 — eenmalig
               </span>
               <h1 className="font-display text-4xl sm:text-5xl font-bold text-primary leading-tight mb-5">
-                Altijd weten wat gasten over jouw woning zeggen.
+                Host Performance Audit
               </h1>
               <p className="text-text-secondary text-lg mb-8 max-w-xl mx-auto md:mx-0">
-                Boni analyseert automatisch alle nieuwe reviews en stuurt je wekelijks of maandelijks een helder rapport met verbeterpunten en voorbeeldreacties.
+                Boni analyseert al jouw reviews en geeft je een helder rapport met sentimenttrend, terugkerende punten, concrete verbeterpunten en kant-en-klare reacties.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                <Link href="/review-monitor/aanmelden" className="btn-primary text-center">
-                  Start gratis — eerste rapport gratis →
+                <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-center">
+                  Rapport aanvragen — €7,99 →
                 </Link>
                 <Link href="#hoe-het-werkt" className="btn-secondary text-center">
                   Hoe werkt het?
@@ -95,63 +95,20 @@ export default function ReviewMonitorPage() {
       <section className="section bg-surface">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Simpele prijzen</h2>
-            <p className="text-text-secondary text-lg">Eerste rapport altijd gratis. Daarna maandelijks opzegbaar.</p>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Simpele prijs</h2>
+            <p className="text-text-secondary text-lg">Eenmalige betaling. Geen abonnement.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Maandelijks */}
-            <div className="card p-8 flex flex-col">
-              <div className="text-4xl mb-4">📅</div>
-              <h3 className="font-display text-2xl font-bold text-primary mb-3">Maandelijks</h3>
-              <p className="text-text-secondary flex-1">Rapport op de 1e van elke maand. Ideaal voor rustige verhuurders.</p>
-              <div className="mt-4 mb-4">
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-bold text-accent">€5,99</span>
-                  <span className="text-text-secondary">/maand</span>
-                </div>
-                <p className="text-sm text-success font-semibold">of €59/jaar — bespaar 2 maanden</p>
+          <div className="max-w-sm mx-auto">
+            <div className="card p-8 text-center border-accent border-2 space-y-4">
+              <div className="text-5xl">📊</div>
+              <h3 className="font-display text-2xl font-bold text-primary">Host Performance Audit</h3>
+              <p className="text-text-secondary">Volledig review-rapport voor één woning. Sentimenttrend, verbeterpunten en kant-en-klare reacties.</p>
+              <div className="py-4">
+                <p className="text-5xl font-bold text-accent">€7,99</p>
+                <p className="text-text-secondary text-sm mt-1">eenmalig — geen abonnement</p>
               </div>
-              <Link href="/review-monitor/aanmelden?frequentie=monthly" className="btn-secondary w-full text-center block mt-auto">
-                Start maandelijks →
-              </Link>
-            </div>
-
-            {/* Wekelijks */}
-            <div className="card p-8 flex flex-col border-accent border-2 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                Meest gekozen
-              </div>
-              <div className="text-4xl mb-4">⚡</div>
-              <h3 className="font-display text-2xl font-bold text-primary mb-3">Wekelijks</h3>
-              <p className="text-text-secondary flex-1">Rapport elke maandag. Blijf je gasten altijd een stap voor.</p>
-              <div className="mt-4 mb-4">
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-bold text-accent">€9,99</span>
-                  <span className="text-text-secondary">/maand</span>
-                </div>
-                <p className="text-sm text-success font-semibold">of €99/jaar — bespaar 2 maanden</p>
-              </div>
-              <Link href="/review-monitor/aanmelden?frequentie=weekly" className="btn-primary w-full text-center block mt-auto">
-                Start wekelijks →
-              </Link>
-            </div>
-          </div>
-          <p className="text-center text-sm text-text-secondary mt-6">
-            Altijd maandelijks opzegbaar. Meerdere woningen? Elke extra woning goedkoper.
-          </p>
-
-          {/* Eenmalige optie */}
-          <div className="mt-8 max-w-sm mx-auto">
-            <div className="card p-6 text-center space-y-3 border-dashed">
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest">Liever geen abonnement?</p>
-              <h3 className="font-display text-xl font-bold text-primary">Eenmalig rapport</h3>
-              <p className="text-text-secondary text-sm">Eén rapport voor één woning. Geen abonnement, geen verlenging.</p>
-              <div className="flex items-baseline justify-center gap-1">
-                <span className="text-3xl font-bold text-accent">€7,99</span>
-                <span className="text-text-secondary text-sm">eenmalig</span>
-              </div>
-              <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-secondary w-full text-center block">
-                Eenmalig rapport aanvragen →
+              <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary w-full text-center block">
+                Rapport aanvragen →
               </Link>
             </div>
           </div>
@@ -179,13 +136,13 @@ export default function ReviewMonitorPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <BoniAvatar size={80} animate={true} className="mx-auto mb-6" />
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">
-            Klaar om altijd op de hoogte te zijn?
+            Klaar voor je Host Performance Audit?
           </h2>
           <p className="text-white/70 text-lg mb-8">
-            Start vandaag gratis. Je eerste rapport is voor niks.
+            Boni analyseert al jouw reviews en levert binnen enkele minuten een volledig rapport.
           </p>
-          <Link href="/review-monitor/aanmelden" className="btn-primary text-center inline-block">
-            Eerste rapport gratis aanvragen →
+          <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-center inline-block">
+            Rapport aanvragen — €7,99 →
           </Link>
         </div>
       </section>

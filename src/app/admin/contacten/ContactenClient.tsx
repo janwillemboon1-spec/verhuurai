@@ -16,7 +16,7 @@ type SortDir = "asc" | "desc";
 
 const SOORT_KLEUR: Record<string, string> = {
   "Listing Optimizer": "bg-accent/10 text-accent",
-  "Review Monitor": "bg-primary/10 text-primary",
+  "Host Performance Audit": "bg-primary/10 text-primary",
   "Prijscalculator": "bg-success/10 text-success",
 };
 
@@ -84,7 +84,7 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
   };
 
   const unickeEmails = Array.from(new Set(gefilterdEnGesorteerd.map(c => c.email))).length;
-  const soorten = ["alle", "Listing Optimizer", "Review Monitor", "Prijscalculator"];
+  const soorten = ["alle", "Listing Optimizer", "Host Performance Audit", "Prijscalculator"];
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">

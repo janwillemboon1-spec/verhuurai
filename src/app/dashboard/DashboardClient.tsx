@@ -259,7 +259,7 @@ export default function DashboardClient({
         {/* Woningen */}
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="font-display text-xl text-primary">Review Monitor rapporten</h2>
+            <h2 className="font-display text-xl text-primary">Host Performance Audit rapporten</h2>
             <Link href="/review-monitor/aanmelden" className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0">
               + Nieuw rapport
             </Link>
@@ -268,7 +268,7 @@ export default function DashboardClient({
           {abonnementen.length === 0 ? (
             <div className="card p-8 text-center space-y-4">
               <div className="text-4xl">🏠</div>
-              <h3 className="font-display text-xl text-primary">Nog geen Review Monitor actief</h3>
+              <h3 className="font-display text-xl text-primary">Nog geen Host Performance Audit actief</h3>
               <Link href="/review-monitor/aanmelden" className="btn-primary inline-block">
                 Eerste rapport aanvragen →
               </Link>

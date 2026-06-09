@@ -57,7 +57,7 @@ export default function ReviewMonitorDemoPage() {
         {/* Demo banner */}
         <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 text-center">
           <p className="text-sm font-semibold text-primary">
-            🎭 Dit is een voorbeeldrapport van de Review Monitor — voor illustratiedoeleinden
+            🎭 Dit is een voorbeeldrapport van de Host Performance Audit — voor illustratiedoeleinden
           </p>
           <p className="text-xs text-text-secondary mt-1">
             Een echt rapport wordt automatisch gegenereerd op basis van jouw eigen reviews.

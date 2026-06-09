@@ -18,16 +18,9 @@ function AanmeldenForm() {
   const [airbnbUrl, setAirbnbUrl] = useState("");
   const [listingNaam, setListingNaam] = useState("");
   const [email, setEmail] = useState("");
-  const [typeRapport, setTypeRapport] = useState<"abonnement" | "eenmalig">(
-    searchParams.get("type") === "eenmalig" ? "eenmalig" : "abonnement"
-  );
-  const isEenmalig = typeRapport === "eenmalig";
-  const [frequentie, setFrequentie] = useState<"monthly" | "weekly">(
-    (searchParams.get("frequentie") as "monthly" | "weekly") || "monthly"
-  );
-  const [interval, setInterval] = useState<"month" | "year">(
-    (searchParams.get("interval") as "month" | "year") || "month"
-  );
+  const isEenmalig = true;
+  const frequentie = "monthly";
+  const interval = "month";
   const [stap, setStap] = useState<"formulier" | "code">("formulier");
   const [code, setCode] = useState("");
   const [laden, setLaden] = useState(false);
@@ -191,41 +184,12 @@ function AanmeldenForm() {
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <BoniAvatar size={70} className="mx-auto mb-4" />
-          <h1 className="font-display text-3xl text-primary mb-2">Review Monitor</h1>
-          <p className="text-text-secondary">Kies een optie en vraag je rapport aan.</p>
+          <h1 className="font-display text-3xl text-primary mb-2">Host Performance Audit</h1>
+          <p className="text-text-secondary">Vul je gegevens in en ontvang je rapport.</p>
+          <p className="text-accent font-semibold mt-1">€7,99 — eenmalig</p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-6">
-
-          {/* Type rapport kiezen */}
-          <div className="space-y-3">
-            <h2 className="font-semibold text-primary">Wat wil je?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { waarde: "abonnement", label: "Eerste rapport gratis", prijs: "Dan €5,99 of €9,99/maand", omschrijving: "Automatisch elke week of maand", badge: "Populair" },
-                { waarde: "eenmalig", label: "Eenmalig rapport", prijs: "€7,99", omschrijving: "Geen abonnement, geen verlenging", badge: null },
-              ].map(({ waarde, label, prijs, omschrijving, badge }) => (
-                <button
-                  key={waarde}
-                  onClick={() => setTypeRapport(waarde as "abonnement" | "eenmalig")}
-                  className={`card p-4 text-left transition-all relative ${
-                    typeRapport === waarde ? "border-accent ring-2 ring-accent/30" : "hover:border-primary/20"
-                  }`}
-                >
-                  {badge && (
-                    <span className="absolute -top-2 right-3 bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {badge}
-                    </span>
-                  )}
-                  <p className="font-semibold text-primary text-sm">{label}</p>
-                  <p className="text-accent font-bold">{prijs}</p>
-                  <p className="text-xs text-text-secondary">{omschrijving}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-border" />
 
           {/* Stap 1 — Woning */}
           <div className="space-y-4">
@@ -264,63 +228,11 @@ function AanmeldenForm() {
 
           <div className="border-t border-border" />
 
-          {/* Stap 2 — Frequentie + interval (alleen bij abonnement) */}
-          {!isEenmalig && <div className="space-y-4">
-            <h2 className="font-semibold text-primary flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">2</span>
-              Hoe vaak wil je een rapport?
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { waarde: "monthly", label: "Maandelijks", prijs: "€5,99/maand", omschrijving: "Rapport op de 1e van de maand" },
-                { waarde: "weekly",  label: "Wekelijks",   prijs: "€9,99/maand", omschrijving: "Rapport elke maandag" },
-              ].map(({ waarde, label, prijs, omschrijving }) => (
-                <button
-                  key={waarde}
-                  onClick={() => setFrequentie(waarde as "monthly" | "weekly")}
-                  className={`card p-4 text-left transition-all ${
-                    frequentie === waarde ? "border-accent ring-2 ring-accent/30" : "hover:border-primary/20"
-                  }`}
-                >
-                  <p className="font-semibold text-primary">{label}</p>
-                  <p className="text-accent font-bold text-sm">{prijs}</p>
-                  <p className="text-xs text-text-secondary">{omschrijving}</p>
-                </button>
-              ))}
-            </div>
-
-            {/* Betaalinterval */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { waarde: "month", label: "Maandelijks betalen", prijs: frequentie === "monthly" ? "€5,99/maand" : "€9,99/maand", korting: null },
-                { waarde: "year",  label: "Jaarlijks betalen",   prijs: frequentie === "monthly" ? "€59/jaar" : "€99/jaar", korting: "2 maanden gratis" },
-              ].map(({ waarde, label, prijs, korting }) => (
-                <button
-                  key={waarde}
-                  onClick={() => setInterval(waarde as "month" | "year")}
-                  className={`card p-4 text-left transition-all ${
-                    interval === waarde ? "border-accent ring-2 ring-accent/30" : "hover:border-primary/20"
-                  }`}
-                >
-                  <p className="font-semibold text-primary text-sm">{label}</p>
-                  <p className="text-accent font-bold">{prijs}</p>
-                  {korting && <p className="text-xs text-success font-semibold">{korting}</p>}
-                </button>
-              ))}
-            </div>
-
-            <p className="text-xs text-text-secondary">
-              Eerste rapport is gratis. Daarna automatisch verlengd. Altijd opzegbaar.
-            </p>
-          </div>}
-
-          <div className="border-t border-border" />
-
-          {/* Stap 3 — Voornaam + Email (alleen als niet ingelogd) */}
+          {/* Stap 2 — Voornaam + Email (alleen als niet ingelogd) */}
           {!isIngelogd && (
             <div className="space-y-3">
               <h2 className="font-semibold text-primary flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">3</span>
+                <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">2</span>
                 Jouw gegevens
               </h2>
               <input
@@ -364,11 +276,7 @@ function AanmeldenForm() {
                 </svg>
                 Bezig...
               </>
-            ) : isEenmalig
-              ? "Eenmalig rapport aanvragen — €7,99 →"
-              : isIngelogd
-              ? "Woning toevoegen →"
-              : "Gratis rapport aanvragen →"}
+            ) : "Host Performance Audit aanvragen — €7,99 →"}
           </button>
         </div>
       </div>

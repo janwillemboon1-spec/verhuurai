@@ -2,7 +2,7 @@
   "nav": {
     "logo": "VerhuurAI",
     "listingOptimizer": "Listing Optimizer",
-    "reviewMonitor": "Review Monitor",
+    "reviewMonitor": "Host Performance",
     "prijscalculator": "Prijscalculator",
     "gratisProberen": "Gratis proberen",
     "inloggen": "Inloggen",
@@ -38,18 +38,18 @@
         "btnDemo": "👁️ Bekijk voorbeeldrapport"
       },
       "reviewMonitor": {
-        "title": "Review Monitor",
-        "description": "Boni leest automatisch alle nieuwe reviews en stuurt je wekelijks of maandelijks een rapport met verbeterpunten en voorbeeldreacties.",
-        "price": "Vanaf €5,99/maand",
-        "badge1": "Eerste rapport gratis",
+        "title": "Host Performance Audit",
+        "description": "Boni analyseert al jouw reviews en geeft je een helder rapport met sentimenttrend, terugkerende punten, verbeterpunten en kant-en-klare reacties.",
+        "price": "€7,99 — eenmalig",
+        "badge1": "Eenmalig",
         "badge2": "Nieuw",
         "features": [
-          "Automatisch reviews bijhouden",
+          "Automatisch alle reviews analyseren",
           "Sentimenttrend + terugkerende punten",
           "Verbeterpunten + kant-en-klare reacties",
-          "Kies je eigen dag en tijdstip"
+          "Eenmalige betaling — geen abonnement"
         ],
-        "btnSignup": "Aanmelden →",
+        "btnSignup": "Rapport aanvragen →",
         "btnInfo": "Meer info →",
         "btnDemo": "👁️ Bekijk voorbeeldrapport"
       },

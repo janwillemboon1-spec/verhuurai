@@ -22,7 +22,7 @@ export default function HomePage() {
                   Listing Optimizer →
                 </Link>
                 <Link href="/review-monitor" className="btn-primary text-center">
-                  Review Monitor →
+                  Host Performance Audit →
                 </Link>
                 <Link href="/prijscalculator" className="btn-secondary text-center">
                   Prijscalculator →
@@ -79,28 +79,27 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Review Monitor */}
+            {/* Host Performance Audit */}
             <div className="card p-8 flex flex-col relative border-accent/40">
-              <div className="absolute -top-3 right-6 flex gap-2">
-                <span className="bg-success text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">Eerste rapport gratis</span>
+              <div className="absolute -top-3 right-6">
                 <span className="bg-accent text-white text-xs font-bold px-3 py-1 rounded-full">Nieuw</span>
               </div>
               <div className="text-5xl mb-5">⭐</div>
-              <h3 className="font-display text-2xl font-bold text-primary mb-2">Review Monitor</h3>
+              <h3 className="font-display text-2xl font-bold text-primary mb-2">Host Performance Audit</h3>
               <p className="text-text-secondary leading-relaxed mb-5 min-h-[10rem]">
-                Boni leest automatisch alle nieuwe reviews en stuurt je wekelijks of maandelijks een rapport met verbeterpunten en voorbeeldreacties.
+                Boni analyseert al jouw reviews en geeft je een helder rapport met sentimenttrend, terugkerende punten, concrete verbeterpunten en kant-en-klare reacties.
               </p>
               <ul className="space-y-2 flex-1">
-                {["Automatisch reviews bijhouden", "Sentimenttrend + terugkerende punten", "Verbeterpunten + kant-en-klare reacties", "Kies je eigen dag en tijdstip"].map((item) => (
+                {["Automatisch alle reviews analyseren", "Sentimenttrend + terugkerende punten", "Verbeterpunten + kant-en-klare reacties", "Eenmalige betaling — geen abonnement"].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-text-secondary">
                     <span className="text-success font-bold">✓</span>{item}
                   </li>
                 ))}
               </ul>
               <div className="mt-6 pt-4 border-t border-border space-y-3">
-                <p className="text-accent font-bold text-xl">Vanaf €5,99/maand</p>
+                <p className="text-accent font-bold text-xl">€7,99 — eenmalig</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link href="/review-monitor/aanmelden" className="btn-primary text-sm text-center flex items-center justify-center">Aanmelden →</Link>
+                  <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-sm text-center flex items-center justify-center">Rapport aanvragen →</Link>
                   <Link href="/review-monitor" className="btn-secondary text-sm text-center flex items-center justify-center">Meer info →</Link>
                 </div>
                 <Link href="/review-monitor/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
@@ -149,7 +148,7 @@ export default function HomePage() {
             {[
               { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
               { quote: "Ik deed nooit iets met mijn prijzen, omdat ik geen idee had hoe ik die moest bepalen. Het rapport dat ik kreeg van Boni was ontzettend waardevol voor mij. Hij vond zelfs feestdagen waar ik het bestaan niet van wist.", naam: "Sophie", locatie: "Estepona" },
-              { quote: "De Review Monitor werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude" },
+              { quote: "De Host Performance Audit werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude" },
             ].map(({ quote, naam, locatie }) => (
               <div key={naam} className="card p-6 flex flex-col gap-4">
                 <p className="text-text-secondary leading-relaxed italic">"{quote}"</p>
@@ -180,7 +179,7 @@ export default function HomePage() {
               📋 Listing Optimizer
             </Link>
             <Link href="/review-monitor" className="btn-primary text-center">
-              ⭐ Review Monitor
+              ⭐ Host Performance Audit
             </Link>
             <Link href="/prijscalculator" className="btn-secondary text-center">
               💰 Prijscalculator
