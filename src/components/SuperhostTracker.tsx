@@ -163,7 +163,7 @@ export function SuperhostTracker({ reviewsRaw }: SuperhostTrackerProps) {
         {toonUitleg && (
           <div className="mt-4 space-y-4">
             <p className="text-sm text-text-secondary">
-              Airbnb controleert elke drie maanden of je het afgelopen jaar aan de Superhost-criteria hebt voldaan. Als dat zo is, word je een Superhost.
+              Airbnb controleert elke drie maanden of je het afgelopen jaar aan de Superhost-criteria hebt voldaan. Als dat zo is, word je een Superhost en profiteer je van de volgende voordelen:
             </p>
 
             <div className="space-y-3">
