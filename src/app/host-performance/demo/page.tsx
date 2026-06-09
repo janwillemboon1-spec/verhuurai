@@ -3,27 +3,32 @@ import { CopyButton } from "@/components/CopyButton";
 import { SuperhostTracker } from "@/components/SuperhostTracker";
 import Link from "next/link";
 
-// Demo reviewsRaw — 18 reviews verspreid over de lopende periode (apr 2025 – jun 2026)
-// Gemiddelde ≈ 4.72 (net onder de 4.8 grens)
+// Demo reviewsRaw — 23 reviews binnen de lopende periode (jul 2025 – jun 2026)
+// 17× 5 sterren + 6× 4 sterren = gemiddelde 4,74 (net onder de 4,8 grens)
 const DEMO_REVIEWS_RAW = [
-  { createdAt: "2025-04-10T10:00:00Z", rating: 5 },
-  { createdAt: "2025-05-03T12:00:00Z", rating: 5 },
-  { createdAt: "2025-05-18T09:00:00Z", rating: 4 },
-  { createdAt: "2025-06-07T14:00:00Z", rating: 5 },
-  { createdAt: "2025-06-22T11:00:00Z", rating: 5 },
-  { createdAt: "2025-07-05T10:00:00Z", rating: 4 },
-  { createdAt: "2025-07-19T16:00:00Z", rating: 5 },
-  { createdAt: "2025-08-02T13:00:00Z", rating: 5 },
-  { createdAt: "2025-08-20T10:00:00Z", rating: 5 },
-  { createdAt: "2025-09-06T09:00:00Z", rating: 4 },
-  { createdAt: "2025-09-24T15:00:00Z", rating: 5 },
-  { createdAt: "2025-10-11T11:00:00Z", rating: 5 },
-  { createdAt: "2025-11-03T10:00:00Z", rating: 4 },
-  { createdAt: "2025-12-14T14:00:00Z", rating: 5 },
-  { createdAt: "2026-01-08T12:00:00Z", rating: 5 },
-  { createdAt: "2026-02-19T10:00:00Z", rating: 5 },
-  { createdAt: "2026-04-05T11:00:00Z", rating: 4 },
-  { createdAt: "2026-05-22T13:00:00Z", rating: 5 },
+  { createdAt: "2025-07-05T10:00:00Z", rating: 5 },
+  { createdAt: "2025-07-19T14:00:00Z", rating: 5 },
+  { createdAt: "2025-08-02T11:00:00Z", rating: 4 },
+  { createdAt: "2025-08-16T09:00:00Z", rating: 5 },
+  { createdAt: "2025-08-29T15:00:00Z", rating: 5 },
+  { createdAt: "2025-09-10T13:00:00Z", rating: 4 },
+  { createdAt: "2025-09-24T10:00:00Z", rating: 5 },
+  { createdAt: "2025-10-08T12:00:00Z", rating: 5 },
+  { createdAt: "2025-10-22T11:00:00Z", rating: 5 },
+  { createdAt: "2025-11-05T10:00:00Z", rating: 4 },
+  { createdAt: "2025-11-19T14:00:00Z", rating: 5 },
+  { createdAt: "2025-12-03T09:00:00Z", rating: 5 },
+  { createdAt: "2025-12-17T13:00:00Z", rating: 4 },
+  { createdAt: "2026-01-08T11:00:00Z", rating: 5 },
+  { createdAt: "2026-01-22T10:00:00Z", rating: 5 },
+  { createdAt: "2026-02-05T14:00:00Z", rating: 5 },
+  { createdAt: "2026-02-19T12:00:00Z", rating: 4 },
+  { createdAt: "2026-03-05T10:00:00Z", rating: 5 },
+  { createdAt: "2026-03-19T11:00:00Z", rating: 5 },
+  { createdAt: "2026-04-09T13:00:00Z", rating: 5 },
+  { createdAt: "2026-04-23T10:00:00Z", rating: 4 },
+  { createdAt: "2026-05-14T14:00:00Z", rating: 5 },
+  { createdAt: "2026-05-28T11:00:00Z", rating: 5 },
 ];
 
 const DEMO = {
