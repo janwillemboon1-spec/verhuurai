@@ -15,7 +15,7 @@ export default async function AdminPage() {
   const [
     { data: abonnementen },
     { data: reviewRapporten },
-    { data: listingRapportenRaw },
+    { data: listingRapportenRaw, error: listingError },
     { data: calculatorRapporten },
     { data: gratisRapporten },
     { data: usersData },
@@ -156,6 +156,9 @@ export default async function AdminPage() {
         <div className="card overflow-hidden">
           <div className="p-5 border-b border-border">
             <h2 className="font-display text-xl text-primary">Listing Optimizer rapporten ({listingRapporten?.length ?? 0})</h2>
+            {listingError && (
+              <p className="text-xs text-danger mt-1 font-mono">⚠️ Query fout: {JSON.stringify(listingError)}</p>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
