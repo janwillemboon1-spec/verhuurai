@@ -75,36 +75,32 @@ export function SuperhostTracker({ reviewsRaw }: SuperhostTrackerProps) {
 
       {/* Scorebalk */}
       <div className="space-y-2">
-        <div className="flex items-end justify-between">
-          <div>
-            <span className={`text-4xl font-bold font-mono ${boven48 ? "text-success" : "text-warning"}`}>
-              {gemiddeldeAfgerond.toFixed(2)}
-            </span>
-            <span className="text-text-secondary ml-1">/ 5,0</span>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-text-secondary">{aantalReviews} reviews meegeteld</p>
-            <p className="text-xs text-text-secondary">Vereist: ≥ 4,80</p>
-          </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className={`text-4xl font-bold font-mono ${boven48 ? "text-success" : "text-warning"}`}>
+            {gemiddeldeAfgerond.toFixed(2)}
+          </span>
+          <span className="text-text-secondary">/ 5,0</span>
         </div>
 
         {/* Balk met drempelmarkering */}
         <div className="relative">
-          <div className="bg-border rounded-full h-4 overflow-visible">
+          <div className="bg-border rounded-full h-4 overflow-hidden">
             <div
               className={`h-4 rounded-full transition-all ${boven48 ? "bg-success" : "bg-warning"}`}
               style={{ width: `${voortgangPct}%` }}
             />
           </div>
-          {/* Drempellijn bij 4.8 */}
+          {/* Drempellijn bij 4.8 — geen zwevend label */}
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-primary"
+            className="absolute top-0 bottom-0 w-0.5 bg-primary/70"
             style={{ left: `${drempelPct}%` }}
-          >
-            <span className="absolute -top-5 -translate-x-1/2 text-[10px] font-bold text-primary whitespace-nowrap">
-              4,8
-            </span>
-          </div>
+          />
+        </div>
+
+        {/* Labels onder de balk */}
+        <div className="flex justify-between text-xs text-text-secondary">
+          <span>{aantalReviews} reviews meegeteld</span>
+          <span>grens Superhost: 4,80</span>
         </div>
 
         {boven48 ? (
