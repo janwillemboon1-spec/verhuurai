@@ -173,6 +173,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
         sessie_id: sessieId,
         rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email },
         host_naam: naam,
+        accommodatie_naam: formData.accommodatieNaam || null,
         email,
         user_id: userId,
         airbnb_url: airbnbUrl,

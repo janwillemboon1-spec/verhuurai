@@ -27,6 +27,7 @@ export interface Sessie {
 export interface AnalyseFormulier {
   // Stap 1: Basis
   hostNaam: string;
+  accommodatieNaam?: string;
   rapportTaal: "nl" | "en";
   woningType: string;
   doelgroep: string[];

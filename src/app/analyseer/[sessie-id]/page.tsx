@@ -434,15 +434,28 @@ function Stap1({
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-primary mb-1.5">
-          Naam van de host <span className="text-accent">*</span>
-        </label>
-        <input
-          {...register("hostNaam", { required: true })}
-          placeholder="Jouw voornaam"
-          className={`input ${errors.hostNaam ? "border-danger focus:border-danger" : ""}`}
-        />
+      <div className="grid sm:grid-cols-2 gap-5">
+        <div>
+          <label className="block text-sm font-semibold text-primary mb-1.5">
+            Naam van de host <span className="text-accent">*</span>
+          </label>
+          <input
+            {...register("hostNaam", { required: true })}
+            placeholder="Jouw voornaam"
+            className={`input ${errors.hostNaam ? "border-danger focus:border-danger" : ""}`}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-primary mb-1.5">
+            Naam van de accommodatie
+            <span className="text-text-secondary text-xs font-normal ml-1">(voor intern gebruik)</span>
+          </label>
+          <input
+            {...register("accommodatieNaam")}
+            placeholder="Bijv. Villa Rosa, Appartement Centrum"
+            className="input"
+          />
+        </div>
       </div>
 
       <div>

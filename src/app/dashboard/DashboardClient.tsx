@@ -27,6 +27,7 @@ interface Abonnement {
 interface ListingRapport {
   id: string;
   host_naam: string | null;
+  accommodatie_naam: string | null;
   aangemaakt_op: string;
   gearchiveerd: boolean;
 }
@@ -172,8 +173,16 @@ export default function DashboardClient({
               {listingRapportenState.filter((r) => !r.gearchiveerd).map((r) => (
                 <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-border last:border-0 hover:bg-surface/50 transition-colors gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-primary text-sm">{r.host_naam || "Advertentie-analyse"}</p>
-                    <p className="text-xs text-text-secondary">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {r.host_naam && <span className="font-semibold text-primary text-sm">{r.host_naam}</span>}
+                      {r.accommodatie_naam && (
+                        <span className="text-sm text-text-secondary">{r.accommodatie_naam}</span>
+                      )}
+                      {!r.host_naam && !r.accommodatie_naam && (
+                        <span className="font-semibold text-primary text-sm">Advertentie-analyse</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-secondary mt-0.5">
                       {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
                     </p>
                   </div>
@@ -204,8 +213,12 @@ export default function DashboardClient({
                   {toonListingArchief && listingRapportenState.filter((r) => r.gearchiveerd).map((r) => (
                     <div key={r.id} className="flex items-center justify-between px-5 py-3 border-t border-border bg-surface/50 gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm text-text-secondary">{r.host_naam || "Advertentie-analyse"}</p>
-                        <p className="text-xs text-text-secondary">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {r.host_naam && <span className="text-sm text-text-secondary">{r.host_naam}</span>}
+                          {r.accommodatie_naam && <span className="text-sm text-text-secondary">{r.accommodatie_naam}</span>}
+                          {!r.host_naam && !r.accommodatie_naam && <span className="text-sm text-text-secondary">Advertentie-analyse</span>}
+                        </div>
+                        <p className="text-xs text-text-secondary mt-0.5">
                           {new Date(r.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
                         </p>
                       </div>
