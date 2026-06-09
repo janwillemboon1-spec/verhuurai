@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
 
@@ -11,16 +12,18 @@ export default async function DashboardPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: listingRapporten } = await supabase
+  const admin = createAdminClient();
+
+  const { data: listingRapporten } = await admin
     .from("listing_rapporten")
     .select("id, host_naam, accommodatie_naam, aangemaakt_op, gearchiveerd")
-    .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+    .or(`user_id.eq.${user.id},email.eq.${user.email ?? ""}`)
     .order("aangemaakt_op", { ascending: false });
 
-  const { data: calculatorRapporten } = await supabase
+  const { data: calculatorRapporten } = await admin
     .from("prijscalculator_rapporten")
     .select("id, locatie, land, basisprijs, aangemaakt_op")
-    .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+    .or(`user_id.eq.${user.id},email.eq.${user.email ?? ""}`)
     .order("aangemaakt_op", { ascending: false });
 
   const { data: abonnementen } = await supabase
