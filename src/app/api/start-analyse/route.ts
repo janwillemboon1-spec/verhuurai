@@ -16,6 +16,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "sessieId en formData verplicht" }, { status: 400 });
   }
 
+  // Sla airbnbUrl op in sessie zodat de analyse-route hem altijd heeft
+  const sessie = global.sessies.get(sessieId);
+  if (sessie && formData?.airbnbUrl) {
+    global.sessies.set(sessieId, { ...sessie, airbnbUrl: formData.airbnbUrl });
+  }
+
   // Markeer als bezig
   global.rapportStatus.set(sessieId, "verwerking");
 

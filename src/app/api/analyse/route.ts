@@ -145,6 +145,8 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
     const sessie = global.sessies.get(sessieId);
     const email = sessie?.email || "";
     const naam = formData.hostNaam || sessie?.naam || "";
+    const airbnbUrl = formData.airbnbUrl || sessie?.airbnbUrl || null;
+    console.log("[Analyse] airbnbUrl uit formData:", formData.airbnbUrl, "| uit sessie:", sessie?.airbnbUrl);
 
     global.rapporten.set(sessieId, {
       ...rapport,
@@ -173,7 +175,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
         host_naam: naam,
         email,
         user_id: userId,
-        airbnb_url: formData.airbnbUrl || null,
+        airbnb_url: airbnbUrl,
       }).select().single();
 
       // Gecombineerde email: rapport klaar + inloglink
