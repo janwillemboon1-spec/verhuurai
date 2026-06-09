@@ -260,7 +260,7 @@ export default function DashboardClient({
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="font-display text-xl text-primary">Host Performance Audit rapporten</h2>
-            <Link href="/review-monitor/aanmelden" className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0">
+            <Link href="/host-performance/aanmelden" className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap flex-shrink-0">
               + Nieuw rapport
             </Link>
           </div>
@@ -269,7 +269,7 @@ export default function DashboardClient({
             <div className="card p-8 text-center space-y-4">
               <div className="text-4xl">🏠</div>
               <h3 className="font-display text-xl text-primary">Nog geen Host Performance Audit actief</h3>
-              <Link href="/review-monitor/aanmelden" className="btn-primary inline-block">
+              <Link href="/host-performance/aanmelden" className="btn-primary inline-block">
                 Eerste rapport aanvragen →
               </Link>
             </div>
@@ -313,7 +313,7 @@ export default function DashboardClient({
 
                       <div className="flex items-center gap-2 flex-shrink-0 relative">
                         {abo.status === "trial" && (
-                          <Link href={`/review-monitor/abonneren/${abo.id}`} className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap">
+                          <Link href={`/host-performance/abonneren/${abo.id}`} className="btn-primary text-xs py-1.5 px-3 whitespace-nowrap">
                             Activeer →
                           </Link>
                         )}
@@ -328,7 +328,7 @@ export default function DashboardClient({
                             {wijzigMenu === abo.id && (
                               <div className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg z-20 min-w-[200px] overflow-hidden">
                                 <Link
-                                  href={`/review-monitor/abonneren/${abo.id}`}
+                                  href={`/host-performance/abonneren/${abo.id}`}
                                   onClick={() => setWijzigMenu(null)}
                                   className="flex items-center gap-2 px-4 py-3 text-sm text-primary hover:bg-background transition-colors"
                                 >

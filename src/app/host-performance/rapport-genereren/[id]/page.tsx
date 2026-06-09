@@ -258,10 +258,10 @@ export default function RapportGenereerenPage() {
             Start een abonnement en Boni stuurt je dit rapport automatisch elke week of maand.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href={`/review-monitor/abonneren/${abonnementId}?frequentie=monthly&interval=month`} className="btn-secondary text-center">
+            <a href={`/host-performance/abonneren/${abonnementId}?frequentie=monthly&interval=month`} className="btn-secondary text-center">
               Maandelijks — €5,99/maand
             </a>
-            <a href={`/review-monitor/abonneren/${abonnementId}?frequentie=weekly&interval=month`} className="btn-primary text-center">
+            <a href={`/host-performance/abonneren/${abonnementId}?frequentie=weekly&interval=month`} className="btn-primary text-center">
               Wekelijks — €9,99/maand
             </a>
           </div>

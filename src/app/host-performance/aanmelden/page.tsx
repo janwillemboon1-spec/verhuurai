@@ -63,7 +63,7 @@ function AanmeldenForm() {
         setLaden(false);
         return;
       }
-      window.location.href = `/review-monitor/rapport-genereren/${data.abonnementId}`;
+      window.location.href = `/host-performance/rapport-genereren/${data.abonnementId}`;
       return;
     }
 
@@ -126,7 +126,7 @@ function AanmeldenForm() {
     const data = await res.json();
 
     if (res.ok && data.abonnementId) {
-      window.location.href = `/review-monitor/rapport-genereren/${data.abonnementId}`;
+      window.location.href = `/host-performance/rapport-genereren/${data.abonnementId}`;
     } else {
       setFout("Account aangemaakt maar woning toevoegen mislukt. Probeer opnieuw.");
       setLaden(false);

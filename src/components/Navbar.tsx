@@ -36,7 +36,7 @@ export function Navbar() {
           <Link href="/listing-optimizer" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("listingOptimizer")}
           </Link>
-          <Link href="/review-monitor" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
+          <Link href="/host-performance" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("reviewMonitor")}
           </Link>
           <Link href="/prijscalculator" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
@@ -81,7 +81,7 @@ export function Navbar() {
           <Link href="/listing-optimizer" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("listingOptimizer")}
           </Link>
-          <Link href="/review-monitor" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
+          <Link href="/host-performance" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("reviewMonitor")}
           </Link>
           <Link href="/prijscalculator" onClick={() => setOpen(false)} className="text-text-secondary font-medium">

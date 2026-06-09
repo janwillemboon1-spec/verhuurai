@@ -21,7 +21,7 @@ export default function HomePage() {
                 <Link href="/listing-optimizer" className="btn-secondary text-center">
                   Listing Optimizer →
                 </Link>
-                <Link href="/review-monitor" className="btn-primary text-center">
+                <Link href="/host-performance" className="btn-primary text-center">
                   Host Performance Audit →
                 </Link>
                 <Link href="/prijscalculator" className="btn-secondary text-center">
@@ -102,10 +102,10 @@ export default function HomePage() {
               <div className="border-t border-border pt-4 space-y-3">
                 <p className="text-accent font-bold text-xl">€7,99 — eenmalig</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-sm text-center flex items-center justify-center">Rapport aanvragen →</Link>
-                  <Link href="/review-monitor" className="btn-secondary text-sm text-center flex items-center justify-center">Meer info →</Link>
+                  <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-sm text-center flex items-center justify-center">Rapport aanvragen →</Link>
+                  <Link href="/host-performance" className="btn-secondary text-sm text-center flex items-center justify-center">Meer info →</Link>
                 </div>
-                <Link href="/review-monitor/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
+                <Link href="/host-performance/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
               </div>
@@ -182,7 +182,7 @@ export default function HomePage() {
             <Link href="/listing-optimizer" className="btn-secondary text-center">
               📋 Listing Optimizer
             </Link>
-            <Link href="/review-monitor" className="btn-primary text-center">
+            <Link href="/host-performance" className="btn-primary text-center">
               ⭐ Host Performance Audit
             </Link>
             <Link href="/prijscalculator" className="btn-secondary text-center">

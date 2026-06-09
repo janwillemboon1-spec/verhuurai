@@ -26,7 +26,7 @@ function CallbackHandler() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setStatus("Ingelogd! Doorsturen...");
-          router.replace(airbnb_url ? `/review-monitor/rapport-genereren` : "/dashboard");
+          router.replace(airbnb_url ? `/host-performance/rapport-genereren` : "/dashboard");
         } else {
           setFout(`Geen inlogcode ontvangen. URL params: ${searchParams.toString() || "(leeg)"}`);
         }
@@ -52,7 +52,7 @@ function CallbackHandler() {
         });
         const aboData = await res.json();
         if (res.ok && aboData.abonnementId) {
-          router.replace(`/review-monitor/rapport-genereren/${aboData.abonnementId}`);
+          router.replace(`/host-performance/rapport-genereren/${aboData.abonnementId}`);
           return;
         }
       }

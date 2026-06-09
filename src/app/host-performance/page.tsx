@@ -20,7 +20,7 @@ export default function ReviewMonitorPage() {
                 Boni analyseert al jouw reviews en geeft je een helder rapport met sentimenttrend, terugkerende punten, concrete verbeterpunten en kant-en-klare reacties.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-center">
+                <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-center">
                   Rapport aanvragen — €7,99 →
                 </Link>
                 <Link href="#hoe-het-werkt" className="btn-secondary text-center">
@@ -107,7 +107,7 @@ export default function ReviewMonitorPage() {
                 <p className="text-5xl font-bold text-accent">€7,99</p>
                 <p className="text-text-secondary text-sm mt-1">eenmalig — geen abonnement</p>
               </div>
-              <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary w-full text-center block">
+              <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary w-full text-center block">
                 Rapport aanvragen →
               </Link>
             </div>
@@ -124,7 +124,7 @@ export default function ReviewMonitorPage() {
               ))}
             </div>
             <p className="text-text-secondary text-sm">Een realistisch voorbeeld van Casa Louise van Peter in Alicante — 23 reviews geanalyseerd.</p>
-            <Link href="/review-monitor/demo" className="btn-primary inline-block text-center">
+            <Link href="/host-performance/demo" className="btn-primary inline-block text-center">
               👁️ Bekijk het volledige voorbeeldrapport →
             </Link>
           </div>
@@ -141,7 +141,7 @@ export default function ReviewMonitorPage() {
           <p className="text-white/70 text-lg mb-8">
             Boni analyseert al jouw reviews en levert binnen enkele minuten een volledig rapport.
           </p>
-          <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-center inline-block">
+          <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-center inline-block">
             Rapport aanvragen — €7,99 →
           </Link>
         </div>

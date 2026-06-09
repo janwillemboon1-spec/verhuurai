@@ -147,7 +147,7 @@ export default function LoginPage() {
 
           <p className="text-xs text-text-secondary text-center">
             Nog geen account?{" "}
-            <Link href="/review-monitor" className="text-accent underline">
+            <Link href="/host-performance" className="text-accent underline">
               Start hier met de Review Monitor
             </Link>
           </p>

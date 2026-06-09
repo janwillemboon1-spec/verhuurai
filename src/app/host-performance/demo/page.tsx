@@ -171,10 +171,10 @@ export default function ReviewMonitorDemoPage() {
             Boni analyseert al jouw reviews en levert binnen enkele minuten een volledig rapport — voor €7,99.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-center">
+            <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-center">
               Rapport aanvragen — €7,99 →
             </Link>
-            <Link href="/review-monitor" className="btn-secondary text-center">
+            <Link href="/host-performance" className="btn-secondary text-center">
               Meer info
             </Link>
           </div>
