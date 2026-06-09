@@ -27,7 +27,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-display font-bold text-xl text-primary">
-          <span className="text-2xl">🏠</span>
+          <img src="/boni.png" alt="Boni" className="w-8 h-8 object-contain" />
           <span>{t("logo")}</span>
         </Link>
 
