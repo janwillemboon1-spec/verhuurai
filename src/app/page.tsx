@@ -72,8 +72,8 @@ export default function HomePage() {
               <div className="border-t border-border pt-4 space-y-3">
                 <p className="text-accent font-bold text-xl">€14,99 — eenmalig</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link href="/gratis" className="btn-secondary text-sm text-center flex items-center justify-center">Gratis proberen</Link>
-                  <Link href="/listing-optimizer" className="btn-primary text-sm text-center flex items-center justify-center">Meer info →</Link>
+                  <Link href="/gratis" className="btn-secondary text-xs text-center flex items-center justify-center py-3">Gratis proberen</Link>
+                  <Link href="/listing-optimizer" className="btn-primary text-xs text-center flex items-center justify-center py-3">Meer info →</Link>
                 </div>
                 <Link href="/rapport/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
@@ -102,8 +102,8 @@ export default function HomePage() {
               <div className="border-t border-border pt-4 space-y-3">
                 <p className="text-accent font-bold text-xl">€7,99 — eenmalig</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-sm text-center flex items-center justify-center">Rapport aanvragen →</Link>
-                  <Link href="/host-performance" className="btn-secondary text-sm text-center flex items-center justify-center">Meer info →</Link>
+                  <Link href="/host-performance/aanmelden?type=eenmalig" className="btn-primary text-xs text-center flex items-center justify-center py-3">Rapport aanvragen →</Link>
+                  <Link href="/host-performance" className="btn-secondary text-xs text-center flex items-center justify-center py-3">Meer info →</Link>
                 </div>
                 <Link href="/host-performance/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
