@@ -77,6 +77,7 @@ export default function ReviewMonitorPage() {
               { icoon: "🔁", titel: "Terugkerende punten", tekst: "Wat gasten keer op keer benoemen — positief én negatief." },
               { icoon: "🎯", titel: "Concrete verbeterpunten", tekst: "Boni geeft 3-5 actiepunten die je direct kunt toepassen." },
               { icoon: "💬", titel: "Voorbeeldreacties", tekst: "Kant-en-klare reacties op negatieve reviews — kopieer en plak." },
+              { icoon: "🏅", titel: "Superhost Score Tracker", tekst: "Zie hoe jouw huidige gemiddelde beoordeling zich verhoudt tot de 4,8-grens voor Superhost-status, hoeveel reviews je nog nodig hebt en wanneer de volgende beoordeling is." },
               { icoon: "🏆", titel: "Online inzien", tekst: "Alle rapporten staan ook in je persoonlijke dashboard." },
             ].map(({ icoon, titel, tekst }) => (
               <div key={titel} className="card p-5 flex gap-4">
