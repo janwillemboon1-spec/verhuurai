@@ -73,7 +73,7 @@ export default function ReviewMonitorPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { icoon: "📋", titel: "Samenvatting nieuwe reviews", tekst: "Overzicht van alle reviews ontvangen in de afgelopen periode." },
-              { icoon: "📈", titel: "Sentimenttrend", tekst: "Gaat het beter of slechter? Vergelijking met de vorige periode." },
+              { icoon: "📈", titel: "Sentimenttrend", tekst: "Hoe positief zijn jouw gasten overall? Verdeling in positief, neutraal en negatief met de meest opvallende patronen." },
               { icoon: "🔁", titel: "Terugkerende punten", tekst: "Wat gasten keer op keer benoemen — positief én negatief." },
               { icoon: "🎯", titel: "Concrete verbeterpunten", tekst: "Boni geeft 3-5 actiepunten die je direct kunt toepassen." },
               { icoon: "💬", titel: "Voorbeeldreacties", tekst: "Kant-en-klare reacties op negatieve reviews — kopieer en plak." },
@@ -123,7 +123,7 @@ export default function ReviewMonitorPage() {
                 </div>
               ))}
             </div>
-            <p className="text-text-secondary text-sm">Een realistisch voorbeeld van Casa Luna in Alicante — 23 reviews geanalyseerd.</p>
+            <p className="text-text-secondary text-sm">Een realistisch voorbeeld van Casa Louise van Peter in Alicante — 23 reviews geanalyseerd.</p>
             <Link href="/review-monitor/demo" className="btn-primary inline-block text-center">
               👁️ Bekijk het volledige voorbeeldrapport →
             </Link>

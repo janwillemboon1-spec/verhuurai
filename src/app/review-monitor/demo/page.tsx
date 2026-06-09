@@ -3,13 +3,13 @@ import { CopyButton } from "@/components/CopyButton";
 import Link from "next/link";
 
 const DEMO = {
-  rapportTitel: "Review Rapport — juni 2026",
-  listingNaam: "Casa Luna · Alicante",
-  periode: "1 – 30 juni 2026",
+  rapportTitel: "Host Performance Audit",
+  listingNaam: "Casa Louise · Alicante",
+  hostNaam: "Peter",
   totaalAantalReviews: 23,
-  sentiment: { positief: 78, neutraal: 13, negatief: 9, trendOmschrijving: "Lichte stijging t.o.v. mei (was 71% positief)" },
+  sentiment: { positief: 78, neutraal: 13, negatief: 9 },
   samenvatting:
-    "Juni was een goede maand voor Casa Luna. De overgrote meerderheid van gasten is enthousiast over de locatie en het zwembad. Er zijn twee terugkerende klachten die aandacht verdienen: de airconditioner in de slaapkamer en de wifi-snelheid. Als je die aanpakt, ga je richting een 9+ gemiddeld.",
+    "Peter, Casa Louise scoort goed bij gasten. 78% van de reviews is positief — de locatie en het privézwembad zijn duidelijke troefkaarten. Er zijn twee terugkerende klachten die directe aandacht verdienen: de airconditioner in de slaapkamer en de wifi-snelheid. Pak die aan en je bent klaar voor een 9+ gemiddelde.",
   terugkerendeComplimenten: [
     "Prachtige locatie — op loopafstand van het strand (12 van 23 reviews)",
     "Privézwembad als groot pluspunt, vooral voor gezinnen",
@@ -40,13 +40,13 @@ const DEMO = {
       origineelReview:
         "Mooie villa, maar wifi werkte slecht. Als je van plan bent om te werken, pas op.",
       aanbevolenReactie:
-        "Bedankt voor je feedback! Je hebt gelijk — de wifi was niet op het niveau dat we willen bieden voor gasten die ook willen werken. We hebben inmiddels een sneller pakket besteld. We houden het in de gaten en passen de omschrijving aan zodat toekomstige gasten goed geïnformeerd zijn. Fijn dat je er verder van genoten hebt!",
+        "Bedankt voor je feedback! Je hebt gelijk — de wifi was niet op het niveau dat we willen bieden voor gasten die ook willen werken. We hebben inmiddels een sneller pakket besteld en passen de omschrijving aan zodat toekomstige gasten goed geïnformeerd zijn. Fijn dat je er verder van genoten hebt!",
     },
   ],
   herschrevenVersie:
     "Reageer altijd binnen 24 uur op een review — positief én negatief.\n\nBij positieve reviews: bedank kort en persoonlijk. Noem iets specifieks uit hun review.\nBij kritische reviews: erken het punt, bied geen excuses maar een oplossing, en sluit positief af.\n\nVermijd: in de verdediging schieten, lange uitleg geven, of de schuld bij de gast leggen.\n\nGouden formule voor negatieve reviews:\n1. Bedank voor de eerlijkheid\n2. Erken het punt (ook al ben je het er niet mee eens)\n3. Noem wat je hebt aangepast of gaat aanpassen\n4. Sluit warm af",
   afsluiting:
-    "Juni was een sterke maand, maar de airco en wifi zijn je bottleneck voor een perfecte score. Fix die twee dingen en je hebt volgend maand een rapport om trots op te zijn. Je doet het goed, Casa Luna! 🏡✨",
+    "Casa Louise heeft een sterke basis, Peter. De airco en wifi zijn de twee punten die je vandaag nog kunt aanpakken — klein effort, groot verschil voor je score. Je doet het goed! 🏡✨",
 };
 
 export default function ReviewMonitorDemoPage() {
@@ -70,7 +70,7 @@ export default function ReviewMonitorDemoPage() {
             <BoniAvatar size={60} />
             <div>
               <h1 className="font-display text-xl text-primary">{DEMO.rapportTitel}</h1>
-              <p className="text-sm text-text-secondary">{DEMO.listingNaam} · {DEMO.periode}</p>
+              <p className="text-sm text-text-secondary">{DEMO.listingNaam} · {DEMO.totaalAantalReviews} reviews geanalyseerd</p>
             </div>
           </div>
 
@@ -87,13 +87,6 @@ export default function ReviewMonitorDemoPage() {
               </div>
             ))}
           </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-success font-semibold">↑</span>
-            <span className="text-text-secondary">{DEMO.sentiment.trendOmschrijving}</span>
-          </div>
-
-          <p className="text-xs text-text-secondary">{DEMO.totaalAantalReviews} reviews geanalyseerd</p>
         </div>
 
         {/* Samenvatting */}
@@ -172,17 +165,17 @@ export default function ReviewMonitorDemoPage() {
         {/* CTA */}
         <div className="card p-8 bg-primary border-0 text-center space-y-4">
           <h2 className="font-display text-2xl text-white">
-            Wil je dit automatisch ontvangen voor jouw woning?
+            Wil je dit voor jouw eigen woning?
           </h2>
           <p className="text-white/70">
-            Boni genereert elke week of maand een rapport op basis van jouw eigen reviews.
+            Boni analyseert al jouw reviews en levert binnen enkele minuten een volledig rapport — voor €7,99.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/review-monitor/aanmelden" className="btn-primary text-center">
-              Eerste rapport gratis →
+            <Link href="/review-monitor/aanmelden?type=eenmalig" className="btn-primary text-center">
+              Rapport aanvragen — €7,99 →
             </Link>
             <Link href="/review-monitor" className="btn-secondary text-center">
-              Meer info over prijzen
+              Meer info
             </Link>
           </div>
         </div>
