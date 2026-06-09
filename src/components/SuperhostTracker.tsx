@@ -9,7 +9,6 @@ interface ReviewRaw {
 
 interface SuperhostTrackerProps {
   reviewsRaw: ReviewRaw[];
-  vandaagOverride?: Date;
 }
 
 function getNextEvaluatieDatum(vandaag: Date): Date {
@@ -28,9 +27,9 @@ function formatDatum(d: Date): string {
   return d.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export function SuperhostTracker({ reviewsRaw, vandaagOverride }: SuperhostTrackerProps) {
+export function SuperhostTracker({ reviewsRaw }: SuperhostTrackerProps) {
   const [toonUitleg, setToonUitleg] = useState(false);
-  const vandaag = vandaagOverride ?? new Date();
+  const vandaag = new Date();
   const volgendeEval = getNextEvaluatieDatum(vandaag);
 
   // Periode: exacte datum een jaar terug
@@ -118,20 +117,6 @@ export function SuperhostTracker({ reviewsRaw, vandaagOverride }: SuperhostTrack
           </p>
         )}
 
-        {/* Boni-tip: score ≥4.8, ≥10 reviews én beoordeling binnen 14 dagen */}
-        {boven48 && aantalReviews >= 10 && dagenTotEval <= 14 && (
-          <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 space-y-2">
-            <p className="text-sm font-semibold text-primary flex items-center gap-2">
-              💡 Tip van Boni
-            </p>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              Voor de reviews die worden meegenomen in de beoordeling is de <strong>publicatiedatum</strong> leidend. Als een gast of host een review schrijft, wordt deze automatisch geplaatst 14 dagen na check-out, of zodra beiden een review hebben geschreven.
-            </p>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              Jij hebt momenteel een score van 4,8 of hoger, je voldoet aan het minimum van 10 boekingen en je volgende beoordeling is <strong>binnen {dagenTotEval} {dagenTotEval === 1 ? "dag" : "dagen"}</strong>. Mijn advies: schrijf je volgende reviews <strong>pas na je beoordelingsdatum</strong> zodat je gegarandeerd de Superhost-status krijgt.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Vaste Superhost-vereisten */}
