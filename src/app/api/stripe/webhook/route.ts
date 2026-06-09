@@ -54,16 +54,16 @@ export async function POST(request: Request) {
         await resend.emails.send({
           from: "boni@verhuurai.nl",
           to: email,
-          subject: "Welkom bij VerhuurAI — jouw toegang is klaar! 🏠",
+          subject: "Welkom bij Host Boni — jouw toegang is klaar! 🏠",
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
               <h1 style="color: #2b3885;">Hey ${naam}!</h1>
-              <p>Geweldig dat je aan de slag gaat met VerhuurAI. Jouw betaling is bevestigd en je toegang staat klaar.</p>
+              <p>Geweldig dat je aan de slag gaat met Host Boni. Jouw betaling is bevestigd en je toegang staat klaar.</p>
               <p><strong>Pakket:</strong> ${pakketId}</p>
               <p><strong>Beschikbare analyses:</strong> ${advertenties}</p>
               <p><strong>Jouw sessie-ID:</strong> <code style="background: #eef7fe; padding: 4px 8px; border-radius: 4px;">${sessieId}</code></p>
               <p style="margin-top: 24px;">Ga naar <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl"}/analyse" style="color: #2b3885;">verhuurai.nl/analyse</a> om je eerste advertentie te analyseren.</p>
-              <p>Veel succes,<br><strong>Boni van VerhuurAI</strong></p>
+              <p>Veel succes,<br><strong>Boni van Host Boni</strong></p>
             </div>
           `,
         });

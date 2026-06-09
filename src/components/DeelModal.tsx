@@ -35,7 +35,7 @@ const DEEL_OPTIES = [
     icoon: "✉️",
     kleur: "bg-blue-100 text-blue-700",
     actie: (url: string, tekst: string) => {
-      window.open(`mailto:?subject=${encodeURIComponent("VerhuurAI Review Rapport")}&body=${encodeURIComponent(tekst + "\n\n" + url)}`, "_blank");
+      window.open(`mailto:?subject=${encodeURIComponent("Host Boni Review Rapport")}&body=${encodeURIComponent(tekst + "\n\n" + url)}`, "_blank");
       return null;
     },
   },
@@ -107,8 +107,8 @@ export function DeelModal({ onSluit, titel, overrideUrl }: DeelModalProps) {
   }, [overrideUrl]);
 
   const deelTekst = titel
-    ? `Bekijk mijn VerhuurAI review rapport: ${titel}`
-    : "Ik gebruik VerhuurAI om mijn Airbnb reviews bij te houden! 🏠";
+    ? `Bekijk mijn Host Boni review rapport: ${titel}`
+    : "Ik gebruik Host Boni om mijn Airbnb reviews bij te houden! 🏠";
 
   const handleActie = (optie: typeof DEEL_OPTIES[0]) => {
     if (optie.id === "pdf") {

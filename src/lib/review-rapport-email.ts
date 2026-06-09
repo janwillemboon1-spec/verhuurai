@@ -31,7 +31,7 @@ export function buildReviewRapportEmail(
 
   <!-- Header -->
   <div style="background:#1B2B4B;padding:32px;border-radius:12px;text-align:center;margin-bottom:24px;">
-    <h1 style="color:white;margin:0 0 4px;font-size:24px;">🏠 VerhuurAI</h1>
+    <h1 style="color:white;margin:0 0 4px;font-size:24px;">🏠 Host Boni</h1>
     <p style="color:#a5b4fc;margin:0;font-size:14px;">Host Performance Audit Rapport</p>
     <p style="color:#e0e7ff;margin:8px 0 0;font-size:13px;">${listingNaam} · ${periode}</p>
   </div>
@@ -108,7 +108,7 @@ export function buildReviewRapportEmail(
   </div>
 
   <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">
-    Dit rapport is gegenereerd door VerhuurAI voor ${naam} · <a href="https://verhuurai.nl/dashboard" style="color:#9ca3af;">Abonnement beheren</a>
+    Dit rapport is gegenereerd door Host Boni voor ${naam} · <a href="https://verhuurai.nl/dashboard" style="color:#9ca3af;">Abonnement beheren</a>
   </p>
 
 </div>

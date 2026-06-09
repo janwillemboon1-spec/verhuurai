@@ -485,12 +485,12 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
         const resend = new Resend(process.env.RESEND_API_KEY);
         const rapportUrl = `${baseUrl}/rapport-pro/${sessieId}`;
         await resend.emails.send({
-          from: "Boni van VerhuurAI <boni@verhuurai.nl>",
+          from: "Boni van Host Boni <boni@verhuurai.nl>",
           to: email,
           subject: `Je Listing Optimizer Pro rapport is klaar! 🏠`,
           html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
             <div style="background:#1B2B4B;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;">
-              <h1 style="color:white;margin:0;font-size:22px;">🏠 VerhuurAI</h1>
+              <h1 style="color:white;margin:0;font-size:22px;">🏠 Host Boni</h1>
               <p style="color:#a5b4fc;margin:8px 0 0;">Listing Optimizer Pro Rapport</p>
             </div>
             <p>Hey ${naam}! Boni heeft jouw advertentie automatisch opgehaald en geanalyseerd.</p>
@@ -501,7 +501,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
               <p style="margin:0 0 8px;font-weight:bold;color:#1B2B4B;">📊 Je dashboard</p>
               <a href="${loginUrl}" style="background:#1B2B4B;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">Inloggen →</a>
             </div>` : ""}
-            <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">VerhuurAI · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a></p>
+            <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a></p>
           </div>`,
         });
       }

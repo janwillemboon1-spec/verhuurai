@@ -116,7 +116,7 @@ export async function POST(request: Request) {
   <div style="max-width: 680px; margin: 0 auto; padding: 24px 16px;">
 
     <div style="background: #2b3885; padding: 32px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
-      <h1 style="color: white; margin: 0 0 8px; font-size: 28px;">VerhuurAI Rapport</h1>
+      <h1 style="color: white; margin: 0 0 8px; font-size: 28px;">Host Boni Rapport</h1>
       <p style="color: #a5b4fc; margin: 0; font-size: 14px;">${datum}</p>
     </div>
 
@@ -208,19 +208,19 @@ export async function POST(request: Request) {
     </div>
 
     <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-      Dit rapport is gegenereerd door VerhuurAI voor ${naam} op ${datum}.
+      Dit rapport is gegenereerd door Host Boni voor ${naam} op ${datum}.
     </p>
   </div>
 </body>
 </html>
     `.trim();
 
-    const fromAdres = process.env.RESEND_FROM_EMAIL || "Boni van VerhuurAI <boni@verhuurai.nl>";
+    const fromAdres = process.env.RESEND_FROM_EMAIL || "Boni van Host Boni <boni@verhuurai.nl>";
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error: resendError } = await resend.emails.send({
       from: fromAdres,
       to: email,
-      subject: "Jouw VerhuurAI rapport is klaar! 📊",
+      subject: "Jouw Host Boni rapport is klaar! 📊",
       html,
     });
 

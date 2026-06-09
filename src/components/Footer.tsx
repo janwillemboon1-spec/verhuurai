@@ -9,7 +9,7 @@ export function Footer() {
           <div className="flex flex-col items-center md:items-start gap-1">
             <div className="flex items-center gap-2 font-display font-bold text-xl text-white">
               <span>🏠</span>
-              <span>VerhuurAI</span>
+              <span>Host Boni</span>
             </div>
             <p className="text-sm text-white/50">
               Jouw advertentie geoptimaliseerd door Boni.
@@ -30,7 +30,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-white/10 text-center text-xs text-white/40">
-          © 2024 VerhuurAI — Alle rechten voorbehouden
+          © 2024 Host Boni — Alle rechten voorbehouden
         </div>
       </div>
     </footer>

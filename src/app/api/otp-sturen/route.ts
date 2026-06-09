@@ -26,13 +26,13 @@ export async function POST(request: Request) {
   // Stuur via Resend
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { error: resendError } = await resend.emails.send({
-    from: "Boni van VerhuurAI <boni@verhuurai.nl>",
+    from: "Boni van Host Boni <boni@verhuurai.nl>",
     to: email.trim(),
-    subject: "Jouw inlogcode voor VerhuurAI",
+    subject: "Jouw inlogcode voor Host Boni",
     html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
         <div style="background:#1B2B4B;padding:20px;border-radius:12px;text-align:center;margin-bottom:24px;">
-          <h1 style="color:white;margin:0;font-size:20px;">🏠 VerhuurAI</h1>
+          <h1 style="color:white;margin:0;font-size:20px;">🏠 Host Boni</h1>
         </div>
         <h2 style="color:#1B2B4B;">Jouw inlogcode</h2>
         <p style="color:#6b7280;">Voer deze code in op de website om in te loggen:</p>

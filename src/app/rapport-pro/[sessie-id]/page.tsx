@@ -281,7 +281,7 @@ export default function RapportProPagina() {
             <div className="flex items-center gap-3">
               <BoniAvatar size={60} />
               <div>
-                <span className="font-display text-xl text-primary">VerhuurAI Rapport</span>
+                <span className="font-display text-xl text-primary">Host Boni Rapport</span>
                 <span className="ml-2 text-xs font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full">PRO ⚡</span>
               </div>
             </div>

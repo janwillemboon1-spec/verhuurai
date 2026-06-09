@@ -311,7 +311,7 @@ export default function RapportPagina() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <BoniAvatar size={60} />
-              <span className="font-display text-xl text-primary">VerhuurAI Rapport</span>
+              <span className="font-display text-xl text-primary">Host Boni Rapport</span>
             </div>
             <div className="text-right text-sm text-text-secondary">
               {hostNaam && <p className="font-semibold text-primary">{hostNaam}</p>}

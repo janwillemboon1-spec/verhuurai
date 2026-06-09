@@ -322,7 +322,7 @@ export default function DemoRapportPage() {
             <BoniAvatar size={72} />
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-display font-bold text-primary">🏠 VerhuurAI</span>
+                <span className="text-xl font-display font-bold text-primary">🏠 Host Boni</span>
               </div>
               <p className="text-sm text-text-secondary">{r.hostNaam} · {r.datum}</p>
             </div>

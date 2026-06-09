@@ -31,13 +31,13 @@ export async function POST(request: Request) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: "Boni van VerhuurAI <boni@verhuurai.nl>",
+        from: "Boni van Host Boni <boni@verhuurai.nl>",
         to: email,
         subject: `Jouw prijscalculator rapport — ${locatie}, ${land}`,
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
             <div style="background:#1B2B4B;padding:24px;border-radius:12px;text-align:center;margin-bottom:24px;">
-              <h1 style="color:white;margin:0;font-size:22px;">🏠 VerhuurAI Prijscalculator</h1>
+              <h1 style="color:white;margin:0;font-size:22px;">🏠 Host Boni Prijscalculator</h1>
               <p style="color:#a5b4fc;margin:8px 0 0;font-size:14px;">${locatie}, ${land} · Basisprijs €${basisprijs}/nacht</p>
             </div>
             <p style="color:#374151;">Jouw prijsrapport is klaar. Bekijk het volledige overzicht via de knop hieronder.</p>
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
               </a>
             </div>` : ""}
             <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
-              Gegenereerd door VerhuurAI · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a>
+              Gegenereerd door Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a>
             </p>
           </div>`,
       });
