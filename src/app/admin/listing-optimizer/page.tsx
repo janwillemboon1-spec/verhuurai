@@ -327,9 +327,6 @@ export default async function ListingOptimizerStatsPage() {
                     <span className={`text-sm font-bold font-mono w-12 text-right flex-shrink-0 ${scoreKleur(score)}`}>
                       {score}/10
                     </span>
-                    <span className="text-xs text-text-secondary w-12 flex-shrink-0 text-right">
-                      n={aantalMetScore}
-                    </span>
                   </div>
                 );
               })}
