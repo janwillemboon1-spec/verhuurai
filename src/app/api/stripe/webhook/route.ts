@@ -62,7 +62,7 @@ export async function POST(request: Request) {
               <p><strong>Pakket:</strong> ${pakketId}</p>
               <p><strong>Beschikbare analyses:</strong> ${advertenties}</p>
               <p><strong>Jouw sessie-ID:</strong> <code style="background: #eef7fe; padding: 4px 8px; border-radius: 4px;">${sessieId}</code></p>
-              <p style="margin-top: 24px;">Ga naar <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl"}/analyse" style="color: #2b3885;">verhuurai.nl/analyse</a> om je eerste advertentie te analyseren.</p>
+              <p style="margin-top: 24px;">Ga naar <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com"}/analyse" style="color: #2b3885;">hostboni.com/analyse</a> om je eerste advertentie te analyseren.</p>
               <p>Veel succes,<br><strong>Boni van Host Boni</strong></p>
             </div>
           `,

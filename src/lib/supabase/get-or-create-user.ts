@@ -2,7 +2,7 @@ import { createAdminClient } from "./admin";
 
 export async function getOrCreateUser(email: string): Promise<{ userId: string | null; isNieuw: boolean; loginUrl: string | null }> {
   const admin = createAdminClient();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
   // Probeer gebruiker aan te maken (email_confirm=true: geen bevestiging nodig)
   const { data: nieuw, error } = await admin.auth.admin.createUser({

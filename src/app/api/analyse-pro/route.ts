@@ -463,7 +463,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
 
     try {
       const admin = createAdminClient();
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
       let userId: string | null = null;
       let loginUrl: string | null = null;
       if (email) {
@@ -501,7 +501,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
               <p style="margin:0 0 8px;font-weight:bold;color:#1B2B4B;">📊 Je dashboard</p>
               <a href="${loginUrl}" style="background:#1B2B4B;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">Inloggen →</a>
             </div>` : ""}
-            <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a></p>
+            <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">hostboni.com</a></p>
           </div>`,
         });
       }

@@ -158,7 +158,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
     // Account aanmaken of vinden + rapport opslaan in Supabase
     try {
       const admin = createAdminClient();
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
       let userId: string | null = null;
       let loginUrl: string | null = null;
@@ -208,7 +208,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
                 </a>
               </div>` : ""}
               <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
-                Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a>
+                Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">hostboni.com</a>
               </p>
             </div>`,
         });

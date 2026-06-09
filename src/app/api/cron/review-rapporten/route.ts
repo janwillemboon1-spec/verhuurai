@@ -39,7 +39,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
   const nu = new Date();
 
   // Haal alle actieve abonnementen op waarvan het tijd is voor een rapport

@@ -24,7 +24,7 @@ export default function RapportGenereerenPage() {
   const [rapportId, setRapportId] = useState<string | null>(null);
   const [deelOpen, setDeelOpen] = useState(false);
   const rapportUrl = rapportId
-    ? `${typeof window !== "undefined" ? window.location.origin : "https://verhuurai.nl"}/dashboard/rapporten/${rapportId}`
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://www.hostboni.com"}/dashboard/rapporten/${rapportId}`
     : "";
   const bezig = useRef(false);
 

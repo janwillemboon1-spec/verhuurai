@@ -274,7 +274,7 @@ export default function RapportPagina() {
   const velden = rapport.velden;
 
 
-  const rapportPubliekUrl = `${typeof window !== "undefined" ? window.location.origin : "https://verhuurai.nl"}/dashboard/listing-rapporten/${sessieId}`;
+  const rapportPubliekUrl = `${typeof window !== "undefined" ? window.location.origin : "https://www.hostboni.com"}/dashboard/listing-rapporten/${sessieId}`;
 
   return (
     <div className="min-h-screen bg-background">

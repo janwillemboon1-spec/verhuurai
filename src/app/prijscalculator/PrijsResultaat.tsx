@@ -35,7 +35,7 @@ export default function PrijsResultaat({ analyse, basis, minN, jaar, opgeslagenI
   const gebruikBasisprijs = minN >= 6;
   const resultaatUrl = typeof window !== "undefined"
     ? `${window.location.origin}/prijscalculator/resultaat/${opgeslagenId}`
-    : `https://verhuurai.nl/prijscalculator/resultaat/${opgeslagenId}`;
+    : `https://www.hostboni.com/prijscalculator/resultaat/${opgeslagenId}`;
 
   const bijzonderPerMaand: Record<number, any[]> = {};
   const voegToe = (item: any) => {

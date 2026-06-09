@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   const { voornaam, email, locatie, land, basisprijs, minNachten, jaar, resultaat } = await request.json();
   const admin = createAdminClient();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
   // Account aanmaken of vinden
   let userId: string | null = null;
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   // Email versturen als adres opgegeven
   if (email && email.includes("@")) {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
         from: "Boni van Host Boni <boni@verhuurai.nl>",
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
               </a>
             </div>` : ""}
             <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:24px;">
-              Gegenereerd door Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">verhuurai.nl</a>
+              Gegenereerd door Host Boni · <a href="${baseUrl}" style="color:#9ca3af;">hostboni.com</a>
             </p>
           </div>`,
       });

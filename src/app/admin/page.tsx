@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://verhuurai.nl";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
 export default async function AdminPage() {
   const supabase = await createClient();

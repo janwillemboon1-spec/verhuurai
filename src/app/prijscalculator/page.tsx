@@ -107,7 +107,7 @@ export default function PrijscalculatorPage() {
   };
 
   const resultaatUrl = opgeslagenId
-    ? `${typeof window !== "undefined" ? window.location.origin : "https://verhuurai.nl"}/prijscalculator/resultaat/${opgeslagenId}`
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://www.hostboni.com"}/prijscalculator/resultaat/${opgeslagenId}`
     : "";
 
   // Bouw bijzondere-dagen map per maand

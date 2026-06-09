@@ -108,7 +108,7 @@ export function buildReviewRapportEmail(
   </div>
 
   <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">
-    Dit rapport is gegenereerd door Host Boni voor ${naam} · <a href="https://verhuurai.nl/dashboard" style="color:#9ca3af;">Abonnement beheren</a>
+    Dit rapport is gegenereerd door Host Boni voor ${naam} · <a href="https://www.hostboni.com/dashboard" style="color:#9ca3af;">Abonnement beheren</a>
   </p>
 
 </div>
