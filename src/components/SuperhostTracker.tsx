@@ -9,6 +9,7 @@ interface ReviewRaw {
 
 interface SuperhostTrackerProps {
   reviewsRaw: ReviewRaw[];
+  vandaagOverride?: Date;
 }
 
 function getNextEvaluatieDatum(vandaag: Date): Date {
@@ -27,9 +28,9 @@ function formatDatum(d: Date): string {
   return d.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export function SuperhostTracker({ reviewsRaw }: SuperhostTrackerProps) {
+export function SuperhostTracker({ reviewsRaw, vandaagOverride }: SuperhostTrackerProps) {
   const [toonUitleg, setToonUitleg] = useState(false);
-  const vandaag = new Date();
+  const vandaag = vandaagOverride ?? new Date();
   const volgendeEval = getNextEvaluatieDatum(vandaag);
 
   // Periode: exacte datum een jaar terug
