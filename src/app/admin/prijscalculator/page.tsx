@@ -20,7 +20,18 @@ export default async function PrijscalculatorStatsPage() {
     .select("id, voornaam, email, locatie, land, basisprijs, min_nachten, aangemaakt_op")
     .order("aangemaakt_op", { ascending: false });
 
-  const data = rapporten ?? [];
+  const alleData = rapporten ?? [];
+
+  // Dedupliceer: email + locatie + basisprijs exact gelijk = duplicaat
+  const gezien = new Set<string>();
+  const data = alleData.filter(r => {
+    const sleutel = `${(r.email || "").toLowerCase().trim()}|${(r.locatie || "").toLowerCase().trim()}|${r.basisprijs}`;
+    if (gezien.has(sleutel)) return false;
+    gezien.add(sleutel);
+    return true;
+  });
+
+  const aantalDuplicaten = alleData.length - data.length;
   const totaal = data.length;
 
   if (totaal === 0) {
@@ -119,7 +130,10 @@ export default async function PrijscalculatorStatsPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="font-display text-3xl text-primary">Prijscalculator — Statistieken</h1>
-            <p className="text-text-secondary text-sm mt-1">Op basis van {totaal} aanvragen</p>
+            <p className="text-text-secondary text-sm mt-1">
+              Op basis van {totaal} unieke aanvragen
+              {aantalDuplicaten > 0 && <span className="ml-1 text-text-secondary/60">({aantalDuplicaten} duplicaat{aantalDuplicaten === 1 ? "" : "s"} uitgefilterd)</span>}
+            </p>
           </div>
           <a href="/admin" className="btn-secondary text-sm">← Terug naar admin</a>
         </div>
