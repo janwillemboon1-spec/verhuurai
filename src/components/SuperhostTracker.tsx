@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface ReviewRaw {
   createdAt: string | null;
   rating: number | null;
@@ -26,6 +28,7 @@ function formatDatum(d: Date): string {
 }
 
 export function SuperhostTracker({ reviewsRaw }: SuperhostTrackerProps) {
+  const [toonUitleg, setToonUitleg] = useState(false);
   const vandaag = new Date();
   const volgendeEval = getNextEvaluatieDatum(vandaag);
 
@@ -130,6 +133,68 @@ export function SuperhostTracker({ reviewsRaw }: SuperhostTrackerProps) {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* Uitlegcontainer — inklapbaar */}
+      <div className="border-t border-border pt-4">
+        <button
+          onClick={() => setToonUitleg(v => !v)}
+          className="flex items-center gap-2 text-sm text-accent font-semibold hover:underline w-full text-left"
+        >
+          <span>{toonUitleg ? "▲" : "▼"}</span>
+          Wat levert Superhost-status je op?
+        </button>
+
+        {toonUitleg && (
+          <div className="mt-4 space-y-4">
+            <p className="text-sm text-text-secondary">
+              Airbnb controleert elke drie maanden of je het afgelopen jaar aan de Superhost-criteria hebt voldaan. Als dat zo is, word je een Superhost.
+            </p>
+
+            <div className="space-y-3">
+              {[
+                {
+                  icoon: "🎁",
+                  titel: "Airbnb-tegoedbon",
+                  tekst: "Elke keer dat je de Superhost-status een heel jaar weet te behouden, krijg je een Airbnb-tegoedbon van $100.",
+                },
+                {
+                  icoon: "📧",
+                  titel: "Gepromoot bij gasten",
+                  tekst: "Gasten komen je tegen in promotionele e-mails van Airbnb.",
+                },
+                {
+                  icoon: "🏅",
+                  titel: "Superhost-badge",
+                  tekst: "Dit vertrouwde symbool voor geweldige gastvrijheid wordt op je profiel en advertentiepagina's weergegeven.",
+                },
+                {
+                  icoon: "💸",
+                  titel: "Extra doorverwijzingsbonus",
+                  tekst: "Je verdient een extra bonus van 20% bovenop de standaard doorverwijzingsbonus.",
+                },
+                {
+                  icoon: "🚀",
+                  titel: "Eerder toegang tot nieuwe functies",
+                  tekst: "Probeer nieuwe programma's en functies uit voordat ze voor iedereen beschikbaar zijn.",
+                },
+                {
+                  icoon: "🎧",
+                  titel: "Voorrang bij support",
+                  tekst: "Je krijgt voorrang wanneer je contact opneemt met Airbnb Support.",
+                },
+              ].map(({ icoon, titel, tekst }) => (
+                <div key={titel} className="flex gap-3">
+                  <span className="text-xl flex-shrink-0">{icoon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-primary">{titel}</p>
+                    <p className="text-xs text-text-secondary leading-relaxed">{tekst}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
