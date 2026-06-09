@@ -14,13 +14,13 @@ export default async function DashboardPage({
   const { data: listingRapporten } = await supabase
     .from("listing_rapporten")
     .select("id, host_naam, accommodatie_naam, aangemaakt_op, gearchiveerd")
-    .eq("user_id", user.id)
+    .or(`user_id.eq.${user.id},email.eq.${user.email}`)
     .order("aangemaakt_op", { ascending: false });
 
   const { data: calculatorRapporten } = await supabase
     .from("prijscalculator_rapporten")
     .select("id, locatie, land, basisprijs, aangemaakt_op")
-    .eq("user_id", user.id)
+    .or(`user_id.eq.${user.id},email.eq.${user.email}`)
     .order("aangemaakt_op", { ascending: false });
 
   const { data: abonnementen } = await supabase
