@@ -15,7 +15,7 @@ export async function getOrCreateUser(email: string): Promise<{ userId: string |
     const { data: link } = await admin.auth.admin.generateLink({
       type: "magiclink",
       email,
-      options: { redirectTo: `${baseUrl}/dashboard` },
+      options: { redirectTo: `${baseUrl}/auth/callback` },
     });
     return { userId: nieuw.user.id, isNieuw: true, loginUrl: link?.properties?.action_link || null };
   }
@@ -29,7 +29,7 @@ export async function getOrCreateUser(email: string): Promise<{ userId: string |
       const { data: link } = await admin.auth.admin.generateLink({
         type: "magiclink",
         email,
-        options: { redirectTo: `${baseUrl}/dashboard` },
+        options: { redirectTo: `${baseUrl}/auth/callback` },
       });
       return { userId: bestaand.id, isNieuw: false, loginUrl: link?.properties?.action_link || null };
     }
