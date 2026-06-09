@@ -59,6 +59,7 @@ export default async function AdminPage() {
           <h1 className="font-display text-3xl text-primary">Admin</h1>
           <div className="flex gap-3 flex-wrap">
             <a href="/admin/listing-optimizer" className="btn-secondary text-sm">📊 LO Statistieken</a>
+            <a href="/admin/host-performance" className="btn-secondary text-sm">⭐ HP Statistieken</a>
             <a href="/admin/contacten" className="btn-primary text-sm">👥 Contacten & Export</a>
             <a href="/dashboard" className="btn-secondary text-sm">← Dashboard</a>
           </div>
