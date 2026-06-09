@@ -71,7 +71,7 @@ export default function PrijscalculatorPage() {
   const gebruikBasisprijs = minN >= 6;
 
   const analyseer = async () => {
-    if (!land.trim() || !plaats.trim() || !basis || !email.includes("@")) return;
+    if (!land.trim() || !plaats.trim() || !basis || !voornaam.trim() || !email.includes("@")) return;
     setLaden(true); setFout(null); setAnalyse(null); setOpgeslagenId(null);
     try {
       const res = await fetch("/api/locatie-analyse", {
@@ -217,7 +217,7 @@ export default function PrijscalculatorPage() {
           {/* Voornaam + Email */}
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-semibold text-primary mb-1.5">Voornaam</label>
+              <label className="block text-sm font-semibold text-primary mb-1.5">Voornaam <span className="text-accent">*</span></label>
               <input
                 type="text"
                 value={voornaam}
@@ -251,8 +251,8 @@ export default function PrijscalculatorPage() {
 
           <button
             onClick={analyseer}
-            disabled={!land.trim() || !plaats.trim() || !basis || !email.includes("@") || laden}
-            className={`btn-primary w-full text-lg py-4 flex items-center justify-center gap-2 ${(!land.trim() || !plaats.trim() || !basis || !email.includes("@") || laden) ? "opacity-40 cursor-not-allowed" : ""}`}
+            disabled={!land.trim() || !plaats.trim() || !basis || !voornaam.trim() || !email.includes("@") || laden}
+            className={`btn-primary w-full text-lg py-4 flex items-center justify-center gap-2 ${(!land.trim() || !plaats.trim() || !basis || !voornaam.trim() || !email.includes("@") || laden) ? "opacity-40 cursor-not-allowed" : ""}`}
           >
             {laden ? (
               <>

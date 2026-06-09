@@ -233,13 +233,13 @@ export default function GratisPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-semibold text-primary mb-1.5">
-                  Naam <span className="text-accent">*</span>
+                  Voornaam <span className="text-accent">*</span>
                 </label>
                 <input
                   type="text"
                   value={naam}
                   onChange={(e) => setNaam(e.target.value)}
-                  placeholder="Jouw naam"
+                  placeholder="Jouw voornaam"
                   className="input"
                   disabled={laden}
                 />
