@@ -153,10 +153,12 @@ export default async function HostPerformanceStatsPage() {
 
   // ── Categoriseren complimenten ────────────────────────────────────────────
 
+  // Tel per rapport (max 1 treffer per rapport per categorie)
   const complimentScores = COMPLIMENT_CATEGORIEEN.map(cat => {
-    const treffers = alleComplimenten.filter(c =>
-      cat.keywords.some(k => c.includes(k.toLowerCase()))
-    ).length;
+    const treffers = geldig.filter((r: any) => {
+      const punten: string[] = (r.rapport_json?.terugkerendeComplimenten ?? []).map((c: string) => c.toLowerCase());
+      return punten.some(c => cat.keywords.some(k => c.includes(k.toLowerCase())));
+    }).length;
     return { ...cat, treffers, percentage: aantalRapporten > 0 ? Math.round((treffers / aantalRapporten) * 100) : 0 };
   }).sort((a, b) => b.treffers - a.treffers);
 
@@ -165,9 +167,10 @@ export default async function HostPerformanceStatsPage() {
   // ── Categoriseren klachten ────────────────────────────────────────────────
 
   const klachtScores = KLACHT_CATEGORIEEN.map(cat => {
-    const treffers = alleKlachten.filter(k =>
-      cat.keywords.some(kw => k.includes(kw.toLowerCase()))
-    ).length;
+    const treffers = geldig.filter((r: any) => {
+      const punten: string[] = (r.rapport_json?.terugkerendeKlachten ?? []).map((k: string) => k.toLowerCase());
+      return punten.some(k => cat.keywords.some(kw => k.includes(kw.toLowerCase())));
+    }).length;
     return { ...cat, treffers, percentage: aantalRapporten > 0 ? Math.round((treffers / aantalRapporten) * 100) : 0 };
   }).sort((a, b) => b.treffers - a.treffers);
 
