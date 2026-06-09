@@ -4,12 +4,12 @@ import Link from "next/link";
 
 const DEMO = {
   rapportTitel: "Host Performance Audit",
-  listingNaam: "Casa Louise · Alicante",
-  hostNaam: "Peter",
+  listingNaam: "Casa Maria · Alicante",
+  hostNaam: "Maria",
   totaalAantalReviews: 23,
   sentiment: { positief: 78, neutraal: 13, negatief: 9 },
   samenvatting:
-    "Peter, Casa Louise scoort goed bij gasten. 78% van de reviews is positief — de locatie en het privézwembad zijn duidelijke troefkaarten. Er zijn twee terugkerende klachten die directe aandacht verdienen: de airconditioner in de slaapkamer en de wifi-snelheid. Pak die aan en je bent klaar voor een 9+ gemiddelde.",
+    "Maria, Casa Maria scoort goed bij gasten. 78% van de reviews is positief — de locatie en het privézwembad zijn duidelijke troefkaarten. Er zijn twee terugkerende klachten die directe aandacht verdienen: de airconditioner in de slaapkamer en de wifi-snelheid. Pak die aan en je bent klaar voor een 9+ gemiddelde.",
   terugkerendeComplimenten: [
     "Prachtige locatie — op loopafstand van het strand (12 van 23 reviews)",
     "Privézwembad als groot pluspunt, vooral voor gezinnen",
@@ -46,7 +46,7 @@ const DEMO = {
   herschrevenVersie:
     "Reageer altijd binnen 24 uur op een review — positief én negatief.\n\nBij positieve reviews: bedank kort en persoonlijk. Noem iets specifieks uit hun review.\nBij kritische reviews: erken het punt, bied geen excuses maar een oplossing, en sluit positief af.\n\nVermijd: in de verdediging schieten, lange uitleg geven, of de schuld bij de gast leggen.\n\nGouden formule voor negatieve reviews:\n1. Bedank voor de eerlijkheid\n2. Erken het punt (ook al ben je het er niet mee eens)\n3. Noem wat je hebt aangepast of gaat aanpassen\n4. Sluit warm af",
   afsluiting:
-    "Casa Louise heeft een sterke basis, Peter. De airco en wifi zijn de twee punten die je vandaag nog kunt aanpakken — klein effort, groot verschil voor je score. Je doet het goed! 🏡✨",
+    "Casa Maria heeft een sterke basis, Maria. De airco en wifi zijn de twee punten die je vandaag nog kunt aanpakken — klein effort, groot verschil voor je score. Je doet het goed! 🏡✨",
 };
 
 export default function ReviewMonitorDemoPage() {
@@ -153,7 +153,6 @@ export default function ReviewMonitorDemoPage() {
           <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
             {DEMO.herschrevenVersie}
           </p>
-          <CopyButton tekst={DEMO.herschrevenVersie} />
         </div>
 
         {/* Afsluiting */}
