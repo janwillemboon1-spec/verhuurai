@@ -72,19 +72,16 @@ export async function getListings(): Promise<HostawayListing[]> {
 export async function getConversations(listingIds: number[]): Promise<HostawayConversation[]> {
   if (listingIds.length === 0) return [];
 
-  const all: HostawayConversation[] = [];
+  const res = await hostawayFetch("/conversations?isArchived=0&limit=100");
+  const data = await res.json();
+  const all: HostawayConversation[] = data.result ?? [];
 
-  for (const listingId of listingIds) {
-    const res = await hostawayFetch(
-      `/conversations?listingId=${listingId}&isArchived=0&limit=50`
+  const allowed = new Set(listingIds);
+  return all
+    .filter((c) => allowed.has(c.listingMapId))
+    .sort((a, b) =>
+      new Date(b.messageReceivedOn).getTime() - new Date(a.messageReceivedOn).getTime()
     );
-    const data = await res.json();
-    if (data.result) all.push(...data.result);
-  }
-
-  return all.sort((a, b) =>
-    new Date(b.messageReceivedOn).getTime() - new Date(a.messageReceivedOn).getTime()
-  );
 }
 
 export async function getConversation(conversationId: number): Promise<HostawayConversation | null> {
