@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
 import { DeelModal } from "@/components/DeelModal";
+import { SuperhostTracker } from "@/components/SuperhostTracker";
 
 const BERICHTEN = [
   "Boni haalt jouw reviews op...",
@@ -247,6 +248,11 @@ export default function RapportGenereerenPage() {
             <BoniAvatar size={50} className="flex-shrink-0" />
             <p className="text-text-secondary leading-relaxed italic">{rapport.afsluiting}</p>
           </div>
+        )}
+
+        {/* Superhost Score Tracker */}
+        {Array.isArray(rapport.reviewsRaw) && rapport.reviewsRaw.length > 0 && (
+          <SuperhostTracker reviewsRaw={rapport.reviewsRaw} />
         )}
 
         {/* CTA abonnement */}
