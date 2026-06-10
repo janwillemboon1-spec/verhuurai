@@ -24,20 +24,21 @@ const VELD_ICONEN: Record<string, string> = {
   huisregels: "📋",
 };
 
-const VELD_NAMEN: Record<string, string> = {
-  titel: "Titel",
-  beschrijving: "Beschrijving",
-  accommodatie: "Accommodatie",
-  toegang: "Toegang voor gasten",
-  interactie: "Interactie met gasten",
-  andereInfo: "Andere belangrijke informatie",
-  voorzieningen: "Voorzieningen",
-  buurt: "Hoogtepunten van de buurt",
-  vervoer: "Vervoersmogelijkheden",
-  fotos: "Foto's",
-  recensies: "Recensies",
-  hostProfiel: "Host profiel",
-  huisregels: "Huisregels",
+const VELD_NAMEN: Record<string, Record<string, string>> = {
+  nl: {
+    titel: "Titel", beschrijving: "Beschrijving", accommodatie: "Accommodatie",
+    toegang: "Toegang voor gasten", interactie: "Interactie met gasten",
+    andereInfo: "Andere belangrijke informatie", voorzieningen: "Voorzieningen",
+    buurt: "Hoogtepunten van de buurt", vervoer: "Vervoersmogelijkheden",
+    fotos: "Foto's", recensies: "Recensies", hostProfiel: "Host profiel", huisregels: "Huisregels",
+  },
+  en: {
+    titel: "Title", beschrijving: "Description", accommodatie: "Accommodation",
+    toegang: "Guest access", interactie: "Guest interaction",
+    andereInfo: "Other important info", voorzieningen: "Amenities",
+    buurt: "Neighbourhood highlights", vervoer: "Getting around",
+    fotos: "Photos", recensies: "Reviews", hostProfiel: "Host profile", huisregels: "House rules",
+  },
 };
 
 const GESCOORDE_VELDEN = [
@@ -55,9 +56,10 @@ const GESCOORDE_VELDEN = [
   "huisregels",
 ] as const;
 
-function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
+function VeldSectie({ veldKey, veld, isEn = false }: { veldKey: string; veld: VeldRapport; isEn?: boolean }) {
   const icoon = VELD_ICONEN[veldKey] ?? "📄";
-  const naam = VELD_NAMEN[veldKey] ?? veldKey;
+  const taalNamen = isEn ? VELD_NAMEN.en : VELD_NAMEN.nl;
+  const naam = taalNamen[veldKey] ?? veldKey;
   const score = veld.score;
   const bgKleur = scoreBgKleur(score);
 
@@ -79,7 +81,7 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
 
       {veld.verbeterpunten && veld.verbeterpunten.length > 0 && (
         <div>
-          <p className="font-semibold text-primary text-sm mb-2">Verbeterpunten</p>
+          <p className="font-semibold text-primary text-sm mb-2">{isEn ? "Improvement points" : "Verbeterpunten"}</p>
           <ul className="space-y-1">
             {veld.verbeterpunten.map((punt, i) => (
               <li key={i} className="flex gap-2 text-sm text-text-secondary">
@@ -93,12 +95,12 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
 
       {veld.herschrevenVersies && veld.herschrevenVersies.length > 0 && (
         <div className="space-y-3">
-          <p className="font-semibold text-primary text-sm">Herschreven versie(s)</p>
+          <p className="font-semibold text-primary text-sm">{isEn ? "Rewritten version(s)" : "Herschreven versie(s)"}</p>
           {veld.herschrevenVersies.map((v, i) => (
             <div key={i} className="bg-surface rounded-xl p-4 border border-border space-y-2">
               {v.uitleg && (
                 <div className="flex items-start gap-1.5">
-                  <span className="text-xs font-bold text-accent flex-shrink-0 mt-0.5">Toelichting</span>
+                  <span className="text-xs font-bold text-accent flex-shrink-0 mt-0.5">{isEn ? "Explanation" : "Toelichting"}</span>
                   <p className="text-xs text-text-secondary italic leading-relaxed">{v.uitleg}</p>
                 </div>
               )}
@@ -115,7 +117,7 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
         <div className="bg-surface rounded-xl p-4 border border-border space-y-2">
           {veld.herschrevenUitleg && (
             <div className="flex items-start gap-1.5">
-              <span className="text-xs font-bold text-accent flex-shrink-0 mt-0.5">Toelichting</span>
+              <span className="text-xs font-bold text-accent flex-shrink-0 mt-0.5">{isEn ? "Explanation" : "Toelichting"}</span>
               <p className="text-xs text-text-secondary italic leading-relaxed">{veld.herschrevenUitleg}</p>
             </div>
           )}
@@ -128,7 +130,7 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
 
       {veldKey === "recensies" && veld.voorbeeldReacties && veld.voorbeeldReacties.length > 0 && (
         <div className="space-y-3">
-          <p className="font-semibold text-primary text-sm">Voorbeeldreacties op reviews</p>
+          <p className="font-semibold text-primary text-sm">{isEn ? "Example review responses" : "Voorbeeldreacties op reviews"}</p>
           {veld.voorbeeldReacties.map((r, i) => (
             <div key={i} className="bg-surface rounded-xl p-4 border border-border space-y-2">
               {r.origineelReview && (
@@ -145,7 +147,7 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
 
       {veld.ontbrekendeVoorzieningen && veld.ontbrekendeVoorzieningen.length > 0 && (
         <div>
-          <p className="font-semibold text-primary text-sm mb-2">Ontbrekende voorzieningen</p>
+          <p className="font-semibold text-primary text-sm mb-2">{isEn ? "Missing amenities" : "Ontbrekende voorzieningen"}</p>
           <ul className="space-y-1">
             {veld.ontbrekendeVoorzieningen.map((item, i) => (
               <li key={i} className="text-sm text-text-secondary flex gap-2">
@@ -159,7 +161,7 @@ function VeldSectie({ veldKey, veld }: { veldKey: string; veld: VeldRapport }) {
 
       {veld.algemeneTips && veld.algemeneTips.length > 0 && (
         <div>
-          <p className="font-semibold text-primary text-sm mb-2">Algemene tips</p>
+          <p className="font-semibold text-primary text-sm mb-2">{isEn ? "General tips" : "Algemene tips"}</p>
           <ul className="space-y-1">
             {veld.algemeneTips.map((tip, i) => (
               <li key={i} className="text-sm text-text-secondary flex gap-2">
@@ -274,7 +276,7 @@ export default function RapportPagina() {
   }
 
   const velden = rapport.velden;
-
+  const isEn = (rapport as any).rapportTaal === "en";
 
   const rapportPubliekUrl = `${typeof window !== "undefined" ? window.location.origin : "https://www.hostboni.com"}/dashboard/listing-rapporten/${databaseId || sessieId}`;
 
@@ -366,7 +368,7 @@ export default function RapportPagina() {
         )}
 
         <div className="card p-6 space-y-6">
-          <h2 className="font-display text-2xl text-primary">Totaalscore</h2>
+          <h2 className="font-display text-2xl text-primary">{isEn ? "Total score" : "Totaalscore"}</h2>
           <div className="flex flex-col items-center gap-4">
             <ScoreCircle score={rapport.totaalscore} size={160} />
             {rapport.totaalSamenvatting && (
@@ -379,7 +381,7 @@ export default function RapportPagina() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {rapport.top3SterkstePunten?.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-display text-lg text-success">Sterkste punten</h3>
+                <h3 className="font-display text-lg text-success">{isEn ? "Strongest points" : "Sterkste punten"}</h3>
                 <div className="space-y-2">
                   {rapport.top3SterkstePunten.map((punt, i) => (
                     <div
@@ -396,7 +398,7 @@ export default function RapportPagina() {
 
             {rapport.top3Prioriteiten?.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-display text-lg text-warning">Prioriteiten</h3>
+                <h3 className="font-display text-lg text-warning">{isEn ? "Priorities" : "Prioriteiten"}</h3>
                 <div className="space-y-2">
                   {rapport.top3Prioriteiten.map((prioriteit, i) => (
                     <div
@@ -414,12 +416,12 @@ export default function RapportPagina() {
         </div>
 
         <div className="space-y-4">
-          <h2 className="font-display text-2xl text-primary">Analyse per onderdeel</h2>
+          <h2 className="font-display text-2xl text-primary">{isEn ? "Analysis per section" : "Analyse per onderdeel"}</h2>
 
           {GESCOORDE_VELDEN.map((key) => {
             const veld = velden[key as keyof typeof velden];
             if (!veld) return null;
-            return <VeldSectie key={key} veldKey={key} veld={veld as VeldRapport} />;
+            return <VeldSectie key={key} veldKey={key} veld={veld as VeldRapport} isEn={isEn} />;
           })}
 
           {velden.directBoeken && (

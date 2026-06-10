@@ -21,6 +21,7 @@ function AanmeldenForm() {
   const isEenmalig = true;
   const frequentie = "eenmalig";
   const interval = "eenmalig";
+  const [taal, setTaal] = useState("nl");
   const [stap, setStap] = useState<"formulier" | "code">("formulier");
   const [code, setCode] = useState("");
   const [laden, setLaden] = useState(false);
@@ -55,6 +56,7 @@ function AanmeldenForm() {
           voornaam: voornaam.trim() || null,
           frequentie,
           interval,
+          taal,
         }),
       });
       const data = await res.json();
@@ -121,6 +123,7 @@ function AanmeldenForm() {
         voornaam: voornaam.trim() || null,
         frequentie,
         interval,
+        taal,
       }),
     });
     const data = await res.json();
@@ -254,6 +257,19 @@ function AanmeldenForm() {
               </p>
             </div>
           )}
+
+          {/* Taal */}
+          <div>
+            <label className="block text-sm font-semibold text-primary mb-2">Rapporttaal</label>
+            <div className="flex gap-3">
+              {[{ waarde: "nl", label: "🇳🇱 Nederlands" }, { waarde: "en", label: "🇬🇧 English" }].map((optie) => (
+                <label key={optie.waarde} className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer text-sm font-medium transition-colors ${taal === optie.waarde ? "border-accent bg-accent/10 text-accent" : "border-border text-text-secondary hover:border-accent/50"}`}>
+                  <input type="radio" name="taal" value={optie.waarde} checked={taal === optie.waarde} onChange={() => setTaal(optie.waarde)} className="sr-only" />
+                  {optie.label}
+                </label>
+              ))}
+            </div>
+          </div>
 
           {fout && (
             <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 text-danger text-sm">

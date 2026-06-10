@@ -26,7 +26,13 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
     vervoer: "🚌", recensies: "⭐", hostProfiel: "👤", huisregels: "📋",
   };
 
-  const VELD_NAMEN: Record<string, string> = {
+  const isEn = (rapport as any).rapportTaal === "en";
+  const VELD_NAMEN = isEn ? {
+    titel: "Title", beschrijving: "Description", accommodatie: "Accommodation",
+    toegang: "Guest access", interactie: "Guest interaction", andereInfo: "Other important info",
+    voorzieningen: "Amenities", buurt: "Neighbourhood highlights", vervoer: "Getting around",
+    recensies: "Reviews", hostProfiel: "Host profile", huisregels: "House rules",
+  } : {
     titel: "Titel", beschrijving: "Beschrijving", accommodatie: "Accommodatie",
     toegang: "Toegang", interactie: "Interactie met gasten", andereInfo: "Andere informatie",
     voorzieningen: "Voorzieningen", buurt: "Buurt", vervoer: "Vervoer",
@@ -60,7 +66,7 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
         )}
 
         <div className="card p-6 space-y-6">
-          <h2 className="font-display text-2xl text-primary">Totaalscore</h2>
+          <h2 className="font-display text-2xl text-primary">{isEn ? "Total score" : "Totaalscore"}</h2>
           <div className="flex flex-col items-center gap-4">
             <ScoreCircle score={rapport.totaalscore} size={160} />
             {rapport.totaalSamenvatting && (
@@ -70,7 +76,7 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
           <div className="grid sm:grid-cols-2 gap-4">
             {rapport.top3SterkstePunten?.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-display text-lg text-success">Sterkste punten</h3>
+                <h3 className="font-display text-lg text-success">{isEn ? "Strongest points" : "Sterkste punten"}</h3>
                 {rapport.top3SterkstePunten.map((punt: string, i: number) => (
                   <div key={i} className="flex gap-3 items-start bg-success/10 border border-success/20 rounded-xl p-3">
                     <span>✅</span><p className="text-sm text-primary">{punt}</p>
@@ -80,7 +86,7 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
             )}
             {rapport.top3Prioriteiten?.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-display text-lg text-warning">Prioriteiten</h3>
+                <h3 className="font-display text-lg text-warning">{isEn ? "Priorities" : "Prioriteiten"}</h3>
                 {rapport.top3Prioriteiten.map((p: string, i: number) => (
                   <div key={i} className="flex gap-3 items-start bg-warning/10 border border-warning/20 rounded-xl p-3">
                     <span>🔧</span><p className="text-sm text-primary">{p}</p>
@@ -92,7 +98,7 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
         </div>
 
         <div className="space-y-4">
-          <h2 className="font-display text-2xl text-primary">Analyse per onderdeel</h2>
+          <h2 className="font-display text-2xl text-primary">{isEn ? "Analysis per section" : "Analyse per onderdeel"}</h2>
           {Object.entries(velden || {}).map(([key, veld]: [string, any]) => {
             if (!veld || !veld.score) return null;
             const bgKleur = scoreBgKleur(veld.score);

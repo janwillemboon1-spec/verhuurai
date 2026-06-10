@@ -8,7 +8,7 @@ if (!global.sessies) global.sessies = new Map();
 
 export async function POST(request: Request) {
   try {
-    const { naam, email, airbnbUrl } = await request.json();
+    const { naam, email, airbnbUrl, taal } = await request.json();
 
     if (!airbnbUrl || !airbnbUrl.includes("airbnb")) {
       return NextResponse.json({ error: "Geldige Airbnb URL is verplicht" }, { status: 400 });
@@ -20,6 +20,7 @@ export async function POST(request: Request) {
       naam: naam?.trim() || "Host",
       email: email?.trim() || "",
       airbnbUrl: airbnbUrl.trim(),
+      taal: taal || "nl",
       aangemaakt: new Date().toISOString(),
     });
 

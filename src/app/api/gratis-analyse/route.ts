@@ -14,7 +14,7 @@ function kapTitelAf(titel: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { titel, airbnbUrl, recensies, naam, email } = body;
+    const { titel, airbnbUrl, recensies, naam, email, taal } = body;
 
     if (!titel || typeof titel !== "string") {
       return NextResponse.json({ error: "Titel is verplicht" }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: buildTitelPrompt(titel.trim(), airbnbUrl?.trim(), recensies?.trim()),
+          content: buildTitelPrompt(titel.trim(), airbnbUrl?.trim(), recensies?.trim(), taal || "nl"),
         },
       ],
     });

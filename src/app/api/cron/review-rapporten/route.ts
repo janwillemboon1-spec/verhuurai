@@ -94,7 +94,7 @@ export async function GET(request: Request) {
         ? `Week van ${nu.toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}`
         : nu.toLocaleDateString("nl-NL", { month: "long", year: "numeric" });
 
-      const prompt = buildReviewRapportPrompt(aboData.airbnb_url, aboData.frequentie, periodeOmschrijving);
+      const prompt = buildReviewRapportPrompt(aboData.airbnb_url, aboData.frequentie, periodeOmschrijving, aboData.taal || "nl");
 
       const message = await client.messages.create({
         model: "claude-sonnet-4-6",
@@ -117,7 +117,7 @@ export async function GET(request: Request) {
         .insert({
           abonnement_id: aboData.id,
           user_id: aboData.user_id,
-          rapport_json: rapport,
+          rapport_json: { ...rapport, taal: aboData.taal || "nl" },
           periode_omschrijving: periodeOmschrijving,
         })
         .select()

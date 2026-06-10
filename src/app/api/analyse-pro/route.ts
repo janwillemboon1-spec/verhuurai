@@ -261,7 +261,8 @@ function mapNaarFormulier(
   raw: { sectieMap: Record<string, any>; volledigData: any },
   naam: string,
   recensies: string,
-  airbnbUrl: string
+  airbnbUrl: string,
+  taal: string = "nl"
 ): AnalyseFormulier {
   const s = raw.sectieMap;
 
@@ -305,7 +306,7 @@ function mapNaarFormulier(
 
   return {
     hostNaam: naam,
-    rapportTaal: "nl",
+    rapportTaal: taal,
     woningType: "Woning",
     doelgroep: ["couples", "families"],
     land,
@@ -383,7 +384,7 @@ export async function POST(request: Request) {
     const sessie = global.sessies.get(sessieId);
     if (!sessie) return NextResponse.json({ error: "Sessie niet gevonden" }, { status: 404 });
 
-    const { naam, email, airbnbUrl } = sessie;
+    const { naam, email, airbnbUrl, taal } = sessie;
     global.rapportStatus.set(sessieId, "verwerking");
 
     const [rawListing, recensies] = await Promise.all([
@@ -399,7 +400,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const formData = mapNaarFormulier(rawListing as any, naam, recensies, airbnbUrl);
+    const formData = mapNaarFormulier(rawListing as any, naam, recensies, airbnbUrl, taal || "nl");
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -459,7 +460,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
       );
     }
 
-    global.rapporten.set(sessieId, { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email, isPro: true });
+    global.rapporten.set(sessieId, { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email, isPro: true, rapportTaal: taal || "nl" });
 
     try {
       const admin = createAdminClient();
@@ -473,7 +474,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
       }
       const { data: opgeslagenRapport } = await admin.from("listing_rapporten").insert({
         sessie_id: sessieId,
-        rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email, isPro: true },
+        rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email, isPro: true, rapportTaal: taal || "nl" },
         host_naam: naam,
         email,
         user_id: userId,

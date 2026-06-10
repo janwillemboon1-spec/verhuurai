@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       recensies = "(Reviews konden niet automatisch worden opgehaald)";
     }
 
-    const prompt = buildReviewRapportPrompt(abo.airbnb_url, abo.frequentie, periodeOmschrijving);
+    const prompt = buildReviewRapportPrompt(abo.airbnb_url, abo.frequentie, periodeOmschrijving, (abo as any).taal || "nl");
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const message = await client.messages.create({
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       .insert({
         abonnement_id: abonnementId,
         user_id: user.id,
-        rapport_json: { ...rapport, reviewsRaw: alleReviewsRaw },
+        rapport_json: { ...rapport, reviewsRaw: alleReviewsRaw, taal: (abo as any).taal || "nl" },
         periode_omschrijving: periodeOmschrijving,
       })
       .select()

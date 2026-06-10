@@ -153,6 +153,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
       hostNaam: naam,
       datum: new Date().toISOString(),
       email,
+      rapportTaal: formData.rapportTaal || "nl",
     });
 
     // Account aanmaken of vinden + rapport opslaan in Supabase
@@ -171,7 +172,7 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
 
       const { data: opgeslagenRapport } = await admin.from("listing_rapporten").insert({
         sessie_id: sessieId,
-        rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email },
+        rapport_json: { ...rapport, hostNaam: naam, datum: new Date().toISOString(), email, rapportTaal: formData.rapportTaal || "nl" },
         host_naam: naam,
         accommodatie_naam: formData.accommodatieNaam || null,
         email,

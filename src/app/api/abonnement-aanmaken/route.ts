@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { airbnb_url, naam, voornaam, frequentie, interval } = await request.json();
+    const { airbnb_url, naam, voornaam, frequentie, interval, taal } = await request.json();
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
         voornaam: voornaam || null,
         frequentie: frequentie || "monthly",
         billing_interval: interval || "month",
+        taal: taal || "nl",
         status: "trial",
       })
       .select()

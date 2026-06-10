@@ -33,6 +33,7 @@ export default function GratisPage() {
   const [scrapeSucces, setScrapeSucces] = useState<number | null>(null);
   const [naam, setNaam] = useState("");
   const [email, setEmail] = useState("");
+  const [taal, setTaal] = useState("nl");
   const [ingelogd, setIngelogd] = useState(false);
   const [ingelogdEmail, setIngelogdEmail] = useState("");
 
@@ -91,6 +92,7 @@ export default function GratisPage() {
           recensies: recensies.trim() || undefined,
           naam: naam.trim() || undefined,
           email: (ingelogd ? ingelogdEmail : email).trim() || undefined,
+          taal,
         }),
       });
 
@@ -260,6 +262,19 @@ export default function GratisPage() {
               </div>
             </div>
           )}
+
+          {/* Taal */}
+          <div>
+            <label className="block text-sm font-semibold text-primary mb-2">Rapporttaal</label>
+            <div className="flex gap-3">
+              {[{ waarde: "nl", label: "🇳🇱 Nederlands" }, { waarde: "en", label: "🇬🇧 English" }].map((optie) => (
+                <label key={optie.waarde} className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer text-sm font-medium transition-colors ${taal === optie.waarde ? "border-accent bg-accent/10 text-accent" : "border-border text-text-secondary hover:border-accent/50"}`}>
+                  <input type="radio" name="taal" value={optie.waarde} checked={taal === optie.waarde} onChange={() => setTaal(optie.waarde)} className="sr-only" />
+                  {optie.label}
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* Knop */}
           <button

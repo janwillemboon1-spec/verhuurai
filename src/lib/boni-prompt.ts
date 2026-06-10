@@ -216,7 +216,8 @@ Genereer je antwoord als GELDIG JSON (geen markdown codeblokken, direct JSON) me
 }`;
 }
 
-export function buildTitelPrompt(titel: string, airbnbUrl?: string, recensies?: string): string {
+export function buildTitelPrompt(titel: string, airbnbUrl?: string, recensies?: string, taal: string = "nl"): string {
+  const isEn = taal === "en";
   const contextBlok = [
     airbnbUrl ? `Airbnb URL van de host: ${airbnbUrl}` : "",
     recensies
@@ -225,6 +226,61 @@ export function buildTitelPrompt(titel: string, airbnbUrl?: string, recensies?: 
   ]
     .filter(Boolean)
     .join("\n\n");
+
+  if (isEn) {
+    return `IMPORTANT: Write the ENTIRE response in English. Every word — analysis, improvement points, rewritten versions, conclusion — must be in English.
+
+You are Boni, a direct expert in optimising vacation rental listings. Analyse this title and give honest advice.
+
+Title: "${titel}"
+Exact character count: ${titel.length} characters
+${contextBlok ? `\nEXTRA CONTEXT FROM HOST:\n${contextBlok}\n` : ""}
+GOAL OF A GOOD TITLE:
+The most unique and distinctive features of the property must be immediately visible.
+
+FORBIDDEN in the title:
+- Accommodation type (apartment, villa, house, room, studio) — the platform shows this automatically
+- The name of the property, unless it is a brand that also appears on the host's own direct booking website
+- Number of guests or beds (e.g. "for 6 people", "4 beds") — the platform shows this automatically
+- The name of the city/town where the property is — already visible in search results
+- Empty adjectives (cosy, beautiful, stunning, lovely, amazing, stylish, modern)
+
+ALLOWED:
+- Internationally recognised words like "parking", "free parking", "pool", "wifi"
+- Concrete location descriptions like "direct sea view", "50m from beach", "on the beach" — precise descriptions, not vague terms
+- Features: amenities (pool, hot tub, workspace), services (breakfast included, shuttle), location advantages or any other distinguishing element
+
+LAYOUT TIP (recommendation, not requirement):
+A structure with separators (|, •, -, .) makes the title scannable. Give this as a tip if missing, but don't penalise the host if the features are clearly present.
+
+SCORES (scale 1-10):
+- 9-10: concrete unique features + no accommodation type + no property name (unless brand) + no guest count + no city name + no empty adjectives + 40-50 characters
+- 7-8: good features, minor deviation
+- 5-6: empty adjectives OR accommodation type OR guest count OR city name present
+- 3-4: no distinguishing features or completely generic
+- 1-2: misleading or empty
+
+REWRITTEN VERSIONS:
+1. Write versions in the SAME LANGUAGE as the original title.
+2. HARD MAXIMUM LIMIT: every rewritten title must NEVER exceed 50 characters. Count from the first letter of the first word to the last letter of the last word — including all spaces and separators. If a version exceeds 50 characters, remove words until you reach 50 or fewer. Aim for 40-50 characters.
+3. All forbidden rules also apply to rewritten versions: no accommodation type, no property name (unless brand), no guest count, no city name, no empty adjectives.
+4. Use the same or similar separator as the host already uses.
+${recensies ? "5. Incorporate the most frequently mentioned positive features from the reviews as inspiration." : ""}
+
+Give your response as JSON without markdown code blocks, directly valid JSON:
+{
+  "score": 1-10,
+  "oordeel": "good/average/poor",
+  "analyse": "Direct analysis from Boni in 2-3 sentences. Specifically mention whether the accommodation type is included or the layout is missing.",
+  "verbeterpunten": ["concrete point 1", "concrete point 2"],
+  "herschreven_versies": [
+    {"versie": "Feature 1 | Feature 2 | Feature 3 | 5 min from Centre", "tekens": 42, "uitleg": "Why this version works"},
+    {"versie": "Feature 1 | Feature 2 | 8 min from Dam", "tekens": 38, "uitleg": "Shorter variant without feature 3"},
+    {"versie": "Feature 1 | Feature 2 | Feature 3 | 3 min from Station", "tekens": 44, "uitleg": "Alternative landmark"}
+  ],
+  "conclusie": "Closing sentence from Boni"
+}`;
+  }
 
   return `Je bent Boni, een directe expert in het optimaliseren van vakantieverhuuradvertenties. Analyseer deze titel en geef eerlijk advies.
 

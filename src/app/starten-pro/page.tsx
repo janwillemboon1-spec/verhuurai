@@ -10,6 +10,7 @@ export default function StartenProPage() {
   const [naam, setNaam] = useState("");
   const [email, setEmail] = useState("");
   const [airbnbUrl, setAirbnbUrl] = useState("");
+  const [taal, setTaal] = useState("nl");
   const [laden, setLaden] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [ingelogd, setIngelogd] = useState(false);
@@ -41,6 +42,7 @@ export default function StartenProPage() {
           naam: ingelogd ? ingelogdEmail.split("@")[0] : naam.trim(),
           email: ingelogd ? ingelogdEmail : email.trim(),
           airbnbUrl: airbnbUrl.trim(),
+          taal,
         }),
       });
       if (!res.ok) throw new Error();
@@ -130,6 +132,19 @@ export default function StartenProPage() {
               </div>
             </>
           )}
+
+          {/* Taal */}
+          <div>
+            <label className="block text-sm font-semibold text-primary mb-2">Rapporttaal</label>
+            <div className="flex gap-3">
+              {[{ waarde: "nl", label: "🇳🇱 Nederlands" }, { waarde: "en", label: "🇬🇧 English" }].map((optie) => (
+                <label key={optie.waarde} className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer text-sm font-medium transition-colors ${taal === optie.waarde ? "border-accent bg-accent/10 text-accent" : "border-border text-text-secondary hover:border-accent/50"}`}>
+                  <input type="radio" name="taal" value={optie.waarde} checked={taal === optie.waarde} onChange={() => setTaal(optie.waarde)} className="sr-only" />
+                  {optie.label}
+                </label>
+              ))}
+            </div>
+          </div>
 
           <div className="bg-background rounded-xl p-4 flex items-center gap-3">
             <BoniAvatar size={50} />
