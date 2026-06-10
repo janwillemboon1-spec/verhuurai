@@ -105,8 +105,8 @@ export default function RevenueDetailPage() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-6">
-        <Link href="/cockpit/revenue" className="text-sm text-gray-400 hover:text-[#2b3885] transition-colors">
-          ← Revenue
+        <Link href="/cockpit/revenue/bezetting" className="text-sm text-gray-400 hover:text-[#2b3885] transition-colors">
+          ← Bezetting
         </Link>
         <span className="text-gray-200">/</span>
         <h1 className="text-xl font-bold text-[#2b3885] truncate">{displayName}</h1>
