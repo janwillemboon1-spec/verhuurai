@@ -51,6 +51,13 @@ export interface HostawayMessage {
   userId: number | null;
 }
 
+export interface HostawayReservation {
+  arrivalDate: string;
+  departureDate: string;
+  channelName: string;
+  listingName: string;
+}
+
 export interface HostawayConversation {
   id: number;
   listingMapId: number;
@@ -61,6 +68,7 @@ export interface HostawayConversation {
   messageSentOn: string;
   messageReceivedOn: string;
   conversationMessages: HostawayMessage[];
+  Reservation: HostawayReservation | null;
 }
 
 export async function getListings(): Promise<HostawayListing[]> {

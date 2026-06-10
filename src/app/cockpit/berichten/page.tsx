@@ -9,6 +9,13 @@ interface Message {
   insertionTime?: string;
 }
 
+interface Reservation {
+  arrivalDate: string;
+  departureDate: string;
+  channelName: string;
+  listingName: string;
+}
+
 interface Conversation {
   id: number;
   listingMapId: number;
@@ -16,6 +23,22 @@ interface Conversation {
   hasUnreadMessages: number;
   messageReceivedOn: string;
   conversationMessages: Message[];
+  Reservation: Reservation | null;
+}
+
+const CHANNEL_LABELS: Record<string, string> = {
+  airbnbOfficial: "Airbnb",
+  bookingCom: "Booking.com",
+  vrbo: "Vrbo",
+  direct: "Direct",
+  homeaway: "HomeAway",
+  expedia: "Expedia",
+};
+
+function formatPeriod(arrival: string, departure: string) {
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+  return `${fmt(arrival)} – ${fmt(departure)}`;
 }
 
 interface DraftResult {
@@ -169,16 +192,15 @@ export default function CockpitBerichtenPage() {
                       <span className="ml-2 w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                     )}
                   </div>
+                  {conv.Reservation && (
+                    <p className="text-xs text-gray-500 mb-1">
+                      {formatPeriod(conv.Reservation.arrivalDate, conv.Reservation.departureDate)}
+                      <span className="mx-1 text-gray-300">·</span>
+                      {CHANNEL_LABELS[conv.Reservation.channelName] ?? conv.Reservation.channelName}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-400 truncate">
                     {conv.conversationMessages?.[conv.conversationMessages.length - 1]?.body ?? ""}
-                  </p>
-                  <p className="text-xs text-gray-300 mt-1">
-                    {new Date(conv.messageReceivedOn).toLocaleDateString("nl-NL", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
                   </p>
                 </button>
               ))}
@@ -196,7 +218,11 @@ export default function CockpitBerichtenPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
               <div>
                 <h2 className="font-semibold text-gray-900">{selected.recipientName}</h2>
-                <p className="text-xs text-gray-400">Gesprek #{selected.id}</p>
+                <p className="text-xs text-gray-400">
+                  {selected.Reservation
+                    ? `${formatPeriod(selected.Reservation.arrivalDate, selected.Reservation.departureDate)} · ${CHANNEL_LABELS[selected.Reservation.channelName] ?? selected.Reservation.channelName}`
+                    : `Gesprek #${selected.id}`}
+                </p>
               </div>
 
               {/* Laatste bericht van gast */}
