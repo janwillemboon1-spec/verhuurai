@@ -306,7 +306,7 @@ function mapNaarFormulier(
 
   return {
     hostNaam: naam,
-    rapportTaal: taal,
+    rapportTaal: taal as "nl" | "en",
     woningType: "Woning",
     doelgroep: ["couples", "families"],
     land,
