@@ -107,7 +107,7 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="font-display text-xl text-primary flex items-center gap-2">
                     <span>{VELD_ICONEN[key] ?? "📄"}</span>
-                    <span>{VELD_NAMEN[key] ?? key}</span>
+                    <span>{(VELD_NAMEN as Record<string, string>)[key] ?? key}</span>
                   </h3>
                   <VeldScore score={veld.score} />
                 </div>
