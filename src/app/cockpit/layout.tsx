@@ -18,6 +18,9 @@ export default async function CockpitLayout({ children }: { children: React.Reac
         <a href="/cockpit/revenue" className="text-sm hover:text-blue-200 transition-colors">
           Revenue
         </a>
+        <a href="/cockpit/revenue/regels" className="text-sm hover:text-blue-200 transition-colors">
+          Regels
+        </a>
         <a href="/cockpit/instellingen" className="text-sm hover:text-blue-200 transition-colors">
           Instellingen
         </a>
