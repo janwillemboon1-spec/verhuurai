@@ -6,14 +6,14 @@ import Anthropic from "@anthropic-ai/sdk";
 const COCKPIT_EMAIL = "info@bnbassistant.com";
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== COCKPIT_EMAIL) {
     return NextResponse.json({ error: "Geen toegang" }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { id } = params;
   const conversationId = parseInt(id);
   const conv = await getConversation(conversationId);
   if (!conv) return NextResponse.json({ error: "Gesprek niet gevonden" }, { status: 404 });
