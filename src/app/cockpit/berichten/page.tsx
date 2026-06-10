@@ -41,12 +41,39 @@ function formatPeriod(arrival: string, departure: string) {
   return `${fmt(arrival)} – ${fmt(departure)}`;
 }
 
+function GastBericht({ vertaald, origineel }: { vertaald: string; origineel: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs font-semibold text-gray-400 uppercase">Bericht gast</p>
+        {origineel && (
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
+          >
+            {open ? "Verberg origineel" : "Origineel"}
+            <span className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`}>▾</span>
+          </button>
+        )}
+      </div>
+      <p className="text-sm text-gray-700 whitespace-pre-wrap">{vertaald}</p>
+      {origineel && open && (
+        <p className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-400 italic whitespace-pre-wrap">
+          {origineel}
+        </p>
+      )}
+    </div>
+  );
+}
+
 interface DraftResult {
   dutchDraft: string;
   translatedDraft: string;
   detectedLang: string;
   guestName: string;
   lastMessage: string;
+  originalLastMessage: string | null;
 }
 
 type AutoMode = boolean;
@@ -241,10 +268,10 @@ export default function CockpitBerichtenPage() {
 
               {/* Laatste bericht van gast */}
               {draft && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                  <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Bericht gast</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{draft.lastMessage}</p>
-                </div>
+                <GastBericht
+                  vertaald={draft.lastMessage}
+                  origineel={draft.originalLastMessage}
+                />
               )}
 
               {draftLoading && (

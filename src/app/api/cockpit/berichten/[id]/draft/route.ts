@@ -27,6 +27,40 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .map((m) => `${m.userId === null ? "Gast" : "Host"}: ${m.body}`)
     .join("\n");
 
+  // Detect guest language
+  const langResponse = await anthropic.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 10,
+    messages: [
+      {
+        role: "user",
+        content: `Detecteer de taal van dit bericht en geef alleen de ISO 639-1 taalcode terug (bijv. "nl", "en", "de", "fr", "es"). Bericht: "${lastGuestMessage.body}"`,
+      },
+    ],
+  });
+  const detectedLang = langResponse.content[0].type === "text"
+    ? langResponse.content[0].text.trim().slice(0, 2).toLowerCase()
+    : "en";
+
+  // Translate incoming message to Dutch (skip if already Dutch)
+  let dutchLastMessage = lastGuestMessage.body;
+  if (detectedLang !== "nl") {
+    const translateIncoming = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: `Vertaal dit bericht naar het Nederlands. Geef ALLEEN de vertaling terug, geen uitleg.\n\n${lastGuestMessage.body}`,
+        },
+      ],
+    });
+    dutchLastMessage = translateIncoming.content[0].type === "text"
+      ? translateIncoming.content[0].text
+      : lastGuestMessage.body;
+  }
+
+  // Generate Dutch draft reply
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
@@ -43,28 +77,12 @@ Als de gast vraagt om iets wat je kunt toezeggen (extra handdoeken, early check-
       },
     ],
   });
-
   const dutchDraft = response.content[0].type === "text" ? response.content[0].text : "";
 
-  // Detect guest language from last message
-  const langResponse = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 10,
-    messages: [
-      {
-        role: "user",
-        content: `Detecteer de taal van dit bericht en geef alleen de ISO 639-1 taalcode terug (bijv. "nl", "en", "de", "fr", "es"). Bericht: "${lastGuestMessage.body}"`,
-      },
-    ],
-  });
-  const detectedLang = langResponse.content[0].type === "text"
-    ? langResponse.content[0].text.trim().slice(0, 2).toLowerCase()
-    : "en";
-
-  // Translate to guest language if not Dutch
+  // Translate outgoing reply to guest language
   let translatedDraft = dutchDraft;
   if (detectedLang !== "nl") {
-    const translateResponse = await anthropic.messages.create({
+    const translateOutgoing = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1024,
       messages: [
@@ -74,8 +92,8 @@ Als de gast vraagt om iets wat je kunt toezeggen (extra handdoeken, early check-
         },
       ],
     });
-    translatedDraft = translateResponse.content[0].type === "text"
-      ? translateResponse.content[0].text
+    translatedDraft = translateOutgoing.content[0].type === "text"
+      ? translateOutgoing.content[0].text
       : dutchDraft;
   }
 
@@ -84,6 +102,7 @@ Als de gast vraagt om iets wat je kunt toezeggen (extra handdoeken, early check-
     translatedDraft,
     detectedLang,
     guestName: conv.recipientName,
-    lastMessage: lastGuestMessage.body,
+    lastMessage: dutchLastMessage,
+    originalLastMessage: detectedLang !== "nl" ? lastGuestMessage.body : null,
   });
 }
