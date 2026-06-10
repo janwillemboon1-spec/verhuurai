@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 declare global {
@@ -16,10 +17,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "sessieId en formData verplicht" }, { status: 400 });
   }
 
-  // Sla airbnbUrl op in sessie zodat de analyse-route hem altijd heeft
+  // Sessie updaten met airbnbUrl en (als nog niet aanwezig) auth-email
   const sessie = global.sessies.get(sessieId);
-  if (sessie && formData?.airbnbUrl) {
-    global.sessies.set(sessieId, { ...sessie, airbnbUrl: formData.airbnbUrl });
+  const updates: Record<string, any> = {};
+  if (formData?.airbnbUrl) updates.airbnbUrl = formData.airbnbUrl;
+  if (sessie && !sessie.email) {
+    try {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) updates.email = user.email;
+    } catch {}
+  }
+  if (sessie && Object.keys(updates).length > 0) {
+    global.sessies.set(sessieId, { ...sessie, ...updates });
   }
 
   // Markeer als bezig
