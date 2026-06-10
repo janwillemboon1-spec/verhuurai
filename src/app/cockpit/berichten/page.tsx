@@ -37,7 +37,7 @@ const CHANNEL_LABELS: Record<string, string> = {
 
 function formatPeriod(arrival: string, departure: string) {
   const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+    new Date(d).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
   return `${fmt(arrival)} – ${fmt(departure)}`;
 }
 
