@@ -1,6 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { buildReviewRapportPrompt } from "@/lib/review-rapport-prompt";
+import { buildReviewRapportEmail } from "@/lib/review-rapport-email";
 import { filterReviews, formateerGefilterd } from "@/lib/filter-reviews";
 import { NextResponse } from "next/server";
 
@@ -98,6 +100,30 @@ export async function POST(request: Request) {
       })
       .select()
       .single();
+
+    // Email sturen naar gebruiker
+    if (user.email && nieuwRapport) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
+        const rapportUrl = `${baseUrl}/dashboard/rapporten/${nieuwRapport.id}`;
+        const html = buildReviewRapportEmail(
+          (abo as any).voornaam || "Host",
+          (abo as any).listing_naam || "Jouw woning",
+          periodeOmschrijving,
+          rapport,
+          rapportUrl
+        );
+        await resend.emails.send({
+          from: "Boni van Host Boni <boni@verhuurai.nl>",
+          to: user.email,
+          subject: `📊 Jouw review rapport is klaar — ${periodeOmschrijving}`,
+          html,
+        });
+      } catch (emailErr) {
+        console.error("Email sturen mislukt (niet fataal):", emailErr);
+      }
+    }
 
     // Update review count en rapport datum voor volgende keer
     await supabase
