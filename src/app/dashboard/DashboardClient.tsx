@@ -311,9 +311,13 @@ export default function DashboardClient({
                             {abo.status === "active" ? "Actief" : abo.status === "trial" ? "Proefperiode" : "Geannuleerd"}
                           </span>
                           <span className="text-xs text-text-secondary">
-                            {abo.frequentie === "weekly" ? "Wekelijks" : "Maandelijks"}
+                            {abo.frequentie === "eenmalig" || abo.status === "trial"
+                              ? "Eenmalig"
+                              : abo.frequentie === "weekly" ? "Wekelijks" : "Maandelijks"}
                             {" · "}
-                            {abo.billing_interval === "year" ? "Jaarlijks betaald" : "Maandelijks betaald"}
+                            {abo.billing_interval === "eenmalig" || abo.status === "trial"
+                              ? "Eenmalig betaald"
+                              : abo.billing_interval === "year" ? "Jaarlijks betaald" : "Maandelijks betaald"}
                           </span>
                           {abo.volgende_rapport_datum && (
                             <span className="text-xs text-text-secondary">

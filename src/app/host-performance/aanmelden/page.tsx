@@ -19,8 +19,8 @@ function AanmeldenForm() {
   const [listingNaam, setListingNaam] = useState("");
   const [email, setEmail] = useState("");
   const isEenmalig = true;
-  const frequentie = "monthly";
-  const interval = "month";
+  const frequentie = "eenmalig";
+  const interval = "eenmalig";
   const [stap, setStap] = useState<"formulier" | "code">("formulier");
   const [code, setCode] = useState("");
   const [laden, setLaden] = useState(false);
