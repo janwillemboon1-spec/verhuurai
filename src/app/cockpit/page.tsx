@@ -17,6 +17,15 @@ export default function CockpitPage() {
         </Link>
 
         <Link
+          href="/cockpit/revenue"
+          className="block p-6 bg-white rounded-xl border border-gray-200 hover:border-[#2b3885] hover:shadow-sm transition-all"
+        >
+          <div className="text-2xl mb-2">📊</div>
+          <h2 className="font-semibold text-gray-900 mb-1">Revenue Management</h2>
+          <p className="text-sm text-gray-500">Pacing, marktbezetting, prijzen en overrides voor alle woningen.</p>
+        </Link>
+
+        <Link
           href="/cockpit/instellingen"
           className="block p-6 bg-white rounded-xl border border-gray-200 hover:border-[#2b3885] hover:shadow-sm transition-all"
         >
