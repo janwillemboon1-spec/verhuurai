@@ -18,14 +18,20 @@ export async function GET() {
     admin.from("cockpit_listing_settings").select("*"),
   ]);
 
-  const settingsMap = new Map((settings ?? []).map((s: { listing_id: number; berichten_sync: boolean }) => [s.listing_id, s.berichten_sync]));
+  const settingsMap = new Map(
+    (settings ?? []).map((s: { listing_id: number; berichten_sync: boolean; interne_naam: string | null }) => [
+      s.listing_id,
+      { sync: s.berichten_sync, interneNaam: s.interne_naam ?? "" },
+    ])
+  );
 
   return NextResponse.json(
     listings.map((l) => ({
       id: l.id,
       name: l.name,
       cityName: l.cityName,
-      berichtenSync: settingsMap.get(l.id) ?? false,
+      berichtenSync: settingsMap.get(l.id)?.sync ?? false,
+      interneNaam: settingsMap.get(l.id)?.interneNaam ?? "",
     }))
   );
 }

@@ -53,6 +53,7 @@ type AutoMode = boolean;
 
 export default function CockpitBerichtenPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [interneNamen, setInterneNamen] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Conversation | null>(null);
   const [draft, setDraft] = useState<DraftResult | null>(null);
@@ -75,6 +76,13 @@ export default function CockpitBerichtenPage() {
     fetch("/api/cockpit/instellingen")
       .then((r) => r.json())
       .then((d) => setAutoMode(d.auto_beantwoorden === "true"));
+    fetch("/api/cockpit/listings")
+      .then((r) => r.json())
+      .then((listings: { id: number; interneNaam: string }[]) => {
+        const map: Record<number, string> = {};
+        listings.forEach((l) => { if (l.interneNaam) map[l.id] = l.interneNaam; });
+        setInterneNamen(map);
+      });
   }, [loadConversations]);
 
   // Poll every 10 minutes
@@ -192,6 +200,9 @@ export default function CockpitBerichtenPage() {
                       <span className="ml-2 w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                     )}
                   </div>
+                  {interneNamen[conv.listingMapId] && (
+                    <p className="text-xs font-medium text-[#2b3885] mb-0.5">{interneNamen[conv.listingMapId]}</p>
+                  )}
                   {conv.Reservation && (
                     <p className="text-xs text-gray-500 mb-1">
                       {formatPeriod(conv.Reservation.arrivalDate, conv.Reservation.departureDate)}
@@ -218,6 +229,9 @@ export default function CockpitBerichtenPage() {
             <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
               <div>
                 <h2 className="font-semibold text-gray-900">{selected.recipientName}</h2>
+                {interneNamen[selected.listingMapId] && (
+                  <p className="text-xs font-medium text-[#2b3885]">{interneNamen[selected.listingMapId]}</p>
+                )}
                 <p className="text-xs text-gray-400">
                   {selected.Reservation
                     ? `${formatPeriod(selected.Reservation.arrivalDate, selected.Reservation.departureDate)} · ${CHANNEL_LABELS[selected.Reservation.channelName] ?? selected.Reservation.channelName}`
