@@ -179,6 +179,13 @@ Hier is de volledige Airbnb-advertentie van ${formData.hostNaam} om te analysere
         airbnb_url: airbnbUrl,
       }).select().single();
 
+      if (opgeslagenRapport) {
+        global.rapporten.set(sessieId, {
+          ...global.rapporten.get(sessieId),
+          databaseId: opgeslagenRapport.id,
+        });
+      }
+
       // Gecombineerde email: rapport klaar + inloglink
       if (email && opgeslagenRapport) {
         const resend = new Resend(process.env.RESEND_API_KEY);

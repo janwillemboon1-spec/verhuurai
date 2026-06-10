@@ -26,6 +26,7 @@ export async function GET(
       rapport: stored,
       hostNaam: stored.hostNaam,
       datum: stored.datum,
+      databaseId: stored.databaseId ?? null,
     });
   } catch (error) {
     console.error("Rapport ophalen fout:", error);

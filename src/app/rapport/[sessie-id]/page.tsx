@@ -181,6 +181,7 @@ export default function RapportPagina() {
   const [rapport, setRapport] = useState<BoniRapport | null>(null);
   const [hostNaam, setHostNaam] = useState<string | null>(null);
   const [datum, setDatum] = useState<string | null>(null);
+  const [databaseId, setDatabaseId] = useState<string | null>(null);
   const [laden, setLaden] = useState(true);
   const [fout, setFout] = useState<string | null>(null);
   const [emailVersturen, setEmailVersturen] = useState(false);
@@ -203,6 +204,7 @@ export default function RapportPagina() {
         setRapport(data.rapport);
         setHostNaam(data.hostNaam ?? null);
         setDatum(data.datum ?? null);
+        setDatabaseId(data.databaseId ?? null);
         setLaden(false);
 
         // Automatisch opslaan in dashboard als gebruiker ingelogd is met hetzelfde email
@@ -274,7 +276,7 @@ export default function RapportPagina() {
   const velden = rapport.velden;
 
 
-  const rapportPubliekUrl = `${typeof window !== "undefined" ? window.location.origin : "https://www.hostboni.com"}/dashboard/listing-rapporten/${sessieId}`;
+  const rapportPubliekUrl = `${typeof window !== "undefined" ? window.location.origin : "https://www.hostboni.com"}/dashboard/listing-rapporten/${databaseId || sessieId}`;
 
   return (
     <div className="min-h-screen bg-background">
