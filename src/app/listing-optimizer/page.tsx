@@ -139,7 +139,7 @@ export default function ListingOptimizerPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <BoniAvatar size={80} animate={true} className="mx-auto mb-6" />
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">
-            Klaar om meer gasten te trekken?
+            Klaar om meer gasten aan te trekken.
           </h2>
           <p className="text-white/70 text-lg mb-8">
             Probeer Boni gratis met je titel, of ga direct voor het volledige rapport.
