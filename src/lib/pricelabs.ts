@@ -1,5 +1,5 @@
 const BASE = "https://api.pricelabs.co/v1";
-const PMS = "hostaway";
+const PMS = "hostaway"; // default fallback only
 
 function headers() {
   return {
@@ -7,6 +7,11 @@ function headers() {
     "Content-Type": "application/json",
   };
 }
+
+// Per-request listings cache (geldig voor de duur van één server request)
+let listingsCache: PLListing[] | null = null;
+let listingsCacheTime = 0;
+const CACHE_TTL = 60 * 1000; // 60 seconden
 
 export interface PLListing {
   id: string;
@@ -57,9 +62,12 @@ export interface PLOverride {
 }
 
 export async function getListings(): Promise<PLListing[]> {
+  if (listingsCache && Date.now() - listingsCacheTime < CACHE_TTL) return listingsCache;
   const res = await fetch(`${BASE}/listings`, { headers: headers() });
   const data = await res.json();
-  return data.listings ?? [];
+  listingsCache = data.listings ?? [];
+  listingsCacheTime = Date.now();
+  return listingsCache!;
 }
 
 export async function getListingNaamPL(listingId: string): Promise<string> {
@@ -74,10 +82,13 @@ export async function updateListing(
   id: string,
   fields: { base?: number; min?: number; max?: number }
 ): Promise<boolean> {
+  const listings = await getListings();
+  const listing = listings.find((l) => l.id === id);
+  const pms = listing?.pms ?? PMS;
   const res = await fetch(`${BASE}/listings`, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({ listings: [{ id, pms: PMS, ...fields }] }),
+    body: JSON.stringify({ listings: [{ id, pms, ...fields }] }),
   });
   return res.ok;
 }
@@ -85,21 +96,35 @@ export async function updateListing(
 export async function getCalendar(
   listingId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  pms?: string
 ): Promise<PLCalendarDay[]> {
+  // If pms not provided, look it up from listings
+  let resolvedPms = pms ?? PMS;
+  if (!pms) {
+    const listings = await getListings();
+    const listing = listings.find((l) => l.id === listingId);
+    if (listing) resolvedPms = listing.pms;
+  }
   const res = await fetch(`${BASE}/listing_prices`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
-      listings: [{ id: listingId, pms: PMS, start_date: startDate, end_date: endDate }],
+      listings: [{ id: listingId, pms: resolvedPms, start_date: startDate, end_date: endDate }],
     }),
   });
   const data = await res.json();
   return data?.[0]?.data ?? [];
 }
 
+async function getPmsForListing(listingId: string): Promise<string> {
+  const listings = await getListings();
+  return listings.find((l) => l.id === listingId)?.pms ?? PMS;
+}
+
 export async function getOverrides(listingId: string): Promise<PLOverride[]> {
-  const res = await fetch(`${BASE}/listings/${listingId}/overrides?pms=${PMS}`, {
+  const pms = await getPmsForListing(listingId);
+  const res = await fetch(`${BASE}/listings/${listingId}/overrides?pms=${pms}`, {
     headers: headers(),
   });
   const data = await res.json();
@@ -110,7 +135,8 @@ export async function upsertOverride(
   listingId: string,
   override: Omit<PLOverride, "created_at" | "updated_at">
 ): Promise<boolean> {
-  const res = await fetch(`${BASE}/listings/${listingId}/overrides?pms=${PMS}`, {
+  const pms = await getPmsForListing(listingId);
+  const res = await fetch(`${BASE}/listings/${listingId}/overrides?pms=${pms}`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ overrides: [override] }),
@@ -119,7 +145,8 @@ export async function upsertOverride(
 }
 
 export async function deleteOverride(listingId: string, date: string): Promise<boolean> {
-  const res = await fetch(`${BASE}/listings/${listingId}/overrides?pms=${PMS}`, {
+  const pms = await getPmsForListing(listingId);
+  const res = await fetch(`${BASE}/listings/${listingId}/overrides?pms=${pms}`, {
     method: "DELETE",
     headers: headers(),
     body: JSON.stringify({ dates: [date] }),
@@ -128,10 +155,13 @@ export async function deleteOverride(listingId: string, date: string): Promise<b
 }
 
 export async function pushPrices(listingId: string): Promise<boolean> {
+  const listings = await getListings();
+  const listing = listings.find((l) => l.id === listingId);
+  const pms = listing?.pms ?? PMS;
   const res = await fetch(`${BASE}/push_prices`, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({ listing_id: listingId, pms: PMS }),
+    body: JSON.stringify({ listing_id: listingId, pms }),
   });
   const data = await res.json();
   return data.status?.includes("updated") ?? false;
@@ -154,20 +184,12 @@ export interface PLReservation {
   cleaning_fees: number;
 }
 
-export async function getReservationData(startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
+async function fetchReservationDataForPms(pms: string, startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
   const all: PLReservation[] = [];
   let page = 1;
-
   while (true) {
-    const params = new URLSearchParams({
-      pms: PMS,
-      start_date: startDate,
-      end_date: endDate,
-      limit: "500",
-      page: String(page),
-    });
+    const params = new URLSearchParams({ pms, start_date: startDate, end_date: endDate, limit: "500", page: String(page) });
     if (listingId) params.set("listing_id", listingId);
-
     const res = await fetch(`${BASE}/reservation_data?${params}`, { headers: headers() });
     if (!res.ok) break;
     const data = await res.json();
@@ -176,8 +198,27 @@ export async function getReservationData(startDate: string, endDate: string, lis
     if (!data.next_page) break;
     page++;
   }
-
   return all;
+}
+
+export async function getReservationData(startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
+  // Determine which PMS types to query
+  let pmsTypes: string[];
+  if (listingId) {
+    // For a specific listing, find its PMS type from the listings
+    const listings = await getListings();
+    const listing = listings.find((l) => l.id === listingId);
+    pmsTypes = listing ? [listing.pms] : [PMS];
+  } else {
+    // For all listings, query all PMS types
+    const listings = await getListings();
+    pmsTypes = Array.from(new Set(listings.map((l) => l.pms)));
+  }
+
+  const results = await Promise.all(
+    pmsTypes.map((pms) => fetchReservationDataForPms(pms, startDate, endDate, listingId))
+  );
+  return results.flat();
 }
 
 export function parseOccupancy(val: string | null | undefined): number {
