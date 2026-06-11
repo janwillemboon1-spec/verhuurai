@@ -123,6 +123,7 @@ function InlinePrice({
 
 interface Aanbeveling {
   listing_id: string;
+  trigger_type: string;
   naam: string;
   reden: string;
   uitleg: string;
@@ -133,70 +134,90 @@ interface Aanbeveling {
   prioriteit: "hoog" | "middel";
 }
 
-function berekenAanbevelingen(listings: Listing[]): Aanbeveling[] {
+interface Trigger {
+  trigger_type: string;
+  enabled: boolean;
+  drempel_pct: number;
+  aanpassing_pct: number;
+  label: string;
+}
+
+const DEFAULT_TRIGGERS: Trigger[] = [
+  { trigger_type: "bezetting_15d_onder", enabled: true, drempel_pct: 15, aanpassing_pct: -10, label: "Bezetting 15 dagen > X% onder markt" },
+  { trigger_type: "bezetting_30d_onder", enabled: true, drempel_pct: 10, aanpassing_pct: -5, label: "Bezetting 30 dagen > X% onder markt" },
+  { trigger_type: "bezetting_voor_markt", enabled: true, drempel_pct: 15, aanpassing_pct: 10, label: "Bezetting loopt > X% voor op markt" },
+  { trigger_type: "pricelabs_advies", enabled: true, drempel_pct: 12, aanpassing_pct: 0, label: "PriceLabs advies > X% afwijkend" },
+  { trigger_type: "geen_pickup", enabled: true, drempel_pct: 5, aanpassing_pct: -5, label: "Geen nieuwe boekingen + bezetting achter" },
+];
+
+function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeveling[] {
+  const tMap = new Map(triggers.map(t => [t.trigger_type, t]));
   const aanbevelingen: Aanbeveling[] = [];
 
   for (const l of listings) {
     const naam = l.interneNaam || l.name.split("--")[0].trim();
     const d15 = parseOcc(l.occupancy_next_15) - parseOcc(l.market_occupancy_next_15);
     const d30 = parseOcc(l.occupancy_next_30) - parseOcc(l.market_occupancy_next_30);
-    const d60 = parseOcc(l.occupancy_next_60) - parseOcc(l.market_occupancy_next_60);
     const base = l.base;
     const rec = l.recommended_base_price;
     const pickup3 = l.booking_pickup_unique_past_3;
+    const heeft = (t: string) => aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t);
 
-    // Verlaging aanbevelen: loopt achter op markt
-    if (d15 <= -15 && base) {
-      const nieuw = Math.round(base * 0.90);
+    const t15 = tMap.get("bezetting_15d_onder");
+    if (t15?.enabled && d15 <= -t15.drempel_pct && base && !heeft("bezetting_15d_onder")) {
+      const nieuw = Math.round(base * (1 + t15.aanpassing_pct / 100));
       aanbevelingen.push({
-        listing_id: l.id, naam, prioriteit: "hoog",
+        listing_id: l.id, trigger_type: "bezetting_15d_onder", naam, prioriteit: "hoog",
         reden: `Bezetting 15d is ${Math.abs(d15)}% onder markt`,
-        uitleg: `De komende 15 dagen staat de bezetting op ${parseOcc(l.occupancy_next_15)}% terwijl de markt op ${parseOcc(l.market_occupancy_next_15)}% zit. Dit verschil van ${Math.abs(d15)}% wijst op te hoge prijsstelling of gebrek aan zichtbaarheid. Een verlaging van 10% van de basisprijs kan de boekingskans sterk verbeteren.`,
-        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (−10%)`,
+        uitleg: `De komende 15 dagen staat de bezetting op ${parseOcc(l.occupancy_next_15)}% terwijl de markt op ${parseOcc(l.market_occupancy_next_15)}% zit. Een verschil van ${Math.abs(d15)}% wijst op te hoge prijsstelling. Verlaging met ${Math.abs(t15.aanpassing_pct)}% kan de boekingskans sterk verbeteren.`,
+        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${t15.aanpassing_pct}%)`,
         veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
       });
-    } else if (d30 <= -10 && base && !aanbevelingen.find(a => a.listing_id === l.id)) {
-      const nieuw = Math.round(base * 0.95);
+    }
+
+    const t30 = tMap.get("bezetting_30d_onder");
+    if (t30?.enabled && d30 <= -t30.drempel_pct && base && !heeft("bezetting_15d_onder") && !heeft("bezetting_30d_onder")) {
+      const nieuw = Math.round(base * (1 + t30.aanpassing_pct / 100));
       aanbevelingen.push({
-        listing_id: l.id, naam, prioriteit: "middel",
+        listing_id: l.id, trigger_type: "bezetting_30d_onder", naam, prioriteit: "middel",
         reden: `Bezetting 30d is ${Math.abs(d30)}% onder markt`,
-        uitleg: `De komende 30 dagen zit de bezetting op ${parseOcc(l.occupancy_next_30)}% versus ${parseOcc(l.market_occupancy_next_30)}% in de markt. Een lichte prijsverlaging van 5% geeft de woning een competitiever profiel zonder te veel omzet te laten liggen.`,
-        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (−5%)`,
+        uitleg: `De komende 30 dagen zit de bezetting op ${parseOcc(l.occupancy_next_30)}% versus ${parseOcc(l.market_occupancy_next_30)}% in de markt. Verlaging met ${Math.abs(t30.aanpassing_pct)}% geeft een competitiever profiel.`,
+        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${t30.aanpassing_pct}%)`,
         veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
       });
     }
 
-    // Verhoging aanbevelen: loopt ver voor op markt
-    if (d15 >= 15 && d30 >= 10 && base && !aanbevelingen.find(a => a.listing_id === l.id)) {
-      const nieuw = Math.round(base * 1.10);
+    const tVoor = tMap.get("bezetting_voor_markt");
+    if (tVoor?.enabled && d15 >= tVoor.drempel_pct && d30 >= tVoor.drempel_pct / 2 && base && !heeft("bezetting_voor_markt")) {
+      const nieuw = Math.round(base * (1 + tVoor.aanpassing_pct / 100));
       aanbevelingen.push({
-        listing_id: l.id, naam, prioriteit: "middel",
+        listing_id: l.id, trigger_type: "bezetting_voor_markt", naam, prioriteit: "middel",
         reden: `Bezetting loopt ${d15}% voor op markt`,
-        uitleg: `Met ${parseOcc(l.occupancy_next_15)}% bezetting voor de komende 15 dagen tegenover ${parseOcc(l.market_occupancy_next_15)}% marktgemiddelde loopt deze woning sterk voor. Dit is een signaal dat de prijs te laag staat — er is ruimte om de basisprijs te verhogen zonder bezetting te verliezen.`,
-        actie: `Verhoog basisprijs van €${base} naar €${nieuw} (+10%)`,
+        uitleg: `Met ${parseOcc(l.occupancy_next_15)}% tegenover ${parseOcc(l.market_occupancy_next_15)}% marktgemiddelde loopt deze woning sterk voor. Er is ruimte de prijs te verhogen (+${tVoor.aanpassing_pct}%) zonder bezetting te verliezen.`,
+        actie: `Verhoog basisprijs van €${base} naar €${nieuw} (+${tVoor.aanpassing_pct}%)`,
         veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
       });
     }
 
-    // PriceLabs aanbeveling significant afwijkend
-    if (rec && base && rec > base * 1.12 && !aanbevelingen.find(a => a.listing_id === l.id)) {
+    const tPL = tMap.get("pricelabs_advies");
+    if (tPL?.enabled && rec && base && rec > base * (1 + tPL.drempel_pct / 100) && !heeft("pricelabs_advies")) {
       aanbevelingen.push({
-        listing_id: l.id, naam, prioriteit: "middel",
+        listing_id: l.id, trigger_type: "pricelabs_advies", naam, prioriteit: "middel",
         reden: `PriceLabs adviseert €${rec} (huidig €${base})`,
-        uitleg: `PriceLabs berekent op basis van marktdata en bezettingspatronen een aanbevolen basisprijs van €${rec}, wat ${Math.round(((rec - base) / base) * 100)}% hoger is dan de huidige €${base}. Dit kan duiden op sterk toegenomen vraag in dit marktsegment.`,
+        uitleg: `PriceLabs berekent een aanbevolen basisprijs van €${rec}, wat ${Math.round(((rec - base) / base) * 100)}% hoger is dan de huidige €${base}. Dit duidt op toegenomen vraag in dit marktsegment.`,
         actie: `Stel basisprijs in op €${rec} (PriceLabs advies)`,
         veld: "base", huidigeWaarde: base, nieuweWaarde: rec,
       });
     }
 
-    // Geen pickup + achterstand
-    if (pickup3 === 0 && d30 <= -5 && base && !aanbevelingen.find(a => a.listing_id === l.id)) {
-      const nieuw = Math.round(base * 0.95);
+    const tPickup = tMap.get("geen_pickup");
+    if (tPickup?.enabled && pickup3 === 0 && d30 <= -tPickup.drempel_pct && base && !heeft("bezetting_15d_onder") && !heeft("geen_pickup")) {
+      const nieuw = Math.round(base * (1 + tPickup.aanpassing_pct / 100));
       aanbevelingen.push({
-        listing_id: l.id, naam, prioriteit: "middel",
-        reden: `0 nieuwe boekingen in 3 dagen + bezetting loopt achter`,
-        uitleg: `Er zijn de afgelopen 3 dagen geen nieuwe boekingen binnengekomen en de 30-daagse bezetting ligt ${Math.abs(d30)}% onder de markt. Dit patroon duidt op een te hoge prijs of te weinig zichtbaarheid. Een kleine verlaging kan de algoritmen van Airbnb/Booking.com prikkelen om de woning vaker te tonen.`,
-        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (−5%)`,
+        listing_id: l.id, trigger_type: "geen_pickup", naam, prioriteit: "middel",
+        reden: `0 nieuwe boekingen (3d) + bezetting ${Math.abs(d30)}% achter`,
+        uitleg: `Geen nieuwe boekingen in 3 dagen en 30-daagse bezetting ligt ${Math.abs(d30)}% onder de markt. Een verlaging van ${Math.abs(tPickup.aanpassing_pct)}% prikkelt de algoritmen van Airbnb/Booking.com om de woning vaker te tonen.`,
+        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${tPickup.aanpassing_pct}%)`,
         veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
       });
     }
@@ -205,18 +226,32 @@ function berekenAanbevelingen(listings: Listing[]): Aanbeveling[] {
   return aanbevelingen.sort((a, b) => (a.prioriteit === "hoog" ? -1 : 1) - (b.prioriteit === "hoog" ? -1 : 1));
 }
 
+type StatusFilter = "in_afwachting" | "uitgevoerd" | "genegeerd";
+
 export default function RevenuePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<"naam" | "occ15" | "occ30" | "occ60">("naam");
   const [pendingPush, setPendingPush] = useState<Set<string>>(new Set());
   const [pushing, setPushing] = useState(false);
+  const [statussen, setStatussen] = useState<Map<string, string>>(new Map());
+  const [triggers, setTriggers] = useState<Trigger[]>(DEFAULT_TRIGGERS);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("in_afwachting");
 
   useEffect(() => {
     fetch("/api/cockpit/revenue/listings")
       .then((r) => r.json())
       .then(setListings)
       .finally(() => setLoading(false));
+    fetch("/api/cockpit/aanbevelingen/status")
+      .then((r) => r.json())
+      .then((rows: { listing_id: string; trigger_type: string; status: string }[]) => {
+        const m = new Map(rows.map(r => [`${r.listing_id}__${r.trigger_type}`, r.status]));
+        setStatussen(m);
+      });
+    fetch("/api/cockpit/aanbevelingen/triggers")
+      .then((r) => r.json())
+      .then((rows: Trigger[]) => { if (rows.length > 0) setTriggers(rows); });
   }, []);
 
   async function handlePriceSave(id: string, field: string, val: number): Promise<void> {
@@ -238,13 +273,18 @@ export default function RevenuePage() {
   async function handlePush() {
     setPushing(true);
     const ids = Array.from(pendingPush);
-    await Promise.all(
-      ids.map((id) =>
-        fetch(`/api/cockpit/revenue/listings/${id}/push`, { method: "POST" })
-      )
-    );
+    await Promise.all(ids.map(id => fetch(`/api/cockpit/revenue/listings/${id}/push`, { method: "POST" })));
     setPendingPush(new Set());
     setPushing(false);
+  }
+
+  async function updateStatus(listing_id: string, trigger_type: string, status: string) {
+    setStatussen(prev => new Map(prev).set(`${listing_id}__${trigger_type}`, status));
+    await fetch("/api/cockpit/aanbevelingen/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listing_id, trigger_type, status }),
+    });
   }
 
   const sorted = [...listings].sort((a, b) => {
@@ -309,6 +349,63 @@ export default function RevenuePage() {
           ))}
         </div>
       </div>
+
+      {/* Aanbevelingen */}
+      {!loading && (() => {
+        const alle = berekenAanbevelingen(listings, triggers);
+        const gefilterd = alle.filter(a => {
+          const s = statussen.get(`${a.listing_id}__${a.trigger_type}`) ?? "in_afwachting";
+          return s === statusFilter;
+        });
+        const telPerStatus = {
+          in_afwachting: alle.filter(a => (statussen.get(`${a.listing_id}__${a.trigger_type}`) ?? "in_afwachting") === "in_afwachting").length,
+          uitgevoerd: alle.filter(a => statussen.get(`${a.listing_id}__${a.trigger_type}`) === "uitgevoerd").length,
+          genegeerd: alle.filter(a => statussen.get(`${a.listing_id}__${a.trigger_type}`) === "genegeerd").length,
+        };
+        return (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-700">Aanbevelingen</h2>
+              <div className="flex gap-1 text-xs">
+                {(["in_afwachting", "uitgevoerd", "genegeerd"] as StatusFilter[]).map(s => (
+                  <button key={s} onClick={() => setStatusFilter(s)}
+                    className={`px-2.5 py-1 rounded-full transition-colors ${statusFilter === s ? "bg-[#2b3885] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                    {s === "in_afwachting" ? "In afwachting" : s === "uitgevoerd" ? "Uitgevoerd" : "Genegeerd"}
+                    {telPerStatus[s] > 0 && <span className="ml-1 opacity-70">({telPerStatus[s]})</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {gefilterd.length === 0 ? (
+              <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
+                {statusFilter === "in_afwachting"
+                  ? "✓ Geen openstaande aanbevelingen."
+                  : `Geen aanbevelingen met status '${statusFilter}'.`}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {gefilterd.map(a => (
+                  <AanbevelingKaart
+                    key={`${a.listing_id}__${a.trigger_type}`}
+                    aanbeveling={a}
+                    status={statusFilter}
+                    onUitvoer={async () => {
+                      await handlePriceSave(a.listing_id, a.veld, a.nieuweWaarde);
+                      await updateStatus(a.listing_id, a.trigger_type, "uitgevoerd");
+                    }}
+                    onNegeer={async () => {
+                      await updateStatus(a.listing_id, a.trigger_type, "genegeerd");
+                    }}
+                    onHeropenen={async () => {
+                      await updateStatus(a.listing_id, a.trigger_type, "in_afwachting");
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Legend */}
       <div className="flex items-center gap-4 mb-4 text-xs text-gray-400">
@@ -404,56 +501,32 @@ export default function RevenuePage() {
         </div>
       )}
 
-      {/* Aanbevelingen */}
-      {!loading && listings.length > 0 && (() => {
-        const aanbevelingen = berekenAanbevelingen(listings);
-        if (aanbevelingen.length === 0) return (
-          <div className="mt-8">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Aanbevelingen</h2>
-            <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
-              ✓ Geen aanbevelingen — alle woningen lopen goed in verhouding tot de markt.
-            </div>
-          </div>
-        );
-        return (
-          <div className="mt-8">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">
-              Aanbevelingen <span className="ml-1.5 text-xs font-normal text-gray-400">({aanbevelingen.length})</span>
-            </h2>
-            <div className="space-y-3">
-              {aanbevelingen.map((a) => (
-                <AanbevelingKaart
-                  key={a.listing_id + a.reden}
-                  aanbeveling={a}
-                  onUitvoer={async () => {
-                    await handlePriceSave(a.listing_id, a.veld, a.nieuweWaarde);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
 
-function AanbevelingKaart({ aanbeveling: a, onUitvoer }: { aanbeveling: Aanbeveling; onUitvoer: () => Promise<void> }) {
-  const [uitgevoerd, setUitgevoerd] = useState(false);
-  const [bezig, setBezig] = useState(false);
+function AanbevelingKaart({
+  aanbeveling: a, status, onUitvoer, onNegeer, onHeropenen
+}: {
+  aanbeveling: Aanbeveling;
+  status: StatusFilter;
+  onUitvoer: () => Promise<void>;
+  onNegeer: () => Promise<void>;
+  onHeropenen: () => Promise<void>;
+}) {
+  const [bezig, setBezig] = useState<string | null>(null);
   const [uitgevouwen, setUitgevouwen] = useState(false);
 
-  async function uitvoeren() {
-    setBezig(true);
-    await onUitvoer();
-    setBezig(false);
-    setUitgevoerd(true);
+  async function run(fn: () => Promise<void>, label: string) {
+    setBezig(label);
+    await fn();
+    setBezig(null);
   }
 
   return (
     <div className={`bg-white border rounded-xl p-4 transition-all ${
       a.prioriteit === "hoog" ? "border-amber-200" : "border-gray-200"
-    } ${uitgevoerd ? "opacity-50" : ""}`}>
+    }`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -464,26 +537,31 @@ function AanbevelingKaart({ aanbeveling: a, onUitvoer }: { aanbeveling: Aanbevel
             <span className="text-xs text-gray-400">{a.reden}</span>
           </div>
           <p className="text-sm font-medium text-[#2b3885] mb-1">{a.actie}</p>
-          <button
-            onClick={() => setUitgevouwen(v => !v)}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <button onClick={() => setUitgevouwen(v => !v)}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
             {uitgevouwen ? "▲ Verberg uitleg" : "▼ Waarom deze aanbeveling?"}
           </button>
           {uitgevouwen && (
             <p className="mt-2 text-xs text-gray-500 leading-relaxed max-w-2xl">{a.uitleg}</p>
           )}
         </div>
-        <div className="flex-shrink-0">
-          {uitgevoerd ? (
-            <span className="text-xs text-green-600 font-medium">✓ Uitgevoerd</span>
-          ) : (
-            <button
-              onClick={uitvoeren}
-              disabled={bezig}
-              className="px-3 py-1.5 bg-[#2b3885] text-white text-xs font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors"
-            >
-              {bezig ? "Bezig..." : "Uitvoeren"}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {status === "in_afwachting" && (
+            <>
+              <button onClick={() => run(onUitvoer, "uitvoer")} disabled={bezig !== null}
+                className="px-3 py-1.5 bg-[#2b3885] text-white text-xs font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors">
+                {bezig === "uitvoer" ? "Bezig..." : "Uitvoeren"}
+              </button>
+              <button onClick={() => run(onNegeer, "negeer")} disabled={bezig !== null}
+                className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors">
+                {bezig === "negeer" ? "..." : "Negeren"}
+              </button>
+            </>
+          )}
+          {status !== "in_afwachting" && (
+            <button onClick={() => run(onHeropenen, "heropen")} disabled={bezig !== null}
+              className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors">
+              {bezig === "heropen" ? "..." : "↩ Heropenen"}
             </button>
           )}
         </div>

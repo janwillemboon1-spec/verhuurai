@@ -2,6 +2,22 @@
 
 import { useEffect, useState } from "react";
 
+interface Trigger {
+  trigger_type: string;
+  enabled: boolean;
+  drempel_pct: number;
+  aanpassing_pct: number;
+  label: string;
+}
+
+const TRIGGER_OMSCHRIJVING: Record<string, string> = {
+  bezetting_15d_onder: "Als bezetting 15 dagen > drempel% onder markt → verlaag basisprijs met |aanpassing|%",
+  bezetting_30d_onder: "Als bezetting 30 dagen > drempel% onder markt → verlaag basisprijs met |aanpassing|%",
+  bezetting_voor_markt: "Als bezetting > drempel% boven markt (15+30d) → verhoog basisprijs met aanpassing%",
+  pricelabs_advies: "Als PriceLabs-advies > drempel% boven huidige basisprijs → stel adviesprijs in",
+  geen_pickup: "Als 0 nieuwe boekingen (3d) én bezetting > drempel% achter markt → verlaag met |aanpassing|%",
+};
+
 interface Listing {
   id: number;
   name: string;
@@ -14,13 +30,37 @@ export default function CockpitInstellingenPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<number | null>(null);
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const [triggerSaving, setTriggerSaving] = useState(false);
+  const [triggerSaved, setTriggerSaved] = useState(false);
 
   useEffect(() => {
     fetch("/api/cockpit/listings")
       .then((r) => r.json())
       .then(setListings)
       .finally(() => setLoading(false));
+    fetch("/api/cockpit/aanbevelingen/triggers")
+      .then((r) => r.json())
+      .then((rows: Trigger[]) => {
+        if (rows.length > 0) setTriggers(rows);
+      });
   }, []);
+
+  async function saveTriggers() {
+    setTriggerSaving(true);
+    await fetch("/api/cockpit/aanbevelingen/triggers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ triggers }),
+    });
+    setTriggerSaving(false);
+    setTriggerSaved(true);
+    setTimeout(() => setTriggerSaved(false), 2000);
+  }
+
+  function updateTrigger(type: string, field: keyof Trigger, value: unknown) {
+    setTriggers(prev => prev.map(t => t.trigger_type === type ? { ...t, [field]: value } : t));
+  }
 
   async function toggle(listing: Listing) {
     setSaving(listing.id);
@@ -86,6 +126,72 @@ export default function CockpitInstellingenPage() {
               </div>
             </section>
           )}
+        </div>
+      )}
+
+      {/* Aanbeveling triggers */}
+      {triggers.length > 0 && (
+        <div className="mt-12">
+          <h1 className="text-2xl font-bold text-[#2b3885] mb-1">Aanbeveling triggers</h1>
+          <p className="text-gray-500 mb-6 text-sm">
+            Stel per trigger in of hij actief is, wat de drempelwaarde is (%) en welke prijsaanpassing wordt aanbevolen.
+          </p>
+          <div className="space-y-3">
+            {triggers.map(t => (
+              <div key={t.trigger_type} className={`bg-white border rounded-xl p-4 transition-all ${t.enabled ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
+                <div className="flex items-start gap-4">
+                  {/* Toggle */}
+                  <button
+                    onClick={() => updateTrigger(t.trigger_type, "enabled", !t.enabled)}
+                    className={`mt-0.5 relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors cursor-pointer focus:outline-none ${t.enabled ? "bg-[#2b3885]" : "bg-gray-200"}`}
+                    role="switch" aria-checked={t.enabled}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${t.enabled ? "translate-x-4" : "translate-x-0"}`} />
+                  </button>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 mb-0.5">{t.label}</p>
+                    <p className="text-xs text-gray-400 mb-3">{TRIGGER_OMSCHRIJVING[t.trigger_type]}</p>
+
+                    <div className="flex gap-6 flex-wrap">
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
+                        <input
+                          type="number" min="1" max="50"
+                          value={t.drempel_pct}
+                          onChange={e => updateTrigger(t.trigger_type, "drempel_pct", parseInt(e.target.value) || 0)}
+                          className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]"
+                        />
+                      </div>
+                      {t.trigger_type !== "pricelabs_advies" && (
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">
+                            Aanpassing (%, negatief = verlaging)
+                          </label>
+                          <input
+                            type="number" min="-50" max="50"
+                            value={t.aanpassing_pct}
+                            onChange={e => updateTrigger(t.trigger_type, "aanpassing_pct", parseInt(e.target.value) || 0)}
+                            className="w-24 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4">
+            <button
+              onClick={saveTriggers}
+              disabled={triggerSaving}
+              className="px-4 py-2 bg-[#2b3885] text-white text-sm font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors"
+            >
+              {triggerSaved ? "✓ Opgeslagen" : triggerSaving ? "Opslaan..." : "Triggers opslaan"}
+            </button>
+          </div>
         </div>
       )}
     </div>
