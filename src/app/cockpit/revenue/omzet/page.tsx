@@ -383,24 +383,24 @@ export default function OmzetPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
-                      <th className="text-left px-3 py-2">Kanaal</th>
-                      <th className="text-right px-3 py-2">Boekingen</th>
-                      <th className="text-right px-3 py-2">Omzet</th>
-                      <th className="text-right px-3 py-2">%</th>
+                      <th className="text-left px-3 py-1.5">Kanaal</th>
+                      <th className="text-right px-3 py-1.5">Boekingen</th>
+                      <th className="text-right px-3 py-1.5">Omzet</th>
+                      <th className="text-right px-3 py-1.5">%</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet).map(([kanaal, k]) => (
                       <tr key={kanaal} className="border-b border-gray-100">
-                        <td className="px-3 py-2.5 font-medium">
+                        <td className="px-3 py-1.5 font-medium text-sm">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: kanaalKleur(kanaal) }} />
                             {kanaalLabel(kanaal)}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-right text-gray-600">{k.boekingen}</td>
-                        <td className="px-3 py-2.5 text-right font-medium">{fmt(k.omzet)}</td>
-                        <td className="px-3 py-2.5 text-right text-gray-500">
+                        <td className="px-3 py-1.5 text-right text-gray-600 text-sm">{k.boekingen}</td>
+                        <td className="px-3 py-1.5 text-right font-medium text-sm">{fmt(k.omzet)}</td>
+                        <td className="px-3 py-1.5 text-right text-gray-500 text-sm">
                           {p.omzet > 0 ? `${((k.omzet / p.omzet) * 100).toFixed(1)}%` : "—"}
                         </td>
                       </tr>
@@ -410,7 +410,7 @@ export default function OmzetPage() {
               </div>
 
               {/* Pie chart — zelfde hoogte als tabel via flex stretch */}
-              <div className="flex-1 bg-white border border-gray-200 rounded-xl min-w-0 flex flex-col justify-center items-center p-5 gap-5">
+              <div className="flex-1 bg-white border border-gray-200 rounded-xl min-w-0 flex flex-row justify-center items-center gap-5 px-5 py-3">
                 {(() => {
                   const sorted = Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet);
                   const total = sorted.reduce((s, [, k]) => s + k.omzet, 0);
@@ -422,14 +422,14 @@ export default function OmzetPage() {
                   }));
                   return (
                     <>
-                      <div className="w-full max-w-[160px]">
+                      <div className="flex-shrink-0 w-[110px]">
                         <PieChart data={pieData} />
                       </div>
-                      <div className="w-full space-y-2.5">
+                      <div className="space-y-2 min-w-0 flex-1">
                         {pieData.map((d) => (
                           <div key={d.label} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
+                              <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
                               <span className="text-gray-700 font-medium truncate">{d.label}</span>
                             </div>
                             <span className="text-gray-500 ml-2 flex-shrink-0 font-medium">{d.pct}%</span>
