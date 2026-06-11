@@ -28,10 +28,27 @@ interface Listing {
   market_occupancy_next_7: string;
   blt_gemiddeld?: number;
   blt_mediaan?: number;
+  blt_p7?: number | null;
+  blt_p15?: number | null;
+  blt_p30?: number | null;
+  blt_p60?: number | null;
+  blt_p90?: number | null;
+  blt_avg_occ?: number | null;
 }
 
 function parseOcc(val: string) {
   return parseInt(val?.replace("%", "").trim() || "0", 10);
+}
+
+// Verwachte bezetting op horizon T obv BLT-boekingscurve
+function verwachteOcc(l: Listing, horizon: 7 | 15 | 30 | 60 | 90): number | null {
+  const pMap: Record<number, number | null | undefined> = {
+    7: l.blt_p7, 15: l.blt_p15, 30: l.blt_p30, 60: l.blt_p60, 90: l.blt_p90,
+  };
+  const p = pMap[horizon];
+  const avgOcc = l.blt_avg_occ;
+  if (p == null || avgOcc == null || avgOcc === 0) return null;
+  return Math.round(avgOcc * p * 100);
 }
 
 function PacingBadge({ own, market }: { own: number; market: number }) {
@@ -53,14 +70,18 @@ function PacingBadge({ own, market }: { own: number; market: number }) {
   );
 }
 
-function OccCell({ own, market }: { own: string; market: string }) {
+function OccCell({ own, market, verwacht }: { own: string; market: string; verwacht?: number | null }) {
   const o = parseOcc(own);
   const m = parseOcc(market);
   return (
     <div className="text-center">
       <div className="font-medium text-gray-900 text-sm">{o}%</div>
-      <div className="text-xs text-gray-400">{m}%</div>
-      <PacingBadge own={o} market={m} />
+      {verwacht != null ? (
+        <div className="text-xs text-purple-500">{verwacht}%</div>
+      ) : (
+        <div className="text-xs text-gray-400">{m}%</div>
+      )}
+      <PacingBadge own={o} market={verwacht != null ? verwacht : m} />
     </div>
   );
 }
@@ -370,6 +391,7 @@ export default function RevenuePage() {
   const [vernieuwen, setVernieuwen] = useState(false);
 
   const [herberekeningBezig, setHerberekeningBezig] = useState(false);
+  const [vergelijkMode, setVergelijkMode] = useState<"markt" | "blt">("markt");
 
   async function herbereken() {
     setHerberekeningBezig(true);
@@ -641,14 +663,30 @@ export default function RevenuePage() {
         );
       })()}
 
-      {/* Legend */}
+      {/* Legend + toggle */}
       <div className="flex items-center gap-4 mb-4 text-xs text-gray-400">
-        <span>Bezetting: <strong className="text-gray-600">eigen%</strong> / markt%</span>
-        <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> ≥+5% voor op markt
+        {/* Vergelijk-toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+          <button onClick={() => setVergelijkMode("markt")}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${vergelijkMode === "markt" ? "bg-white text-[#2b3885] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
+            vs Markt
+          </button>
+          <button onClick={() => setVergelijkMode("blt")}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${vergelijkMode === "blt" ? "bg-white text-[#2b3885] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
+            vs Eigen tempo
+          </button>
+        </div>
+        <span>
+          Bezetting: <strong className="text-gray-600">eigen%</strong> /{" "}
+          {vergelijkMode === "markt" ? "markt%" : <span className="text-purple-600 font-medium">verwacht% (BLT)</span>}
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> ≤-5% achter op markt
+          <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+          {vergelijkMode === "markt" ? "≥+5% voor op markt" : "≥+5% voor op eigen tempo"}
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+          {vergelijkMode === "markt" ? "≤-5% achter op markt" : "≤-5% achter op eigen tempo"}
         </span>
         <span className="ml-auto text-gray-300">Prijzen klikbaar om te bewerken</span>
       </div>
@@ -661,7 +699,9 @@ export default function RevenuePage() {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
                 <th className="text-left px-4 py-3 font-medium">Woning</th>
-                <th className="text-center px-3 py-3 font-medium">15 dagen</th>
+                <th className="text-center px-3 py-3 font-medium">
+                  15 dagen{vergelijkMode === "blt" && <span className="block text-purple-400 font-normal text-xs">vs tempo</span>}
+                </th>
                 <th className="text-center px-3 py-3 font-medium">30 dagen</th>
                 <th className="text-center px-3 py-3 font-medium">60 dagen</th>
                 <th className="text-center px-3 py-3 font-medium">90 dagen</th>
@@ -689,16 +729,16 @@ export default function RevenuePage() {
                     )}
                   </td>
                   <td className="px-3 py-3">
-                    <OccCell own={l.occupancy_next_15} market={l.market_occupancy_next_15} />
+                    <OccCell own={l.occupancy_next_15} market={l.market_occupancy_next_15} verwacht={vergelijkMode === "blt" ? verwachteOcc(l, 15) : null} />
                   </td>
                   <td className="px-3 py-3">
-                    <OccCell own={l.occupancy_next_30} market={l.market_occupancy_next_30} />
+                    <OccCell own={l.occupancy_next_30} market={l.market_occupancy_next_30} verwacht={vergelijkMode === "blt" ? verwachteOcc(l, 30) : null} />
                   </td>
                   <td className="px-3 py-3">
-                    <OccCell own={l.occupancy_next_60} market={l.market_occupancy_next_60} />
+                    <OccCell own={l.occupancy_next_60} market={l.market_occupancy_next_60} verwacht={vergelijkMode === "blt" ? verwachteOcc(l, 60) : null} />
                   </td>
                   <td className="px-3 py-3">
-                    <OccCell own={l.occupancy_next_90} market={l.market_occupancy_next_90} />
+                    <OccCell own={l.occupancy_next_90} market={l.market_occupancy_next_90} verwacht={vergelijkMode === "blt" ? verwachteOcc(l, 90) : null} />
                   </td>
                   <td className="px-3 py-3 text-center">
                     <InlinePrice listingId={l.id} field="min" value={l.min} onSave={handlePriceSave} />
