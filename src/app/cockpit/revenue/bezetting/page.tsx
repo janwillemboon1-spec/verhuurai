@@ -363,7 +363,8 @@ export default function RevenuePage() {
   const [sortKey, setSortKey] = useState<"naam" | "occ15" | "occ30" | "occ60">("naam");
   const [pendingPush, setPendingPush] = useState<Set<string>>(new Set());
   const [pushing, setPushing] = useState(false);
-  const [statussen, setStatussen] = useState<Map<string, string>>(new Map());
+  type StatusRecord = { status: string; bijgewerkt_op: string };
+  const [statussen, setStatussen] = useState<Map<string, StatusRecord>>(new Map());
   const [triggers, setTriggers] = useState<Trigger[]>(DEFAULT_TRIGGERS);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("in_afwachting");
 
@@ -381,8 +382,11 @@ export default function RevenuePage() {
     }).finally(() => setLoading(false));
     fetch("/api/cockpit/aanbevelingen/status")
       .then((r) => r.json())
-      .then((rows: { listing_id: string; trigger_type: string; status: string }[]) => {
-        const m = new Map(rows.map(r => [`${r.listing_id}__${r.trigger_type}`, r.status]));
+      .then((rows: { listing_id: string; trigger_type: string; status: string; bijgewerkt_op: string }[]) => {
+        const m = new Map(rows.map(r => [
+          `${r.listing_id}__${r.trigger_type}`,
+          { status: r.status, bijgewerkt_op: r.bijgewerkt_op ?? "" }
+        ]));
         setStatussen(m);
       });
     fetch("/api/cockpit/aanbevelingen/triggers")
@@ -415,7 +419,8 @@ export default function RevenuePage() {
   }
 
   async function updateStatus(listing_id: string, trigger_type: string, status: string) {
-    setStatussen(prev => new Map(prev).set(`${listing_id}__${trigger_type}`, status));
+    const nu = new Date().toISOString();
+    setStatussen(prev => new Map(prev).set(`${listing_id}__${trigger_type}`, { status, bijgewerkt_op: nu }));
     await fetch("/api/cockpit/aanbevelingen/status", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -488,15 +493,54 @@ export default function RevenuePage() {
 
       {/* Aanbevelingen */}
       {!loading && (() => {
+        const COOLDOWN_UUR = 72;
+        const nu = Date.now();
+
+        // Meest recente actie per woning (over alle triggers)
+        const laaststeActiePerListing = new Map<string, { tijdstip: Date; status: string }>();
+        statussen.forEach((rec, key) => {
+          if (!rec.bijgewerkt_op || rec.status === "in_afwachting") return;
+          const lid = key.split("__")[0];
+          const ts = new Date(rec.bijgewerkt_op);
+          const huidig = laaststeActiePerListing.get(lid);
+          if (!huidig || ts > huidig.tijdstip) laaststeActiePerListing.set(lid, { tijdstip: ts, status: rec.status });
+        });
+
+        // Woningen in cooldown (actie < 72u geleden)
+        const inCooldown = new Set<string>();
+        laaststeActiePerListing.forEach(({ tijdstip }, lid) => {
+          const urenGelden = (nu - tijdstip.getTime()) / 3600000;
+          if (urenGelden < COOLDOWN_UUR) inCooldown.add(lid);
+        });
+
         const alle = berekenAanbevelingen(listings, triggers);
+
+        // Pas cooldown toe: verberg in_afwachting aanbevelingen voor woningen in cooldown
         const gefilterd = alle.filter(a => {
-          const s = statussen.get(`${a.listing_id}__${a.trigger_type}`) ?? "in_afwachting";
+          const rec = statussen.get(`${a.listing_id}__${a.trigger_type}`);
+          const s = rec?.status ?? "in_afwachting";
+          if (statusFilter === "in_afwachting" && inCooldown.has(a.listing_id)) return false;
           return s === statusFilter;
         });
+
+        // Cooldown-woningen tonen als aparte sectie bij "in_afwachting"
+        const cooldownLijst = statusFilter === "in_afwachting"
+          ? Array.from(inCooldown).map(lid => {
+              const l = listings.find(x => x.id === lid);
+              const info = laaststeActiePerListing.get(lid)!;
+              const urenGelden = Math.round((nu - info.tijdstip.getTime()) / 3600000);
+              const resterend = COOLDOWN_UUR - urenGelden;
+              return { lid, naam: l?.interneNaam || l?.name.split("--")[0].trim() || lid, resterend, status: info.status, tijdstip: info.tijdstip };
+            })
+          : [];
+
         const telPerStatus = {
-          in_afwachting: alle.filter(a => (statussen.get(`${a.listing_id}__${a.trigger_type}`) ?? "in_afwachting") === "in_afwachting").length,
-          uitgevoerd: alle.filter(a => statussen.get(`${a.listing_id}__${a.trigger_type}`) === "uitgevoerd").length,
-          genegeerd: alle.filter(a => statussen.get(`${a.listing_id}__${a.trigger_type}`) === "genegeerd").length,
+          in_afwachting: alle.filter(a => {
+            const rec = statussen.get(`${a.listing_id}__${a.trigger_type}`);
+            return (rec?.status ?? "in_afwachting") === "in_afwachting" && !inCooldown.has(a.listing_id);
+          }).length,
+          uitgevoerd: alle.filter(a => statussen.get(`${a.listing_id}__${a.trigger_type}`)?.status === "uitgevoerd").length,
+          genegeerd: alle.filter(a => statussen.get(`${a.listing_id}__${a.trigger_type}`)?.status === "genegeerd").length,
         };
         return (
           <div className="mb-8">
@@ -512,6 +556,18 @@ export default function RevenuePage() {
                 ))}
               </div>
             </div>
+            {/* Cooldown woningen */}
+            {cooldownLijst.length > 0 && (
+              <div className="mb-3 space-y-1">
+                {cooldownLijst.map(c => (
+                  <div key={c.lid} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg px-4 py-2 text-xs text-gray-400">
+                    <span><span className="font-medium text-gray-600">{c.naam}</span> — {c.status === "uitgevoerd" ? "Uitgevoerd" : "Genegeerd"} op {c.tijdstip.toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="text-gray-300">⏱ Nieuwe aanbeveling over {c.resterend}u</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {gefilterd.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
                 {statusFilter === "in_afwachting"
@@ -525,6 +581,7 @@ export default function RevenuePage() {
                     key={`${a.listing_id}__${a.trigger_type}`}
                     aanbeveling={a}
                     status={statusFilter}
+                    bijgewerkt_op={statussen.get(`${a.listing_id}__${a.trigger_type}`)?.bijgewerkt_op}
                     onUitvoer={async () => {
                       await fetch("/api/cockpit/aanbevelingen/uitvoer", {
                         method: "POST",
@@ -659,10 +716,11 @@ export default function RevenuePage() {
 }
 
 function AanbevelingKaart({
-  aanbeveling: a, status, onUitvoer, onNegeer, onHeropenen
+  aanbeveling: a, status, bijgewerkt_op, onUitvoer, onNegeer, onHeropenen
 }: {
   aanbeveling: Aanbeveling;
   status: StatusFilter;
+  bijgewerkt_op?: string;
   onUitvoer: () => Promise<void>;
   onNegeer: () => Promise<void>;
   onHeropenen: () => Promise<void>;
@@ -690,10 +748,25 @@ function AanbevelingKaart({
             <span className="text-xs text-gray-400">{a.reden}</span>
           </div>
           <p className="text-sm font-medium text-[#2b3885] mb-1">{a.actie}</p>
-          <button onClick={() => setUitgevouwen(v => !v)}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            {uitgevouwen ? "▲ Verberg uitleg" : "▼ Waarom deze aanbeveling?"}
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={() => setUitgevouwen(v => !v)}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+              {uitgevouwen ? "▲ Verberg uitleg" : "▼ Waarom deze aanbeveling?"}
+            </button>
+            {bijgewerkt_op && (
+              <>
+                <span className="text-gray-200">·</span>
+                <span className="text-xs text-gray-400">
+                  {status === "uitgevoerd" ? "Uitgevoerd" : "Genegeerd"} op{" "}
+                  {new Date(bijgewerkt_op).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <a href={`/cockpit/revenue/logboek`}
+                  className="text-xs text-[#2b3885] hover:underline transition-colors">
+                  Bekijk wijziging →
+                </a>
+              </>
+            )}
+          </div>
           {uitgevouwen && (
             <p className="mt-2 text-xs text-gray-500 leading-relaxed max-w-2xl">{a.uitleg}</p>
           )}
