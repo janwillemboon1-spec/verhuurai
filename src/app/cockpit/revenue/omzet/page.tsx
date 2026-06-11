@@ -298,15 +298,18 @@ export default function OmzetPage() {
   const [syncBezig, setSyncBezig] = useState(false);
   const [syncVoortgang, setSyncVoortgang] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [cacheRijen, setCacheRijen] = useState<number | null>(null);
+  const [syncMislukt, setSyncMislukt] = useState<string[] | null>(null);
 
   useEffect(() => {
     fetch("/api/cockpit/revenue/omzet/sync")
       .then(r => r.json())
-      .then(d => setLastSync(d.sync_op ?? null));
+      .then(d => { setLastSync(d.sync_op ?? null); setCacheRijen(d.cache_rijen ?? null); });
   }, []);
 
   async function syncData() {
     setSyncBezig(true);
+    setSyncMislukt(null);
     setSyncVoortgang("Verbinding maken...");
 
     const res = await fetch("/api/cockpit/revenue/omzet/sync", { method: "POST" });
@@ -314,21 +317,28 @@ export default function OmzetPage() {
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const text = decoder.decode(value);
-      const lines = text.split("\n").filter(l => l.startsWith("data: "));
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
       for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
         try {
           const msg = JSON.parse(line.slice(6));
           if (msg.type === "progress") {
             setSyncVoortgang(`${msg.listing} (${msg.index}/${msg.totaal_listings})`);
+          } else if (msg.type === "listing_ok") {
+            setSyncVoortgang(`✓ ${msg.listing} — ${msg.reserveringen} reserveringen`);
           } else if (msg.type === "done") {
             setLastSync(msg.sync_op);
+            setCacheRijen(null); // wordt ververst bij volgende GET
             setSyncVoortgang(null);
             setSyncBezig(false);
+            if (msg.mislukt?.length) setSyncMislukt(msg.mislukt);
             const { start, end } = getPeriode(periodeId);
             laad(eigenStart && eigenEnd && periodeId === "eigen" ? eigenStart : start,
                  eigenStart && eigenEnd && periodeId === "eigen" ? eigenEnd   : end);
@@ -379,10 +389,16 @@ export default function OmzetPage() {
             {lastSync && (
               <p className="text-xs text-gray-400 mt-1">
                 Laatste sync: {new Date(lastSync).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                {cacheRijen !== null && <span className="ml-1 text-gray-300">· {cacheRijen} rijen</span>}
               </p>
             )}
             {!lastSync && !syncBezig && (
               <p className="text-xs text-amber-500 mt-1">Nog geen data — klik om te synchroniseren</p>
+            )}
+            {syncMislukt && syncMislukt.length > 0 && (
+              <div className="mt-1.5 text-xs text-red-500 max-w-xs">
+                Mislukt: {syncMislukt.join(", ")}
+              </div>
             )}
           </div>
           <Link href="/cockpit/revenue/omzet/prognose" className="text-xs text-[#2b3885] hover:underline">
