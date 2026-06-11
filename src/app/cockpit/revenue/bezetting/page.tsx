@@ -23,6 +23,9 @@ interface Listing {
   market_occupancy_next_90: string;
   booking_pickup_unique_past_3: number;
   booking_pickup_unique_past_30: number;
+  last_date_pushed: string | null;
+  occupancy_next_7: string;
+  market_occupancy_next_7: string;
 }
 
 function parseOcc(val: string) {
@@ -122,6 +125,14 @@ function InlinePrice({
 }
 
 type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
+type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated";
+
+interface TriggerConditie {
+  conditie: ConditieType;
+  periode?: number;       // voor bezetting_onder/boven: 7, 15, 30, 60, 90
+  drempel_pct?: number;   // percentage drempel
+  dagen?: number;         // voor geen_pickup / prijs_niet_updated
+}
 
 interface Aanbeveling {
   listing_id: string;
@@ -141,7 +152,8 @@ interface Aanbeveling {
 
 interface Trigger {
   trigger_type: string;
-  conditie: string;
+  conditie: string;       // legacy - nog steeds gebruikt als fallback
+  condities?: TriggerConditie[];  // nieuwe multi-conditie array
   enabled: boolean;
   drempel_pct: number;
   aanpassing_pct: number;
@@ -159,9 +171,57 @@ const DEFAULT_TRIGGERS: Trigger[] = [
   { trigger_type: "geen_pickup", conditie: "geen_pickup", enabled: true, drempel_pct: 5, aanpassing_pct: -5, label: "Geen nieuwe boekingen + bezetting achter", actie_type: "basisprijs", dso_periode: 30, dso_price_type: "percent" },
 ];
 
+function getOccByPeriode(l: Listing, periode: number): number {
+  const map: Record<number, string> = { 7: l.occupancy_next_7, 15: l.occupancy_next_15, 30: l.occupancy_next_30, 60: l.occupancy_next_60, 90: l.occupancy_next_90 };
+  return parseOcc(map[periode] ?? "0");
+}
+function getMktByPeriode(l: Listing, periode: number): number {
+  const map: Record<number, string> = { 7: l.market_occupancy_next_7, 15: l.market_occupancy_next_15, 30: l.market_occupancy_next_30, 60: l.market_occupancy_next_60, 90: l.market_occupancy_next_90 };
+  return parseOcc(map[periode] ?? "0");
+}
+
+function checkConditie(l: Listing, c: TriggerConditie): boolean {
+  const { conditie, periode = 30, drempel_pct = 10, dagen = 3 } = c;
+  switch (conditie) {
+    case "bezetting_onder": {
+      const delta = getOccByPeriode(l, periode) - getMktByPeriode(l, periode);
+      return delta <= -drempel_pct;
+    }
+    case "bezetting_boven": {
+      const delta = getOccByPeriode(l, periode) - getMktByPeriode(l, periode);
+      return delta >= drempel_pct;
+    }
+    case "pricelabs_advies": {
+      const { base, recommended_base_price: rec } = l;
+      return !!(rec && base && rec > base * (1 + drempel_pct / 100));
+    }
+    case "geen_pickup": {
+      return dagen <= 3 ? l.booking_pickup_unique_past_3 === 0 : l.booking_pickup_unique_past_30 === 0;
+    }
+    case "prijs_niet_updated": {
+      if (!l.last_date_pushed) return true;
+      const daysSince = (Date.now() - new Date(l.last_date_pushed).getTime()) / 86400000;
+      return daysSince >= dagen;
+    }
+  }
+  return false;
+}
+
+function conditieTekst(c: TriggerConditie): string {
+  switch (c.conditie) {
+    case "bezetting_onder": return `bezetting komende ${c.periode ?? 30}d meer dan ${c.drempel_pct ?? 10}% onder markt`;
+    case "bezetting_boven": return `bezetting komende ${c.periode ?? 30}d meer dan ${c.drempel_pct ?? 10}% boven markt`;
+    case "pricelabs_advies": return `PriceLabs advies meer dan ${c.drempel_pct ?? 10}% hoger`;
+    case "geen_pickup": return `geen nieuwe boekingen in ${c.dagen ?? 3} dagen`;
+    case "prijs_niet_updated": return `prijs meer dan ${c.dagen ?? 3} dagen niet geüpdated`;
+    default: return c.conditie;
+  }
+}
+
 function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeveling[] {
   const actief = triggers.filter(t => t.enabled);
-  const byConditie = (c: string) => actief.filter(t => (t.conditie ?? t.trigger_type) === c);
+  // Legacy: triggers zonder condities array gebruiken de oude conditie-veld aanpak
+  const byConditie = (c: string) => actief.filter(t => !t.condities?.length && (t.conditie ?? t.trigger_type) === c);
   const aanbevelingen: Aanbeveling[] = [];
 
   for (const l of listings) {
@@ -246,6 +306,28 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
           actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
         });
       }
+    }
+
+    // Nieuwe multi-conditie triggers (AND logica)
+    for (const t of actief.filter(tr => tr.condities && tr.condities.length > 0)) {
+      if (aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t.trigger_type)) continue;
+      const base = l.base;
+      if (!base) continue;
+
+      const alleVoldaan = t.condities!.every(c => checkConditie(l, c));
+      if (!alleVoldaan) continue;
+
+      const { actie, veld, nieuw } = maakActieTekst(t, base, l.recommended_base_price);
+      const conditiesSamenvatting = t.condities!.map(conditieTekst).join(" én ");
+      aanbevelingen.push({
+        listing_id: l.id, trigger_type: t.trigger_type, naam,
+        prioriteit: t.drempel_pct >= 15 ? "hoog" : "middel",
+        actie_type: t.actie_type ?? "basisprijs",
+        dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
+        reden: t.label,
+        uitleg: `Alle condities zijn voldaan: ${conditiesSamenvatting}.`,
+        actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
+      });
     }
   }
 

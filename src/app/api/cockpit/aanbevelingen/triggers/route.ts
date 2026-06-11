@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (body.triggers) {
     for (const t of body.triggers) {
       await admin.from("cockpit_aanbeveling_triggers").upsert(
-        { trigger_type: t.trigger_type, conditie: t.conditie ?? t.trigger_type, enabled: t.enabled, drempel_pct: t.drempel_pct, aanpassing_pct: t.aanpassing_pct, label: t.label },
+        { trigger_type: t.trigger_type, conditie: t.conditie ?? t.trigger_type, condities: t.condities ?? null, enabled: t.enabled, drempel_pct: t.drempel_pct, aanpassing_pct: t.aanpassing_pct, label: t.label, actie_type: t.actie_type ?? "basisprijs", dso_periode: t.dso_periode ?? 15, dso_price_type: t.dso_price_type ?? "percent" },
         { onConflict: "trigger_type" }
       );
     }
@@ -38,11 +38,15 @@ export async function POST(req: NextRequest) {
     const t = body.trigger;
     const { data, error } = await admin.from("cockpit_aanbeveling_triggers").insert({
       trigger_type: t.trigger_type,
-      conditie: t.conditie,
+      conditie: t.conditie ?? "custom",
+      condities: t.condities ?? null,
       enabled: true,
-      drempel_pct: t.drempel_pct,
-      aanpassing_pct: t.aanpassing_pct,
+      drempel_pct: t.drempel_pct ?? 10,
+      aanpassing_pct: t.aanpassing_pct ?? -5,
       label: t.label,
+      actie_type: t.actie_type ?? "basisprijs",
+      dso_periode: t.dso_periode ?? 15,
+      dso_price_type: t.dso_price_type ?? "percent",
     }).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);

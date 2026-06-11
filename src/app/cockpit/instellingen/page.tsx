@@ -3,10 +3,19 @@
 import { useEffect, useState } from "react";
 
 type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
+type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated";
+
+interface TriggerConditie {
+  conditie: ConditieType;
+  periode?: number;
+  drempel_pct?: number;
+  dagen?: number;
+}
 
 interface Trigger {
   trigger_type: string;
   conditie: string;
+  condities?: TriggerConditie[];
   enabled: boolean;
   drempel_pct: number;
   aanpassing_pct: number;
@@ -17,11 +26,21 @@ interface Trigger {
 }
 
 const ACTIE_OPTIES: { value: ActieType; label: string }[] = [
-  { value: "basisprijs",    label: "Basisprijs aanpassen (%)" },
-  { value: "minimumprijs",  label: "Minimumprijs aanpassen (%)" },
-  { value: "dso_percent",   label: "DSO — procentuele aanpassing" },
-  { value: "dso_fixed",     label: "DSO — vaste prijs (€)" },
+  { value: "basisprijs",   label: "Basisprijs aanpassen (%)" },
+  { value: "minimumprijs", label: "Minimumprijs aanpassen (%)" },
+  { value: "dso_percent",  label: "DSO — procentueel" },
+  { value: "dso_fixed",    label: "DSO — vaste prijs (€)" },
 ];
+
+const CONDITIE_TYPE_OPTIES: { value: ConditieType; label: string }[] = [
+  { value: "bezetting_onder",    label: "Bezetting onder markt" },
+  { value: "bezetting_boven",    label: "Bezetting boven markt" },
+  { value: "pricelabs_advies",   label: "PriceLabs advies afwijkend" },
+  { value: "geen_pickup",        label: "Geen nieuwe boekingen" },
+  { value: "prijs_niet_updated", label: "Prijs niet geüpdated" },
+];
+
+const LEGE_CONDITIE: TriggerConditie = { conditie: "bezetting_onder", periode: 30, drempel_pct: 10, dagen: 3 };
 
 const CONDITIE_OPTIES = [
   { value: "bezetting_15d_onder", label: "Bezetting 15 dagen onder markt" },
@@ -56,6 +75,7 @@ export default function CockpitInstellingenPage() {
   const [triggerSaved, setTriggerSaved] = useState(false);
   const [nieuweTrigger, setNieuweTrigger] = useState({
     conditie: "bezetting_15d_onder",
+    condities: [{ ...LEGE_CONDITIE }] as TriggerConditie[],
     label: "",
     drempel_pct: 15,
     aanpassing_pct: -10,
@@ -103,8 +123,8 @@ export default function CockpitInstellingenPage() {
   }
 
   async function voegTriggerToe() {
-    const trigger_type = `${nieuweTrigger.conditie}_${Date.now()}`;
-    const nieuw: Trigger = { ...nieuweTrigger, trigger_type, enabled: true };
+    const trigger_type = `custom_${Date.now()}`;
+    const nieuw: Trigger = { ...nieuweTrigger, trigger_type, enabled: true, condities: nieuweTrigger.condities };
     const res = await fetch("/api/cockpit/aanbevelingen/triggers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -112,7 +132,7 @@ export default function CockpitInstellingenPage() {
     });
     const data = await res.json();
     setTriggers(prev => [...prev, { ...nieuw, ...data }]);
-    setNieuweTrigger({ conditie: "bezetting_15d_onder", label: "", drempel_pct: 15, aanpassing_pct: -10, actie_type: "basisprijs", dso_periode: 15, dso_price_type: "percent" });
+    setNieuweTrigger({ conditie: "bezetting_15d_onder", condities: [{ ...LEGE_CONDITIE }], label: "", drempel_pct: 15, aanpassing_pct: -10, actie_type: "basisprijs", dso_periode: 15, dso_price_type: "percent" });
     setToevoegen(false);
   }
 
@@ -203,12 +223,27 @@ export default function CockpitInstellingenPage() {
                   </button>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-sm font-medium text-gray-900">{t.label || t.trigger_type}</p>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                        {CONDITIE_OPTIES.find(c => c.value === (t.conditie ?? t.trigger_type))?.label ?? t.conditie}
-                      </span>
-                    </div>
+                    <p className="text-sm font-medium text-gray-900 mb-1">{t.label || t.trigger_type}</p>
+                    {/* Condities weergave */}
+                    {t.condities && t.condities.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {t.condities.map((c, i) => (
+                          <span key={i} className="text-xs bg-[#eef7fe] text-[#2b3885] px-1.5 py-0.5 rounded">
+                            {i > 0 && <span className="mr-1 text-gray-400">EN</span>}
+                            {CONDITIE_TYPE_OPTIES.find(o => o.value === c.conditie)?.label}
+                            {c.periode && ` ${c.periode}d`}
+                            {c.drempel_pct && ` >${c.drempel_pct}%`}
+                            {c.dagen && ` ${c.dagen}d`}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mb-2">
+                        <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                          {CONDITIE_OPTIES.find(c => c.value === (t.conditie ?? t.trigger_type))?.label ?? t.conditie}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex gap-3 flex-wrap">
                       <div>
                         <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
@@ -272,13 +307,65 @@ export default function CockpitInstellingenPage() {
                       onChange={e => setNieuweTrigger(p => ({ ...p, label: e.target.value }))}
                       className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
                   </div>
-                  <div>
-                    <label className="text-xs text-gray-500 block mb-1">Conditietype</label>
-                    <select value={nieuweTrigger.conditie}
-                      onChange={e => setNieuweTrigger(p => ({ ...p, conditie: e.target.value }))}
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]">
-                      {CONDITIE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs text-gray-500">Condities (alle moeten gelden — AND)</label>
+                      <button type="button"
+                        onClick={() => setNieuweTrigger(p => ({ ...p, condities: [...p.condities, { ...LEGE_CONDITIE }] }))}
+                        className="text-xs text-[#2b3885] hover:underline">+ Conditie toevoegen</button>
+                    </div>
+                    <div className="space-y-2">
+                      {nieuweTrigger.condities.map((c, i) => (
+                        <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                              <div className="sm:col-span-2">
+                                <select value={c.conditie}
+                                  onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], conditie: e.target.value as ConditieType }; return { ...p, condities: cs }; })}
+                                  className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                                  {CONDITIE_TYPE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                </select>
+                              </div>
+                              {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven") && (
+                                <>
+                                  <div>
+                                    <select value={c.periode ?? 30}
+                                      onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], periode: parseInt(e.target.value) }; return { ...p, condities: cs }; })}
+                                      className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                                      {[7,15,30,60,90].map(d => <option key={d} value={d}>{d} dagen</option>)}
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <input type="number" min="1" max="50" placeholder="Drempel %" value={c.drempel_pct ?? 10}
+                                      onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                      className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                  </div>
+                                </>
+                              )}
+                              {c.conditie === "pricelabs_advies" && (
+                                <div>
+                                  <input type="number" min="1" max="100" placeholder="Drempel %" value={c.drempel_pct ?? 10}
+                                    onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                </div>
+                              )}
+                              {(c.conditie === "geen_pickup" || c.conditie === "prijs_niet_updated") && (
+                                <div>
+                                  <input type="number" min="1" max="90" placeholder="Dagen" value={c.dagen ?? 3}
+                                    onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], dagen: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                </div>
+                              )}
+                            </div>
+                            {nieuweTrigger.condities.length > 1 && (
+                              <button type="button"
+                                onClick={() => setNieuweTrigger(p => ({ ...p, condities: p.condities.filter((_, j) => j !== i) }))}
+                                className="text-gray-300 hover:text-red-500 text-xs mt-1">✕</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
