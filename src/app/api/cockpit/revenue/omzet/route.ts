@@ -128,13 +128,25 @@ export async function GET(req: NextRequest) {
 
   const prognose = berekenPrognose(reservations, stlyReservations, [], csvData, start, actualEnd);
 
+  function stlyPct(huidig: number, ly: number): number | null {
+    return ly > 0 ? ((huidig - ly) / ly) * 100 : null;
+  }
+
   return NextResponse.json({
-    periode: { start, end: actualEnd, stlyStart, stlyEnd },
+    periode: { start, end, stlyStart, stlyEnd },
     portfolio: {
       ...portfolioMetrics,
-      omzet_ly: portfolioSTLY.omzet,
-      yoy_pct: portfolioSTLY.omzet > 0
-        ? ((portfolioMetrics.omzet - portfolioSTLY.omzet) / portfolioSTLY.omzet) * 100
+      omzet_ly:     portfolioSTLY.omzet,
+      yoy_pct:      stlyPct(portfolioMetrics.omzet, portfolioSTLY.omzet),
+      adr_ly:       portfolioSTLY.adr,
+      adr_pct:      stlyPct(portfolioMetrics.adr, portfolioSTLY.adr),
+      bezetting_ly: portfolioSTLY.bezetting,
+      bezetting_pct: stlyPct(portfolioMetrics.bezetting, portfolioSTLY.bezetting),
+      revpar_ly:    portfolioSTLY.revpar,
+      revpar_pct:   stlyPct(portfolioMetrics.revpar, portfolioSTLY.revpar),
+      nachten_ly:   portfolioSTLY.nachten,
+      nachten_pct:  portfolioSTLY.nachten > 0
+        ? ((portfolioMetrics.nachten - portfolioSTLY.nachten) / portfolioSTLY.nachten) * 100
         : null,
     },
     listings: listingBreakdown,

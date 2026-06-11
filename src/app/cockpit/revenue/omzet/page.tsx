@@ -56,6 +56,14 @@ interface KPIs {
   kanalen: Record<string, { omzet: number; boekingen: number }>;
   omzet_ly: number;
   yoy_pct: number | null;
+  adr_ly?: number;
+  adr_pct?: number | null;
+  bezetting_ly?: number;
+  bezetting_pct?: number | null;
+  revpar_ly?: number;
+  revpar_pct?: number | null;
+  nachten_ly?: number;
+  nachten_pct?: number | null;
 }
 
 interface ListingRij {
@@ -454,22 +462,48 @@ export default function OmzetPage() {
         <div className="space-y-8">
 
           {/* KPI kaarten */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { label: "Huuromzet", val: fmt(p.omzet), sub: <YoyBadge pct={p.yoy_pct} /> },
-              { label: "Totaal incl. schoonmaak", val: fmt(p.omzetIncl), sub: null },
-              { label: "ADR", val: fmt(p.adr), sub: <span className="text-xs text-gray-400">per nacht</span> },
-              { label: "Bezetting", val: `${p.bezetting.toFixed(1)}%`, sub: <span className="text-xs text-gray-400">van beschikbare nachten</span> },
-              { label: "RevPAR", val: fmt(p.revpar), sub: <span className="text-xs text-gray-400">per beschikbare nacht</span> },
-              { label: "Geboekte nachten", val: String(p.nachten), sub: null },
-            ].map((k) => (
-              <div key={k.label} className="bg-white border border-gray-200 rounded-xl p-4">
-                <p className="text-xs text-gray-400 mb-1">{k.label}</p>
-                <p className="text-lg font-bold text-gray-900">{k.val}</p>
-                {k.sub}
+          {(() => {
+            const periodeLabel = (() => {
+              const s = data!.periode.start;
+              const e = data!.periode.end;
+              const fmt2 = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" });
+              return `${fmt2(s)} – ${fmt2(e)}`;
+            })();
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">Huuromzet</p>
+                  <p className="text-lg font-bold text-gray-900">{fmt(p.omzet)}</p>
+                  <YoyBadge pct={p.yoy_pct} />
+                  <p className="text-xs text-gray-300 mt-1">{periodeLabel}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">Totaal incl. schoonmaak</p>
+                  <p className="text-lg font-bold text-gray-900">{fmt(p.omzetIncl)}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">ADR</p>
+                  <p className="text-lg font-bold text-gray-900">{fmt(p.adr)}</p>
+                  <YoyBadge pct={p.adr_pct ?? null} />
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">Bezetting</p>
+                  <p className="text-lg font-bold text-gray-900">{p.bezetting.toFixed(1)}%</p>
+                  <YoyBadge pct={p.bezetting_pct ?? null} />
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">RevPAR</p>
+                  <p className="text-lg font-bold text-gray-900">{fmt(p.revpar)}</p>
+                  <YoyBadge pct={p.revpar_pct ?? null} />
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 mb-1">Geboekte nachten</p>
+                  <p className="text-lg font-bold text-gray-900">{p.nachten}</p>
+                  <YoyBadge pct={p.nachten_pct ?? null} />
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           {/* Kanalen */}
           <section>
