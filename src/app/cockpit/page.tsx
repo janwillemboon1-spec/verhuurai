@@ -1,10 +1,22 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function CockpitPage() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#2b3885] mb-2">Cockpit</h1>
-      <p className="text-gray-500 mb-8">Jouw persoonlijk dashboard voor Boon Vakantieverhuur.</p>
+      <div className="flex items-center gap-5 mb-8">
+        <Image
+          src="/boni-cockpit.png"
+          alt="Boni"
+          width={80}
+          height={80}
+          className="rounded-full object-cover flex-shrink-0"
+        />
+        <div>
+          <h1 className="text-2xl font-bold text-[#2b3885]">Boni&apos;s Cockpit</h1>
+          <p className="text-gray-500 mt-0.5">Jouw persoonlijk dashboard voor Boon Vakantieverhuur.</p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link
