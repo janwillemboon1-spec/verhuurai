@@ -38,11 +38,40 @@ const CONDITIE_TYPE_OPTIES: { value: ConditieType; label: string; tooltip: strin
   { value: "pricelabs_advies",   label: "PriceLabs advies afwijkend",  tooltip: "PriceLabs adviseert significant andere prijs" },
   { value: "geen_pickup",        label: "Geen nieuwe boekingen",       tooltip: "Geen nieuwe boekingen in N dagen" },
   { value: "prijs_niet_updated", label: "Prijs niet geüpdated",        tooltip: "Basisprijs N dagen niet gepusht" },
-  { value: "blt_kort",           label: "BLT < drempel (last-minute)", tooltip: "Woning heeft korte boekingstijd — last-minute karakter" },
-  { value: "blt_lang",           label: "BLT > drempel (ver vooruit)", tooltip: "Woning wordt ver van tevoren geboekt" },
+  { value: "blt_kort",           label: "Gem. boekingstijd korter dan X dagen",  tooltip: "Woning heeft kort leadtime — last-minute karakter" },
+  { value: "blt_lang",           label: "Gem. boekingstijd langer dan X dagen",  tooltip: "Woning wordt ver van tevoren geboekt" },
 ];
 
 const LEGE_CONDITIE: TriggerConditie = { conditie: "bezetting_onder", periode: 30, drempel_pct: 10, dagen: 3 };
+
+function conditieZin(c: TriggerConditie): string {
+  switch (c.conditie) {
+    case "bezetting_onder": return `bezetting komende ${c.periode ?? 30} dagen meer dan ${c.drempel_pct ?? 10}% onder de markt`;
+    case "bezetting_boven": return `bezetting komende ${c.periode ?? 30} dagen meer dan ${c.drempel_pct ?? 10}% boven de markt`;
+    case "pricelabs_advies": return `PriceLabs advies meer dan ${c.drempel_pct ?? 10}% hoger dan huidig`;
+    case "geen_pickup": return `geen nieuwe boekingen in de afgelopen ${c.dagen ?? 3} dagen`;
+    case "prijs_niet_updated": return `prijs al meer dan ${c.dagen ?? 3} dagen niet geüpdated`;
+    case "blt_kort": return `gemiddelde boekingstijd van de woning < ${c.drempel_pct ?? 30} dagen`;
+    case "blt_lang": return `gemiddelde boekingstijd van de woning > ${c.drempel_pct ?? 60} dagen`;
+    default: return c.conditie;
+  }
+}
+
+function actieZin(actie_type: string, aanpassing: number, dso_periode?: number): string {
+  switch (actie_type) {
+    case "basisprijs": return aanpassing < 0 ? `verlaag de basisprijs met ${Math.abs(aanpassing)}%` : `verhoog de basisprijs met ${aanpassing}%`;
+    case "minimumprijs": return aanpassing < 0 ? `verlaag de minimumprijs met ${Math.abs(aanpassing)}%` : `verhoog de minimumprijs met ${aanpassing}%`;
+    case "dso_percent": return `zet een DSO van ${aanpassing}% op vrije datums komende ${dso_periode ?? 15} dagen`;
+    case "dso_fixed": return `zet een vaste DSO-prijs van €${aanpassing} op vrije datums komende ${dso_periode ?? 15} dagen`;
+    default: return `pas prijs aan met ${aanpassing}%`;
+  }
+}
+
+function triggerSamenvattingZin(condities: TriggerConditie[], actie_type: string, aanpassing: number, dso_periode?: number): string {
+  if (condities.length === 0) return "";
+  const voorwaarden = condities.map(conditieZin).join(", én ");
+  return `Als ${voorwaarden} → ${actieZin(actie_type, aanpassing, dso_periode)}.`;
+}
 
 const CONDITIE_OPTIES = [
   { value: "bezetting_15d_onder", label: "Bezetting 15 dagen onder markt" },
@@ -324,8 +353,9 @@ export default function CockpitInstellingenPage() {
                       {nieuweTrigger.condities.map((c, i) => (
                         <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
                           <div className="flex items-start gap-2">
-                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-2">
                               <div className="sm:col-span-2">
+                                <label className="text-xs text-gray-400 block mb-0.5">Conditietype</label>
                                 <select value={c.conditie}
                                   onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], conditie: e.target.value as ConditieType }; return { ...p, condities: cs }; })}
                                   className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
@@ -335,6 +365,7 @@ export default function CockpitInstellingenPage() {
                               {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven") && (
                                 <>
                                   <div>
+                                    <label className="text-xs text-gray-400 block mb-0.5">Periode</label>
                                     <select value={c.periode ?? 30}
                                       onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], periode: parseInt(e.target.value) }; return { ...p, condities: cs }; })}
                                       className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
@@ -342,7 +373,8 @@ export default function CockpitInstellingenPage() {
                                     </select>
                                   </div>
                                   <div>
-                                    <input type="number" min="1" max="50" placeholder="Drempel %" value={c.drempel_pct ?? 10}
+                                    <label className="text-xs text-gray-400 block mb-0.5">Achterstand (%)</label>
+                                    <input type="number" min="1" max="50" value={c.drempel_pct ?? 10}
                                       onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                       className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                                   </div>
@@ -350,21 +382,24 @@ export default function CockpitInstellingenPage() {
                               )}
                               {c.conditie === "pricelabs_advies" && (
                                 <div>
-                                  <input type="number" min="1" max="100" placeholder="Drempel %" value={c.drempel_pct ?? 10}
+                                  <label className="text-xs text-gray-400 block mb-0.5">Afwijking (%)</label>
+                                  <input type="number" min="1" max="100" value={c.drempel_pct ?? 10}
                                     onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                                 </div>
                               )}
                               {(c.conditie === "geen_pickup" || c.conditie === "prijs_niet_updated") && (
                                 <div>
-                                  <input type="number" min="1" max="90" placeholder="Dagen" value={c.dagen ?? 3}
+                                  <label className="text-xs text-gray-400 block mb-0.5">Aantal dagen</label>
+                                  <input type="number" min="1" max="90" value={c.dagen ?? 3}
                                     onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], dagen: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                                 </div>
                               )}
                               {(c.conditie === "blt_kort" || c.conditie === "blt_lang") && (
                                 <div>
-                                  <input type="number" min="1" max="365" placeholder="Dagen BLT" value={c.drempel_pct ?? (c.conditie === "blt_kort" ? 30 : 60)}
+                                  <label className="text-xs text-gray-400 block mb-0.5">Max/min dagen (BLT)</label>
+                                  <input type="number" min="1" max="365" value={c.drempel_pct ?? (c.conditie === "blt_kort" ? 30 : 60)}
                                     onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                                 </div>
@@ -415,6 +450,14 @@ export default function CockpitInstellingenPage() {
                     </div>
                   )}
                 </div>
+                {/* Live samenvatting */}
+                {nieuweTrigger.condities.length > 0 && (
+                  <div className="bg-white border border-blue-100 rounded-lg px-4 py-3 text-xs text-[#2b3885] leading-relaxed">
+                    <span className="font-medium">Samenvatting: </span>
+                    {triggerSamenvattingZin(nieuweTrigger.condities, nieuweTrigger.actie_type, nieuweTrigger.aanpassing_pct, nieuweTrigger.dso_periode)}
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <button onClick={voegTriggerToe} disabled={!nieuweTrigger.label}
                     className="px-4 py-2 bg-[#2b3885] text-white text-sm rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors">
