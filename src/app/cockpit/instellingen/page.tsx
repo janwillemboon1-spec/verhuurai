@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
+
 interface Trigger {
   trigger_type: string;
   conditie: string;
@@ -9,7 +11,17 @@ interface Trigger {
   drempel_pct: number;
   aanpassing_pct: number;
   label: string;
+  actie_type: ActieType;
+  dso_periode: number;
+  dso_price_type: "percent" | "fixed";
 }
+
+const ACTIE_OPTIES: { value: ActieType; label: string }[] = [
+  { value: "basisprijs",    label: "Basisprijs aanpassen (%)" },
+  { value: "minimumprijs",  label: "Minimumprijs aanpassen (%)" },
+  { value: "dso_percent",   label: "DSO — procentuele aanpassing" },
+  { value: "dso_fixed",     label: "DSO — vaste prijs (€)" },
+];
 
 const CONDITIE_OPTIES = [
   { value: "bezetting_15d_onder", label: "Bezetting 15 dagen onder markt" },
@@ -47,6 +59,9 @@ export default function CockpitInstellingenPage() {
     label: "",
     drempel_pct: 15,
     aanpassing_pct: -10,
+    actie_type: "basisprijs" as ActieType,
+    dso_periode: 15,
+    dso_price_type: "percent" as "percent" | "fixed",
   });
   const [toevoegen, setToevoegen] = useState(false);
 
@@ -97,7 +112,7 @@ export default function CockpitInstellingenPage() {
     });
     const data = await res.json();
     setTriggers(prev => [...prev, { ...nieuw, ...data }]);
-    setNieuweTrigger({ conditie: "bezetting_15d_onder", label: "", drempel_pct: 15, aanpassing_pct: -10 });
+    setNieuweTrigger({ conditie: "bezetting_15d_onder", label: "", drempel_pct: 15, aanpassing_pct: -10, actie_type: "basisprijs", dso_periode: 15, dso_price_type: "percent" });
     setToevoegen(false);
   }
 
@@ -188,20 +203,47 @@ export default function CockpitInstellingenPage() {
                   </button>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-2 mb-2">
                       <p className="text-sm font-medium text-gray-900">{t.label || t.trigger_type}</p>
                       <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                         {CONDITIE_OPTIES.find(c => c.value === (t.conditie ?? t.trigger_type))?.label ?? t.conditie}
                       </span>
                     </div>
-                    <div className="flex gap-4 flex-wrap mt-2">
+                    <div className="flex gap-3 flex-wrap">
                       <div>
                         <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
                         <input type="number" min="1" max="50" value={t.drempel_pct}
                           onChange={e => updateTrigger(t.trigger_type, "drempel_pct", parseInt(e.target.value) || 0)}
                           className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                       </div>
-                      {(t.conditie ?? t.trigger_type) !== "pricelabs_advies" && (
+                      <div>
+                        <label className="text-xs text-gray-500 block mb-1">Actie</label>
+                        <select value={t.actie_type ?? "basisprijs"}
+                          onChange={e => updateTrigger(t.trigger_type, "actie_type", e.target.value)}
+                          className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                          {ACTIE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                      </div>
+                      {(t.actie_type === "dso_percent" || t.actie_type === "dso_fixed") ? (
+                        <>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">
+                              {t.actie_type === "dso_fixed" ? "Prijs (€)" : "Aanpassing (%)"}
+                            </label>
+                            <input type="number" min="-100" max="10000" value={t.aanpassing_pct}
+                              onChange={e => updateTrigger(t.trigger_type, "aanpassing_pct", parseInt(e.target.value) || 0)}
+                              className="w-24 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Periode (dagen)</label>
+                            <select value={t.dso_periode ?? 15}
+                              onChange={e => updateTrigger(t.trigger_type, "dso_periode", parseInt(e.target.value))}
+                              className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                              {[7, 15, 30, 60].map(d => <option key={d} value={d}>{d} dagen</option>)}
+                            </select>
+                          </div>
+                        </>
+                      ) : (t.conditie ?? t.trigger_type) !== "pricelabs_advies" && (
                         <div>
                           <label className="text-xs text-gray-500 block mb-1">Aanpassing (%)</label>
                           <input type="number" min="-50" max="50" value={t.aanpassing_pct}
@@ -244,12 +286,32 @@ export default function CockpitInstellingenPage() {
                       onChange={e => setNieuweTrigger(p => ({ ...p, drempel_pct: parseInt(e.target.value) || 0 }))}
                       className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
                   </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Actie</label>
+                    <select value={nieuweTrigger.actie_type}
+                      onChange={e => setNieuweTrigger(p => ({ ...p, actie_type: e.target.value as ActieType }))}
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]">
+                      {ACTIE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
                   {nieuweTrigger.conditie !== "pricelabs_advies" && (
                     <div>
-                      <label className="text-xs text-gray-500 block mb-1">Aanpassing (%)</label>
-                      <input type="number" min="-50" max="50" value={nieuweTrigger.aanpassing_pct}
+                      <label className="text-xs text-gray-500 block mb-1">
+                        {nieuweTrigger.actie_type === "dso_fixed" ? "Prijs (€)" : "Aanpassing (%)"}
+                      </label>
+                      <input type="number" min="-10000" max="10000" value={nieuweTrigger.aanpassing_pct}
                         onChange={e => setNieuweTrigger(p => ({ ...p, aanpassing_pct: parseInt(e.target.value) || 0 }))}
                         className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
+                    </div>
+                  )}
+                  {(nieuweTrigger.actie_type === "dso_percent" || nieuweTrigger.actie_type === "dso_fixed") && (
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Periode (dagen)</label>
+                      <select value={nieuweTrigger.dso_periode}
+                        onChange={e => setNieuweTrigger(p => ({ ...p, dso_periode: parseInt(e.target.value) }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]">
+                        {[7, 15, 30, 60].map(d => <option key={d} value={d}>{d} dagen</option>)}
+                      </select>
                     </div>
                   )}
                 </div>
