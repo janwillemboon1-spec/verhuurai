@@ -176,6 +176,14 @@ export default function CockpitBerichtenPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setLoading(true); loadConversations(); }}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:border-[#2b3885] hover:text-[#2b3885] disabled:opacity-50 transition-colors"
+          >
+            <span className={loading ? "animate-spin inline-block" : ""}>↻</span>
+            Ophalen
+          </button>
           <span className="text-sm text-gray-500">
             {autoMode ? "Automatisch verzenden" : "Goedkeuring vereist"}
           </span>
