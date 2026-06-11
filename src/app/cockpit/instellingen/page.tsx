@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
-type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated" | "blt_kort" | "blt_lang";
+type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated" | "blt_kort" | "blt_lang" | "eigen_tempo_achter" | "eigen_tempo_voor";
 
 interface TriggerConditie {
   conditie: ConditieType;
@@ -40,6 +40,8 @@ const CONDITIE_TYPE_OPTIES: { value: ConditieType; label: string; tooltip: strin
   { value: "prijs_niet_updated", label: "Prijs niet geüpdated",        tooltip: "Basisprijs N dagen niet gepusht" },
   { value: "blt_kort",           label: "Gem. boekingstijd korter dan X dagen",  tooltip: "Woning heeft kort leadtime — last-minute karakter" },
   { value: "blt_lang",           label: "Gem. boekingstijd langer dan X dagen",  tooltip: "Woning wordt ver van tevoren geboekt" },
+  { value: "eigen_tempo_achter", label: "Bezetting achter op eigen historisch tempo", tooltip: "Eigen bezetting loopt X% achter op verwacht eigen tempo (BLT-curve)" },
+  { value: "eigen_tempo_voor",   label: "Bezetting voor op eigen historisch tempo",  tooltip: "Eigen bezetting loopt X% voor op verwacht eigen tempo (BLT-curve)" },
 ];
 
 const LEGE_CONDITIE: TriggerConditie = { conditie: "bezetting_onder", periode: 30, drempel_pct: 10, dagen: 3 };
@@ -53,6 +55,8 @@ function conditieZin(c: TriggerConditie): string {
     case "prijs_niet_updated": return `prijs al meer dan ${c.dagen ?? 3} dagen niet geüpdated`;
     case "blt_kort": return `gemiddelde boekingstijd van de woning < ${c.drempel_pct ?? 30} dagen`;
     case "blt_lang": return `gemiddelde boekingstijd van de woning > ${c.drempel_pct ?? 60} dagen`;
+    case "eigen_tempo_achter": return `bezetting komende ${c.periode ?? 30} dagen loopt > ${c.drempel_pct ?? 10}% achter op eigen historisch tempo`;
+    case "eigen_tempo_voor": return `bezetting komende ${c.periode ?? 30} dagen loopt > ${c.drempel_pct ?? 10}% voor op eigen historisch tempo`;
     default: return c.conditie;
   }
 }
@@ -356,7 +360,7 @@ export default function CockpitInstellingenPage() {
                                       {CONDITIE_TYPE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                     </select>
                                   </div>
-                                  {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven") && (<>
+                                  {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven" || c.conditie === "eigen_tempo_achter" || c.conditie === "eigen_tempo_voor") && (<>
                                     <div>
                                       <label className="text-xs text-gray-400 block mb-0.5">Periode</label>
                                       <select value={c.periode ?? 30}
@@ -366,7 +370,9 @@ export default function CockpitInstellingenPage() {
                                       </select>
                                     </div>
                                     <div>
-                                      <label className="text-xs text-gray-400 block mb-0.5">Achterstand (%)</label>
+                                      <label className="text-xs text-gray-400 block mb-0.5">
+                                        {c.conditie === "eigen_tempo_achter" || c.conditie === "eigen_tempo_voor" ? "Afwijking (%)" : "Achterstand (%)"}
+                                      </label>
                                       <input type="number" min="1" max="50" value={c.drempel_pct ?? 10}
                                         onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                         className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
@@ -490,7 +496,7 @@ export default function CockpitInstellingenPage() {
                                   {CONDITIE_TYPE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                 </select>
                               </div>
-                              {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven") && (
+                              {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven" || c.conditie === "eigen_tempo_achter" || c.conditie === "eigen_tempo_voor") && (
                                 <>
                                   <div>
                                     <label className="text-xs text-gray-400 block mb-0.5">Periode</label>
@@ -501,7 +507,9 @@ export default function CockpitInstellingenPage() {
                                     </select>
                                   </div>
                                   <div>
-                                    <label className="text-xs text-gray-400 block mb-0.5">Achterstand (%)</label>
+                                    <label className="text-xs text-gray-400 block mb-0.5">
+                                      {c.conditie === "eigen_tempo_achter" || c.conditie === "eigen_tempo_voor" ? "Afwijking (%)" : "Achterstand (%)"}
+                                    </label>
                                     <input type="number" min="1" max="50" value={c.drempel_pct ?? 10}
                                       onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                       className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />

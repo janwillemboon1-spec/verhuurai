@@ -148,7 +148,7 @@ function InlinePrice({
 }
 
 type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
-type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated" | "blt_kort" | "blt_lang";
+type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated" | "blt_kort" | "blt_lang" | "eigen_tempo_achter" | "eigen_tempo_voor";
 
 interface TriggerConditie {
   conditie: ConditieType;
@@ -232,9 +232,20 @@ function checkConditie(l: Listing, c: TriggerConditie): boolean {
       return blt <= (drempel_pct ?? 30);
     }
     case "blt_lang": {
-      // BLT mediaan is langer dan X dagen (ver-van-tevoren woning)
       const blt = l.blt_mediaan ?? l.blt_gemiddeld ?? 0;
       return blt >= (drempel_pct ?? 60);
+    }
+    case "eigen_tempo_achter": {
+      const verwacht = verwachteOcc(l, (periode ?? 30) as 7 | 15 | 30 | 60 | 90);
+      if (verwacht == null || verwacht === 0) return false;
+      const eigen = getOccByPeriode(l, periode ?? 30);
+      return (verwacht - eigen) >= (drempel_pct ?? 10);
+    }
+    case "eigen_tempo_voor": {
+      const verwacht = verwachteOcc(l, (periode ?? 30) as 7 | 15 | 30 | 60 | 90);
+      if (verwacht == null) return false;
+      const eigen = getOccByPeriode(l, periode ?? 30);
+      return (eigen - verwacht) >= (drempel_pct ?? 10);
     }
   }
   return false;
@@ -249,6 +260,8 @@ function conditieTekst(c: TriggerConditie): string {
     case "prijs_niet_updated": return `prijs meer dan ${c.dagen ?? 3} dagen niet geüpdated`;
     case "blt_kort": return `gemiddelde boekingstijd < ${c.drempel_pct ?? 30} dagen (last-minute woning)`;
     case "blt_lang": return `gemiddelde boekingstijd > ${c.drempel_pct ?? 60} dagen (ver vooruit geboekt)`;
+    case "eigen_tempo_achter": return `bezetting ${c.periode ?? 30}d loopt ${c.drempel_pct ?? 10}% achter op eigen historisch tempo`;
+    case "eigen_tempo_voor": return `bezetting ${c.periode ?? 30}d loopt ${c.drempel_pct ?? 10}% voor op eigen historisch tempo`;
     default: return c.conditie;
   }
 }
