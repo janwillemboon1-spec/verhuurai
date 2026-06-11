@@ -36,7 +36,9 @@ export async function GET(req: NextRequest) {
   const windowStart = stlyStartVanPeriode < trendStartDate.toISOString().slice(0, 10)
     ? stlyStartVanPeriode
     : trendStartDate.toISOString().slice(0, 10);
-  const windowEnd = actualEnd;
+  // windowEnd = einde van de geselecteerde periode (kan in de toekomst liggen)
+  // zodat toekomstige bevestigde boekingen ook meegenomen worden in de trend
+  const windowEnd = end;
 
   // Één call per listing (27 calls ipv 135)
   const [allData, listings, admin] = await Promise.all([
@@ -104,8 +106,8 @@ export async function GET(req: NextRequest) {
     trendCursor.setMonth(trendCursor.getMonth() + 1);
   }
 
-  // Huidige data: reserveringen t/m vandaag (toekomstige maanden tonen 0)
-  const trendData = filterPeriode(allData, start, today);
+  // Huidige data: reserveringen van start t/m einde periode (inclusief toekomstige bevestigde boekingen)
+  const trendData = filterPeriode(allData, start, end);
   // STLY: zelfde maanden vorig jaar
   const trendLyStart = addYears(start, -1);
   const trendLyEnd = addYears(end, -1);

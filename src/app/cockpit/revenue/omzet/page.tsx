@@ -499,11 +499,18 @@ export default function OmzetPage() {
                   </thead>
                   <tbody>
                     {data!.trend.map((t) => {
+                      const today = new Date().toISOString().slice(0, 7);
+                      const isToekomst = t.maand > today;
                       const diff = t.omzet_ly > 0 ? ((t.omzet - t.omzet_ly) / t.omzet_ly) * 100 : null;
                       return (
-                        <tr key={t.maand} className="border-b border-gray-100">
-                          <td className="px-4 py-2 font-medium">{new Date(t.maand + "-15").toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}</td>
-                          <td className="px-4 py-2 text-right font-medium">{fmt(t.omzet)}</td>
+                        <tr key={t.maand} className={`border-b border-gray-100 ${isToekomst ? "bg-blue-50/30" : ""}`}>
+                          <td className="px-4 py-2 font-medium">
+                            {new Date(t.maand + "-15").toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}
+                            {isToekomst && <span className="ml-2 text-xs text-blue-400 font-normal">bevestigd</span>}
+                          </td>
+                          <td className={`px-4 py-2 text-right font-medium ${isToekomst ? "text-blue-700" : ""}`}>
+                            {t.omzet > 0 ? fmt(t.omzet) : <span className="text-gray-300">—</span>}
+                          </td>
                           <td className="px-4 py-2 text-right text-gray-400">{t.omzet_ly > 0 ? fmt(t.omzet_ly) : "—"}</td>
                           <td className="px-4 py-2 text-right"><YoyBadge pct={diff} /></td>
                         </tr>
