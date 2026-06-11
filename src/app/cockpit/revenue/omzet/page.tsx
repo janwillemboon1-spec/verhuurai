@@ -3,13 +3,26 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
-const PIE_COLORS = ["#2b3885","#4a90d9","#7fbce8","#a8d4f0","#c8e6f7","#e2f2fb"];
+const KANAAL_KLEUREN: Record<string, string> = {
+  airbnb: "#FF5A5F",
+  bcom:   "#003580",
+  vrbo:   "#1A8FE3",
+};
+function kanaalKleur(kanaal: string): string {
+  return KANAAL_KLEUREN[kanaal.toLowerCase()] ?? "#22C55E";
+}
+function kanaalLabel(kanaal: string): string {
+  if (kanaal === "airbnb") return "Airbnb";
+  if (kanaal === "bcom")   return "Booking.com";
+  if (kanaal === "vrbo")   return "Vrbo";
+  return kanaal.charAt(0).toUpperCase() + kanaal.slice(1);
+}
 
-function PieChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+function PieChart({ data }: { data: { label: string; value: number; color: string; pct: string }[] }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) return null;
 
-  const cx = 80, cy = 80, r = 70;
+  const cx = 80, cy = 80, r = 68;
   let angle = -Math.PI / 2;
   const slices = data.map((d) => {
     const sweep = (d.value / total) * 2 * Math.PI;
@@ -19,13 +32,13 @@ function PieChart({ data }: { data: { label: string; value: number; color: strin
     const x2 = cx + r * Math.cos(angle);
     const y2 = cy + r * Math.sin(angle);
     const large = sweep > Math.PI ? 1 : 0;
-    return { ...d, path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`, pct: (d.value / total * 100).toFixed(1) };
+    return { ...d, path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z` };
   });
 
   return (
-    <svg viewBox="0 0 160 160" className="w-full max-w-[160px]">
+    <svg viewBox="0 0 160 160" className="w-full">
       {slices.map((s) => (
-        <path key={s.label} d={s.path} fill={s.color}>
+        <path key={s.label} d={s.path} fill={s.color} stroke="white" strokeWidth="1.5">
           <title>{s.label}: {s.pct}%</title>
         </path>
       ))}
@@ -379,7 +392,12 @@ export default function OmzetPage() {
                   <tbody>
                     {Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet).map(([kanaal, k]) => (
                       <tr key={kanaal} className="border-b border-gray-100">
-                        <td className="px-3 py-2 font-medium capitalize">{kanaal}</td>
+                        <td className="px-3 py-2 font-medium">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: kanaalKleur(kanaal) }} />
+                            {kanaalLabel(kanaal)}
+                          </div>
+                        </td>
                         <td className="px-3 py-2 text-right text-gray-600">{k.boekingen}</td>
                         <td className="px-3 py-2 text-right font-medium">{fmt(k.omzet)}</td>
                         <td className="px-3 py-2 text-right text-gray-500">
@@ -392,22 +410,29 @@ export default function OmzetPage() {
               </div>
 
               {/* Pie chart */}
-              <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center min-w-0">
+              <div className="flex-1 bg-white border border-gray-200 rounded-xl p-5 flex flex-col items-center gap-4 min-w-0">
                 {(() => {
                   const sorted = Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet);
-                  const pieData = sorted.map(([label, k], i) => ({
-                    label,
+                  const total = sorted.reduce((s, [, k]) => s + k.omzet, 0);
+                  const pieData = sorted.map(([label, k]) => ({
+                    label: kanaalLabel(label),
                     value: k.omzet,
-                    color: PIE_COLORS[i % PIE_COLORS.length],
+                    color: kanaalKleur(label),
+                    pct: total > 0 ? ((k.omzet / total) * 100).toFixed(1) : "0",
                   }));
                   return (
                     <>
-                      <PieChart data={pieData} />
-                      <div className="mt-3 space-y-1 w-full">
+                      <div className="w-36 h-36 flex-shrink-0">
+                        <PieChart data={pieData} />
+                      </div>
+                      <div className="w-full space-y-2">
                         {pieData.map((d) => (
-                          <div key={d.label} className="flex items-center gap-2 text-xs">
-                            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                            <span className="capitalize text-gray-600 truncate">{d.label}</span>
+                          <div key={d.label} className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
+                              <span className="text-gray-700 font-medium truncate">{d.label}</span>
+                            </div>
+                            <span className="text-gray-400 ml-2 flex-shrink-0">{d.pct}%</span>
                           </div>
                         ))}
                       </div>
