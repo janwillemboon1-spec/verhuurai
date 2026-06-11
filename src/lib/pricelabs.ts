@@ -195,7 +195,12 @@ async function fetchReservationDataForListing(listing: PLListing, startDate: str
   const res = await fetch(`${BASE}/reservation_data?${params}`, { headers: headers() });
   if (!res.ok) return [];
   const data = await res.json();
-  return data.data ?? [];
+  const rows: PLReservation[] = data.data ?? [];
+  // Direct Airbnb-gekoppelde woningen (pms=airbnb) hebben geen booking_channel — zet dit expliciet
+  if (listing.pms === "airbnb") {
+    return rows.map((r) => ({ ...r, booking_channel: r.booking_channel || "airbnb" }));
+  }
+  return rows;
 }
 
 export async function getReservationData(startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
