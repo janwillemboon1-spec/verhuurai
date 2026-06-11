@@ -28,14 +28,14 @@ export async function GET(req: NextRequest) {
   const today = new Date().toISOString().slice(0, 10);
   const actualEnd = end > today ? today : end;
 
-  // Bereken het 24-maands venster (huidig + STLY)
+  // Venster: vroegste van (start -1 jaar, 24 maanden geleden) zodat STLY voor hele periode beschikbaar is
+  const stlyStartVanPeriode = addYears(start, -1); // LY-start voor de geselecteerde periode
   const trendStartDate = new Date();
-  trendStartDate.setMonth(trendStartDate.getMonth() - 11);
+  trendStartDate.setMonth(trendStartDate.getMonth() - 23); // 24 maanden terug als fallback
   trendStartDate.setDate(1);
-  const trendStart12 = trendStartDate.toISOString().slice(0, 10);
-
-  // We halen één keer data op voor het 24-maands venster: 12 mnd geleden t/m vandaag + 1 jaar eerder
-  const windowStart = addYears(trendStart12, -1); // 24 maanden terug
+  const windowStart = stlyStartVanPeriode < trendStartDate.toISOString().slice(0, 10)
+    ? stlyStartVanPeriode
+    : trendStartDate.toISOString().slice(0, 10);
   const windowEnd = actualEnd;
 
   // Één call per listing (27 calls ipv 135)
@@ -94,17 +94,22 @@ export async function GET(req: NextRequest) {
     };
   }).sort((a, b) => b.omzet - a.omzet);
 
-  // Maandelijkse trend: laatste 12 maanden vs STLY — alles uit dezelfde dataset
+  // Maandelijkse trend: alle maanden van de geselecteerde periode vs STLY
   const trendMaanden: string[] = [];
-  const d = new Date(trendStartDate);
-  d.setDate(1);
-  while (d.toISOString().slice(0, 10) <= today) {
-    trendMaanden.push(d.toISOString().slice(0, 7));
-    d.setMonth(d.getMonth() + 1);
+  const trendCursor = new Date(start);
+  trendCursor.setDate(1);
+  const trendEndStr = end.slice(0, 7); // YYYY-MM van einde periode
+  while (trendCursor.toISOString().slice(0, 7) <= trendEndStr) {
+    trendMaanden.push(trendCursor.toISOString().slice(0, 7));
+    trendCursor.setMonth(trendCursor.getMonth() + 1);
   }
 
-  const trendData = filterPeriode(allData, trendStart12, today);
-  const trendLyData = filterPeriode(allData, addYears(trendStart12, -1), addYears(today, -1));
+  // Huidige data: reserveringen t/m vandaag (toekomstige maanden tonen 0)
+  const trendData = filterPeriode(allData, start, today);
+  // STLY: zelfde maanden vorig jaar
+  const trendLyStart = addYears(start, -1);
+  const trendLyEnd = addYears(end, -1);
+  const trendLyData = filterPeriode(allData, trendLyStart, trendLyEnd);
   const maandTrend = groepeerPerMaand(trendData);
   const maandTrendLY = groepeerPerMaand(trendLyData);
 
