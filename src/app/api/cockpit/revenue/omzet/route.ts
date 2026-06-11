@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getReservationData, getListings } from "@/lib/pricelabs";
+import { getReservationData, getListings, PLReservation } from "@/lib/pricelabs";
 import { aggregeer, groepeerPerListing, groepeerPerMaand, dagenInPeriode, berekenPrognose } from "@/lib/omzet-aggregatie";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,6 +8,10 @@ const COCKPIT_EMAIL = "info@bnbassistant.com";
 
 function addYears(dateStr: string, years: number): string {
   return dateStr.replace(/^(\d{4})/, (y) => String(parseInt(y) + years));
+}
+
+function filterPeriode(rows: PLReservation[], start: string, end: string): PLReservation[] {
+  return rows.filter((r) => r.check_in >= start && r.check_in <= end);
 }
 
 export async function GET(req: NextRequest) {
@@ -24,24 +28,19 @@ export async function GET(req: NextRequest) {
   const today = new Date().toISOString().slice(0, 10);
   const actualEnd = end > today ? today : end;
 
-  // STLY: zelfde periode een jaar eerder
-  const stlyStart = addYears(start, -1);
-  const stlyEnd = addYears(actualEnd, -1);
+  // Bereken het 24-maands venster (huidig + STLY)
+  const trendStartDate = new Date();
+  trendStartDate.setMonth(trendStartDate.getMonth() - 11);
+  trendStartDate.setDate(1);
+  const trendStart12 = trendStartDate.toISOString().slice(0, 10);
 
-  // Altijd laatste 12 maanden voor de trend (onafhankelijk van periode-selector)
-  const trendEnd = today;
-  const trendStart = new Date();
-  trendStart.setMonth(trendStart.getMonth() - 11);
-  trendStart.setDate(1);
-  const trendStartStr = trendStart.toISOString().slice(0, 10);
-  const trendLyStart = addYears(trendStartStr, -1);
-  const trendLyEnd = addYears(trendEnd, -1);
+  // We halen één keer data op voor het 24-maands venster: 12 mnd geleden t/m vandaag + 1 jaar eerder
+  const windowStart = addYears(trendStart12, -1); // 24 maanden terug
+  const windowEnd = actualEnd;
 
-  const [reservations, stlyReservations, trendData, trendLyData, listings, admin] = await Promise.all([
-    getReservationData(start, actualEnd),
-    getReservationData(stlyStart, stlyEnd),
-    getReservationData(trendStartStr, trendEnd),
-    getReservationData(trendLyStart, trendLyEnd),
+  // Één call per listing (27 calls ipv 135)
+  const [allData, listings, admin] = await Promise.all([
+    getReservationData(windowStart, windowEnd),
     getListings(),
     Promise.resolve(createAdminClient()),
   ]);
@@ -62,6 +61,12 @@ export async function GET(req: NextRequest) {
     if (!csvData[row.methode]) csvData[row.methode] = {};
     csvData[row.methode][row.maand] = parseFloat(row.omzet);
   }
+
+  // Filter in JavaScript — geen extra API calls
+  const stlyStart = addYears(start, -1);
+  const stlyEnd = addYears(actualEnd, -1);
+  const reservations = filterPeriode(allData, start, actualEnd);
+  const stlyReservations = filterPeriode(allData, stlyStart, stlyEnd);
 
   const dagen = dagenInPeriode(start, actualEnd);
   const stlyDagen = dagenInPeriode(stlyStart, stlyEnd);
@@ -89,21 +94,22 @@ export async function GET(req: NextRequest) {
     };
   }).sort((a, b) => b.omzet - a.omzet);
 
-  // Maandelijkse trend: laatste 12 maanden met STLY-uitlijning
-  const maandTrend = groepeerPerMaand(trendData);
-  const maandTrendLY = groepeerPerMaand(trendLyData);
-
-  // Genereer de 12 maanden
+  // Maandelijkse trend: laatste 12 maanden vs STLY — alles uit dezelfde dataset
   const trendMaanden: string[] = [];
-  const d = new Date(trendStart);
+  const d = new Date(trendStartDate);
   d.setDate(1);
-  while (d.toISOString().slice(0, 10) <= trendEnd) {
-    trendMaanden.push(d.toISOString().slice(0, 7)); // YYYY-MM
+  while (d.toISOString().slice(0, 10) <= today) {
+    trendMaanden.push(d.toISOString().slice(0, 7));
     d.setMonth(d.getMonth() + 1);
   }
 
+  const trendData = filterPeriode(allData, trendStart12, today);
+  const trendLyData = filterPeriode(allData, addYears(trendStart12, -1), addYears(today, -1));
+  const maandTrend = groepeerPerMaand(trendData);
+  const maandTrendLY = groepeerPerMaand(trendLyData);
+
   const trend = trendMaanden.map((m) => {
-    const lyMaand = addYears(m + "-01", -1).slice(0, 7); // zelfde maand vorig jaar
+    const lyMaand = addYears(m + "-01", -1).slice(0, 7);
     return {
       maand: m,
       omzet: aggregeer(maandTrend[m] ?? [], 30).omzet,

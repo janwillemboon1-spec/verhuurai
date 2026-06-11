@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getReservationData, getCalendar } from "@/lib/pricelabs";
+import { getReservationData, getCalendar, PLReservation } from "@/lib/pricelabs";
 import { aggregeer, groepeerPerMaand, dagenInPeriode, berekenPrognose } from "@/lib/omzet-aggregatie";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,6 +8,10 @@ const COCKPIT_EMAIL = "info@bnbassistant.com";
 
 function addYears(dateStr: string, years: number): string {
   return dateStr.replace(/^(\d{4})/, (y) => String(parseInt(y) + years));
+}
+
+function filterPeriode(rows: PLReservation[], start: string, end: string): PLReservation[] {
+  return rows.filter((r) => r.check_in >= start && r.check_in <= end);
 }
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -23,24 +27,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
   const today = new Date().toISOString().slice(0, 10);
   const actualEnd = end > today ? today : end;
-  const stlyStart = addYears(start, -1);
-  const stlyEnd = addYears(actualEnd, -1);
   const futureEnd = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
 
-  // Altijd laatste 12 maanden voor de trend
-  const trendEnd = today;
+  // 24-maands venster voor één API call
   const trendStartDate = new Date();
   trendStartDate.setMonth(trendStartDate.getMonth() - 11);
   trendStartDate.setDate(1);
-  const trendStartStr = trendStartDate.toISOString().slice(0, 10);
-  const trendLyStart = addYears(trendStartStr, -1);
-  const trendLyEnd = addYears(trendEnd, -1);
+  const trendStart12 = trendStartDate.toISOString().slice(0, 10);
+  const windowStart = addYears(trendStart12, -1);
 
-  const [reservations, stlyReservations, trendData, trendLyData, futureCalendar, admin] = await Promise.all([
-    getReservationData(start, actualEnd, params.id),
-    getReservationData(stlyStart, stlyEnd, params.id),
-    getReservationData(trendStartStr, trendEnd, params.id),
-    getReservationData(trendLyStart, trendLyEnd, params.id),
+  const [allData, futureCalendar, admin] = await Promise.all([
+    getReservationData(windowStart, actualEnd, params.id),
     getCalendar(params.id, today, futureEnd),
     Promise.resolve(createAdminClient()),
   ]);
@@ -55,34 +52,35 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     csvData[row.methode][row.maand] = parseFloat(row.omzet);
   }
 
+  const stlyStart = addYears(start, -1);
+  const stlyEnd = addYears(actualEnd, -1);
+  const reservations = filterPeriode(allData, start, actualEnd);
+  const stlyReservations = filterPeriode(allData, stlyStart, stlyEnd);
+
   const dagen = dagenInPeriode(start, actualEnd);
   const stlyDagen = dagenInPeriode(stlyStart, stlyEnd);
   const metrics = aggregeer(reservations, dagen);
   const stlyMetrics = aggregeer(stlyReservations, stlyDagen);
 
-  // Maandelijkse trend: laatste 12 maanden met STLY-uitlijning
-  const maandTrend = groepeerPerMaand(trendData);
-  const maandTrendLY = groepeerPerMaand(trendLyData);
-
+  // Trend: laatste 12 maanden
   const trendMaanden: string[] = [];
   const d = new Date(trendStartDate);
   d.setDate(1);
-  while (d.toISOString().slice(0, 10) <= trendEnd) {
+  while (d.toISOString().slice(0, 10) <= today) {
     trendMaanden.push(d.toISOString().slice(0, 7));
     d.setMonth(d.getMonth() + 1);
   }
+
+  const trendData = filterPeriode(allData, trendStart12, today);
+  const trendLyData = filterPeriode(allData, addYears(trendStart12, -1), addYears(today, -1));
+  const maandTrend = groepeerPerMaand(trendData);
+  const maandTrendLY = groepeerPerMaand(trendLyData);
 
   const trend = trendMaanden.map((m) => {
     const lyMaand = addYears(m + "-01", -1).slice(0, 7);
     const cur = aggregeer(maandTrend[m] ?? [], 30);
     const ly = aggregeer(maandTrendLY[lyMaand] ?? [], 30);
-    return {
-      maand: m,
-      omzet: cur.omzet,
-      omzet_ly: ly.omzet,
-      nachten: cur.nachten,
-      adr: cur.adr,
-    };
+    return { maand: m, omzet: cur.omzet, omzet_ly: ly.omzet, nachten: cur.nachten, adr: cur.adr };
   });
 
   const prognose = berekenPrognose(reservations, stlyReservations, futureCalendar, csvData, today, futureEnd);
