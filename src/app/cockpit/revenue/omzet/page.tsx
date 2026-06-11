@@ -295,6 +295,26 @@ export default function OmzetPage() {
   const [eigenEnd, setEigenEnd] = useState("");
   const [data, setData] = useState<OmzetData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncBezig, setSyncBezig] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/cockpit/revenue/omzet/sync")
+      .then(r => r.json())
+      .then(d => setLastSync(d.sync_op ?? null));
+  }, []);
+
+  async function syncData() {
+    setSyncBezig(true);
+    const res = await fetch("/api/cockpit/revenue/omzet/sync", { method: "POST" });
+    const d = await res.json();
+    setLastSync(d.sync_op ?? null);
+    setSyncBezig(false);
+    // Herlaad na sync
+    const { start, end } = getPeriode(periodeId);
+    laad(eigenStart && eigenEnd && periodeId === "eigen" ? eigenStart : start,
+         eigenStart && eigenEnd && periodeId === "eigen" ? eigenEnd   : end);
+  }
 
   const laad = useCallback((start: string, end: string) => {
     setLoading(true);
@@ -322,9 +342,29 @@ export default function OmzetPage() {
         <Link href="/cockpit/revenue" className="text-sm text-gray-400 hover:text-[#2b3885] transition-colors">← Revenue</Link>
         <span className="text-gray-200">/</span>
         <h1 className="text-xl font-bold text-[#2b3885]">Omzet</h1>
-        <Link href="/cockpit/revenue/omzet/prognose" className="ml-auto text-xs text-[#2b3885] hover:underline">
-          Prognoses →
-        </Link>
+        <div className="ml-auto flex items-center gap-4">
+          <div className="text-right">
+            <button
+              onClick={syncData}
+              disabled={syncBezig}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2b3885] text-white text-xs font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors"
+            >
+              <span className={syncBezig ? "animate-spin inline-block" : ""}>↻</span>
+              {syncBezig ? "Data ophalen (~1 min)..." : "Data synchroniseren"}
+            </button>
+            {lastSync && (
+              <p className="text-xs text-gray-400 mt-1">
+                Laatste sync: {new Date(lastSync).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+            {!lastSync && !syncBezig && (
+              <p className="text-xs text-amber-500 mt-1">Nog geen data — klik om te synchroniseren</p>
+            )}
+          </div>
+          <Link href="/cockpit/revenue/omzet/prognose" className="text-xs text-[#2b3885] hover:underline">
+            Prognoses →
+          </Link>
+        </div>
       </div>
 
       {/* Periode tabs */}

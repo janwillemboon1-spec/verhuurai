@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getReservationData, getCalendar, PLReservation } from "@/lib/pricelabs";
+import { getCalendar, PLReservation } from "@/lib/pricelabs";
+import { getReserveringenUitCache } from "@/lib/reserveringen-cache";
 import { aggregeer, groepeerPerMaand, dagenInPeriode, berekenPrognose } from "@/lib/omzet-aggregatie";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -35,9 +36,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   trendStartDate.setDate(1);
   const trendStart12 = trendStartDate.toISOString().slice(0, 10);
   const windowStart = addYears(trendStart12, -1);
+  const windowEnd = end; // inclusief toekomstige bevestigde boekingen
 
   const [allData, futureCalendar, admin] = await Promise.all([
-    getReservationData(windowStart, actualEnd, params.id),
+    getReserveringenUitCache(windowStart, windowEnd, params.id),
     getCalendar(params.id, today, futureEnd),
     Promise.resolve(createAdminClient()),
   ]);

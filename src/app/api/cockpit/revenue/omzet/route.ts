@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getReservationData, getListings, PLReservation } from "@/lib/pricelabs";
+import { getListings, PLReservation } from "@/lib/pricelabs";
+import { getReserveringenUitCache } from "@/lib/reserveringen-cache";
 import { aggregeer, groepeerPerListing, groepeerPerMaand, dagenInPeriode, berekenPrognose } from "@/lib/omzet-aggregatie";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -40,9 +41,9 @@ export async function GET(req: NextRequest) {
   // zodat toekomstige bevestigde boekingen ook meegenomen worden in de trend
   const windowEnd = end;
 
-  // Één call per listing (27 calls ipv 135)
+  // Lees uit Supabase cache — geen PriceLabs calls meer
   const [allData, listings, admin] = await Promise.all([
-    getReservationData(windowStart, windowEnd),
+    getReserveringenUitCache(windowStart, windowEnd),
     getListings(),
     Promise.resolve(createAdminClient()),
   ]);
