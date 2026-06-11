@@ -65,13 +65,14 @@ export async function GET(req: NextRequest) {
     csvData[row.methode][row.maand] = parseFloat(row.omzet);
   }
 
-  // Filter in JavaScript — geen extra API calls
+  // KPI: gebruik de volledige geselecteerde periode — inclusief toekomstige bevestigde boekingen
+  // STLY: dezelfde volledige periode vorig jaar (voor eerlijke absoluutvergelijking)
   const stlyStart = addYears(start, -1);
-  const stlyEnd = addYears(actualEnd, -1);
-  const reservations = filterPeriode(allData, start, actualEnd);
+  const stlyEnd   = addYears(end, -1);
+  const reservations     = filterPeriode(allData, start, end);
   const stlyReservations = filterPeriode(allData, stlyStart, stlyEnd);
 
-  const dagen = dagenInPeriode(start, actualEnd);
+  const dagen     = dagenInPeriode(start, end);
   const stlyDagen = dagenInPeriode(stlyStart, stlyEnd);
   const perListing = groepeerPerListing(reservations);
   const perListingSTLY = groepeerPerListing(stlyReservations);

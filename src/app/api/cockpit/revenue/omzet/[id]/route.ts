@@ -55,11 +55,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 
   const stlyStart = addYears(start, -1);
-  const stlyEnd = addYears(actualEnd, -1);
-  const reservations = filterPeriode(allData, start, actualEnd);
+  const stlyEnd   = addYears(end, -1);
+  const reservations     = filterPeriode(allData, start, end);
   const stlyReservations = filterPeriode(allData, stlyStart, stlyEnd);
 
-  const dagen = dagenInPeriode(start, actualEnd);
+  const dagen     = dagenInPeriode(start, end);
   const stlyDagen = dagenInPeriode(stlyStart, stlyEnd);
   const metrics = aggregeer(reservations, dagen);
   const stlyMetrics = aggregeer(stlyReservations, stlyDagen);
