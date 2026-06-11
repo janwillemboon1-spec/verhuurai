@@ -27,7 +27,9 @@ export function aggregeer(reservations: PLReservation[], totaleDagen: number): O
 
   const kanalen: Record<string, { omzet: number; boekingen: number }> = {};
   for (const r of geboekt) {
-    const k = r.booking_channel || "overig";
+    const raw = (r.booking_channel || "overig").toLowerCase();
+    // Alles wat airbnb bevat samenvoegen onder één sleutel
+    const k = raw.includes("airbnb") ? "airbnb" : raw;
     if (!kanalen[k]) kanalen[k] = { omzet: 0, boekingen: 0 };
     kanalen[k].omzet += parseFloat(r.rental_revenue || "0");
     kanalen[k].boekingen += 1;
