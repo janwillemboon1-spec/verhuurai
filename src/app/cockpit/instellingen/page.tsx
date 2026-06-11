@@ -104,6 +104,39 @@ export default function CockpitInstellingenPage() {
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [triggerSaving, setTriggerSaving] = useState(false);
   const [triggerSaved, setTriggerSaved] = useState(false);
+  const [editTriggerType, setEditTriggerType] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{
+    label: string; condities: TriggerConditie[]; aanpassing_pct: number;
+    actie_type: ActieType; dso_periode: number; dso_price_type: "percent" | "fixed"; drempel_pct: number;
+  } | null>(null);
+
+  function startEdit(t: Trigger) {
+    setEditTriggerType(t.trigger_type);
+    setEditValues({
+      label: t.label,
+      condities: t.condities && t.condities.length > 0 ? [...t.condities.map(c => ({ ...c }))] : [{ ...LEGE_CONDITIE }],
+      aanpassing_pct: t.aanpassing_pct,
+      actie_type: t.actie_type ?? "basisprijs",
+      dso_periode: t.dso_periode ?? 15,
+      dso_price_type: t.dso_price_type ?? "percent",
+      drempel_pct: t.drempel_pct,
+    });
+    setToevoegen(false);
+  }
+
+  async function slaEditOp() {
+    if (!editTriggerType || !editValues) return;
+    const updated = { ...triggers.find(t => t.trigger_type === editTriggerType)!, ...editValues, condities: editValues.condities };
+    setTriggers(prev => prev.map(t => t.trigger_type === editTriggerType ? updated : t));
+    await fetch("/api/cockpit/aanbevelingen/triggers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ triggers: [updated] }),
+    });
+    setEditTriggerType(null);
+    setEditValues(null);
+  }
+
   const [nieuweTrigger, setNieuweTrigger] = useState({
     conditie: "bezetting_15d_onder",
     condities: [{ ...LEGE_CONDITIE }] as TriggerConditie[],
@@ -247,87 +280,182 @@ export default function CockpitInstellingenPage() {
               </div>
             )}
             {triggers.map(t => (
-              <div key={t.trigger_type} className={`bg-white border rounded-xl p-4 transition-all ${t.enabled ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
-                <div className="flex items-start gap-4">
-                  <button
-                    onClick={() => updateTrigger(t.trigger_type, "enabled", !t.enabled)}
-                    className={`mt-0.5 relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors cursor-pointer focus:outline-none ${t.enabled ? "bg-[#2b3885]" : "bg-gray-200"}`}
-                    role="switch" aria-checked={t.enabled}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${t.enabled ? "translate-x-4" : "translate-x-0"}`} />
-                  </button>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 mb-1">{t.label || t.trigger_type}</p>
-                    {/* Condities weergave */}
-                    {t.condities && t.condities.length > 0 ? (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {t.condities.map((c, i) => (
-                          <span key={i} className="text-xs bg-[#eef7fe] text-[#2b3885] px-1.5 py-0.5 rounded">
-                            {i > 0 && <span className="mr-1 text-gray-400">EN</span>}
-                            {CONDITIE_TYPE_OPTIES.find(o => o.value === c.conditie)?.label}
-                            {c.periode && ` ${c.periode}d`}
-                            {c.drempel_pct && ` >${c.drempel_pct}%`}
-                            {c.dagen && ` ${c.dagen}d`}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="mb-2">
+              <div key={t.trigger_type} className={`bg-white border rounded-xl transition-all ${
+                editTriggerType === t.trigger_type ? "border-[#2b3885]" : t.enabled ? "border-gray-200" : "border-gray-100 opacity-60"
+              }`}>
+                {/* Normale weergave */}
+                {editTriggerType !== t.trigger_type && (
+                  <div className="flex items-start gap-4 p-4">
+                    <button onClick={() => updateTrigger(t.trigger_type, "enabled", !t.enabled)}
+                      className={`mt-0.5 relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors cursor-pointer focus:outline-none ${t.enabled ? "bg-[#2b3885]" : "bg-gray-200"}`}
+                      role="switch" aria-checked={t.enabled}>
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${t.enabled ? "translate-x-4" : "translate-x-0"}`} />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 mb-1">{t.label || t.trigger_type}</p>
+                      {t.condities && t.condities.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {t.condities.map((c, i) => (
+                            <span key={i} className="text-xs bg-[#eef7fe] text-[#2b3885] px-1.5 py-0.5 rounded">
+                              {i > 0 && <span className="mr-1 text-gray-400">EN</span>}
+                              {CONDITIE_TYPE_OPTIES.find(o => o.value === c.conditie)?.label}
+                              {c.periode && ` ${c.periode}d`}
+                              {c.drempel_pct != null && ` >${c.drempel_pct}%`}
+                              {c.dagen && ` ${c.dagen}d`}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
                         <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                           {CONDITIE_OPTIES.find(c => c.value === (t.conditie ?? t.trigger_type))?.label ?? t.conditie}
                         </span>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {ACTIE_OPTIES.find(o => o.value === (t.actie_type ?? "basisprijs"))?.label} · {t.aanpassing_pct > 0 ? "+" : ""}{t.aanpassing_pct}{t.actie_type === "dso_fixed" ? "€" : "%"}
+                        {(t.actie_type === "dso_percent" || t.actie_type === "dso_fixed") && ` · ${t.dso_periode ?? 15}d`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button onClick={() => { startEdit(t); setToevoegen(false); }}
+                        className="text-xs text-[#2b3885] hover:underline">
+                        Bewerken
+                      </button>
+                      <button onClick={() => deleteTrigger(t.trigger_type)}
+                        className="text-gray-300 hover:text-red-500 transition-colors text-sm" title="Verwijder trigger">✕</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Edit formulier */}
+                {editTriggerType === t.trigger_type && editValues && (
+                  <div className="p-4">
+                    <p className="text-sm font-semibold text-[#2b3885] mb-3">Trigger bewerken</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                      <div className="sm:col-span-2">
+                        <label className="text-xs text-gray-500 block mb-1">Naam</label>
+                        <input type="text" value={editValues.label}
+                          onChange={e => setEditValues(p => p && ({ ...p, label: e.target.value }))}
+                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
                       </div>
-                    )}
-                    <div className="flex gap-3 flex-wrap">
-                      <div>
-                        <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
-                        <input type="number" min="1" max="50" value={t.drempel_pct}
-                          onChange={e => updateTrigger(t.trigger_type, "drempel_pct", parseInt(e.target.value) || 0)}
-                          className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs text-gray-500">Condities (AND)</label>
+                          <button type="button" onClick={() => setEditValues(p => p && ({ ...p, condities: [...p.condities, { ...LEGE_CONDITIE }] }))}
+                            className="text-xs text-[#2b3885] hover:underline">+ Conditie toevoegen</button>
+                        </div>
+                        <div className="space-y-2">
+                          {editValues.condities.map((c, i) => (
+                            <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                              <div className="flex items-start gap-2">
+                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                  <div className="sm:col-span-2">
+                                    <label className="text-xs text-gray-400 block mb-0.5">Conditietype</label>
+                                    <select value={c.conditie}
+                                      onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], conditie: e.target.value as ConditieType }; return { ...p, condities: cs }; })}
+                                      className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                                      {CONDITIE_TYPE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                    </select>
+                                  </div>
+                                  {(c.conditie === "bezetting_onder" || c.conditie === "bezetting_boven") && (<>
+                                    <div>
+                                      <label className="text-xs text-gray-400 block mb-0.5">Periode</label>
+                                      <select value={c.periode ?? 30}
+                                        onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], periode: parseInt(e.target.value) }; return { ...p, condities: cs }; })}
+                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                                        {[7,15,30,60,90].map(d => <option key={d} value={d}>{d} dagen</option>)}
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="text-xs text-gray-400 block mb-0.5">Achterstand (%)</label>
+                                      <input type="number" min="1" max="50" value={c.drempel_pct ?? 10}
+                                        onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                    </div>
+                                  </>)}
+                                  {c.conditie === "pricelabs_advies" && (
+                                    <div>
+                                      <label className="text-xs text-gray-400 block mb-0.5">Afwijking (%)</label>
+                                      <input type="number" min="1" max="100" value={c.drempel_pct ?? 10}
+                                        onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                    </div>
+                                  )}
+                                  {(c.conditie === "geen_pickup" || c.conditie === "prijs_niet_updated") && (
+                                    <div>
+                                      <label className="text-xs text-gray-400 block mb-0.5">Aantal dagen</label>
+                                      <input type="number" min="1" max="90" value={c.dagen ?? 3}
+                                        onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], dagen: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                    </div>
+                                  )}
+                                  {(c.conditie === "blt_kort" || c.conditie === "blt_lang") && (
+                                    <div>
+                                      <label className="text-xs text-gray-400 block mb-0.5">Max/min dagen</label>
+                                      <input type="number" min="1" max="365" value={c.drempel_pct ?? (c.conditie === "blt_kort" ? 30 : 60)}
+                                        onChange={e => setEditValues(p => { if (!p) return p; const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                    </div>
+                                  )}
+                                </div>
+                                {editValues.condities.length > 1 && (
+                                  <button type="button" onClick={() => setEditValues(p => p && ({ ...p, condities: p.condities.filter((_, j) => j !== i) }))}
+                                    className="text-gray-300 hover:text-red-500 text-xs mt-1">✕</button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                       <div>
                         <label className="text-xs text-gray-500 block mb-1">Actie</label>
-                        <select value={t.actie_type ?? "basisprijs"}
-                          onChange={e => updateTrigger(t.trigger_type, "actie_type", e.target.value)}
-                          className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
+                        <select value={editValues.actie_type}
+                          onChange={e => setEditValues(p => p && ({ ...p, actie_type: e.target.value as ActieType }))}
+                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]">
                           {ACTIE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                       </div>
-                      {(t.actie_type === "dso_percent" || t.actie_type === "dso_fixed") ? (
-                        <>
-                          <div>
-                            <label className="text-xs text-gray-500 block mb-1">
-                              {t.actie_type === "dso_fixed" ? "Prijs (€)" : "Aanpassing (%)"}
-                            </label>
-                            <input type="number" min="-100" max="10000" value={t.aanpassing_pct}
-                              onChange={e => updateTrigger(t.trigger_type, "aanpassing_pct", parseInt(e.target.value) || 0)}
-                              className="w-24 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
-                          </div>
-                          <div>
-                            <label className="text-xs text-gray-500 block mb-1">Periode (dagen)</label>
-                            <select value={t.dso_periode ?? 15}
-                              onChange={e => updateTrigger(t.trigger_type, "dso_periode", parseInt(e.target.value))}
-                              className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]">
-                              {[7, 15, 30, 60].map(d => <option key={d} value={d}>{d} dagen</option>)}
-                            </select>
-                          </div>
-                        </>
-                      ) : (t.conditie ?? t.trigger_type) !== "pricelabs_advies" && (
+                      {(editValues.actie_type === "basisprijs" || editValues.actie_type === "minimumprijs" || editValues.actie_type === "dso_percent" || editValues.actie_type === "dso_fixed") && (
                         <div>
-                          <label className="text-xs text-gray-500 block mb-1">Aanpassing (%)</label>
-                          <input type="number" min="-50" max="50" value={t.aanpassing_pct}
-                            onChange={e => updateTrigger(t.trigger_type, "aanpassing_pct", parseInt(e.target.value) || 0)}
-                            className="w-24 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                          <label className="text-xs text-gray-500 block mb-1">
+                            {editValues.actie_type === "dso_fixed" ? "Prijs (€)" : "Aanpassing (%)"}
+                          </label>
+                          <input type="number" min="-10000" max="10000" value={editValues.aanpassing_pct}
+                            onChange={e => setEditValues(p => p && ({ ...p, aanpassing_pct: parseInt(e.target.value) || 0 }))}
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
+                        </div>
+                      )}
+                      {(editValues.actie_type === "dso_percent" || editValues.actie_type === "dso_fixed") && (
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Periode (dagen)</label>
+                          <select value={editValues.dso_periode}
+                            onChange={e => setEditValues(p => p && ({ ...p, dso_periode: parseInt(e.target.value) }))}
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]">
+                            {[7,15,30,60].map(d => <option key={d} value={d}>{d} dagen</option>)}
+                          </select>
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  <button onClick={() => deleteTrigger(t.trigger_type)}
-                    className="text-gray-300 hover:text-red-500 transition-colors text-sm flex-shrink-0 mt-0.5"
-                    title="Verwijder trigger">✕</button>
-                </div>
+                    {/* Live samenvatting */}
+                    {editValues.condities.length > 0 && (
+                      <div className="bg-[#eef7fe] border border-blue-100 rounded-lg px-4 py-3 text-xs text-[#2b3885] mb-3 leading-relaxed">
+                        <span className="font-medium">Samenvatting: </span>
+                        {triggerSamenvattingZin(editValues.condities, editValues.actie_type, editValues.aanpassing_pct, editValues.dso_periode)}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <button onClick={slaEditOp}
+                        className="px-4 py-2 bg-[#2b3885] text-white text-sm rounded-lg hover:bg-[#232f6e] transition-colors">
+                        Opslaan
+                      </button>
+                      <button onClick={() => { setEditTriggerType(null); setEditValues(null); }}
+                        className="px-4 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors">
+                        Annuleren
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
 
