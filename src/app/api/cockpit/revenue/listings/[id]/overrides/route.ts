@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getOverrides, upsertOverride, deleteOverride } from "@/lib/pricelabs";
+import { getOverrides, upsertOverride, deleteOverride, pushPrices } from "@/lib/pricelabs";
 import { NextRequest, NextResponse } from "next/server";
 
 const COCKPIT_EMAIL = "info@bnbassistant.com";
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     reason: body.reason ?? "",
   });
   if (!ok) return NextResponse.json({ error: "Override opslaan mislukt" }, { status: 500 });
+  await pushPrices(params.id);
   return NextResponse.json({ ok: true });
 }
 
@@ -35,5 +36,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const { date } = await req.json();
   const ok = await deleteOverride(params.id, date);
   if (!ok) return NextResponse.json({ error: "Verwijderen mislukt" }, { status: 500 });
+  await pushPrices(params.id);
   return NextResponse.json({ ok: true });
 }

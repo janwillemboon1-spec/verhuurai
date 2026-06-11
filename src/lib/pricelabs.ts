@@ -119,6 +119,16 @@ export async function deleteOverride(listingId: string, date: string): Promise<b
   return res.ok;
 }
 
+export async function pushPrices(listingId: string): Promise<boolean> {
+  const res = await fetch(`${BASE}/push_prices`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ listing_id: listingId, pms: PMS }),
+  });
+  const data = await res.json();
+  return data.status?.includes("updated") ?? false;
+}
+
 export function parseOccupancy(val: string | null | undefined): number {
   if (!val) return 0;
   return parseInt(val.replace("%", "").trim(), 10) || 0;

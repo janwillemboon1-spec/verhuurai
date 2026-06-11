@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { updateListing } from "@/lib/pricelabs";
+import { updateListing, pushPrices } from "@/lib/pricelabs";
 import { NextRequest, NextResponse } from "next/server";
 
 const COCKPIT_EMAIL = "info@bnbassistant.com";
@@ -19,5 +19,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const ok = await updateListing(params.id, fields);
   if (!ok) return NextResponse.json({ error: "Bijwerken mislukt" }, { status: 500 });
+  await pushPrices(params.id);
   return NextResponse.json({ ok: true });
 }
