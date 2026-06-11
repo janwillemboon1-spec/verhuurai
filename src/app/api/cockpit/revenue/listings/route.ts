@@ -13,24 +13,33 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const [listings, { data: settings }] = await Promise.all([
+  const [listings, { data: settings }, { data: bltCache }] = await Promise.all([
     getListings(),
-    admin.from("cockpit_listing_settings").select("listing_id, interne_naam, blt_mediaan, blt_gemiddeld"),
+    admin.from("cockpit_listing_settings").select("listing_id, interne_naam"),
+    admin.from("cockpit_blt_cache").select("listing_id, blt_mediaan, blt_gemiddeld"),
   ]);
 
-  const settingsMap = new Map(
-    (settings ?? []).map((s: { listing_id: number; interne_naam: string | null; blt_mediaan: number | null; blt_gemiddeld: number | null }) => [
+  const namenMap = new Map(
+    (settings ?? []).map((s: { listing_id: number; interne_naam: string | null }) => [
       String(s.listing_id),
-      { interne_naam: s.interne_naam ?? "", blt_mediaan: s.blt_mediaan, blt_gemiddeld: s.blt_gemiddeld },
+      s.interne_naam ?? "",
+    ])
+  );
+
+  // listing_id in blt_cache is TEXT — directe string vergelijking, geen precisieverlies
+  const bltMap = new Map(
+    (bltCache ?? []).map((b: { listing_id: string; blt_mediaan: number | null; blt_gemiddeld: number | null }) => [
+      b.listing_id,
+      { mediaan: b.blt_mediaan, gemiddeld: b.blt_gemiddeld },
     ])
   );
 
   return NextResponse.json(
     listings.map((l) => ({
       ...l,
-      interneNaam: settingsMap.get(l.id)?.interne_naam ?? "",
-      blt_mediaan: settingsMap.get(l.id)?.blt_mediaan ?? null,
-      blt_gemiddeld: settingsMap.get(l.id)?.blt_gemiddeld ?? null,
+      interneNaam: namenMap.get(l.id) ?? "",
+      blt_mediaan: bltMap.get(l.id)?.mediaan ?? null,
+      blt_gemiddeld: bltMap.get(l.id)?.gemiddeld ?? null,
     }))
   );
 }

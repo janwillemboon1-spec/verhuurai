@@ -23,7 +23,7 @@ function berekenBLT(reservations: PLReservation[]): { gemiddeld: number; mediaan
   return { gemiddeld, mediaan, n: blts.length };
 }
 
-// GET: haal opgeslagen BLT op uit Supabase
+// GET: haal opgeslagen BLT op uit Supabase (listing_id als TEXT — geen precisieverlies)
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -32,23 +32,19 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("cockpit_listing_settings")
-    .select("listing_id, blt_mediaan, blt_gemiddeld, blt_bijgewerkt_op")
-    .not("blt_mediaan", "is", null);
+  const { data } = await admin.from("cockpit_blt_cache").select("*");
 
-  const result: Record<string, { gemiddeld: number; mediaan: number; bijgewerkt_op: string }> = {};
+  const result: Record<string, { gemiddeld: number; mediaan: number }> = {};
   for (const row of data ?? []) {
-    result[String(row.listing_id)] = {
+    result[row.listing_id] = {
       gemiddeld: row.blt_gemiddeld ?? 0,
       mediaan: row.blt_mediaan ?? 0,
-      bijgewerkt_op: row.blt_bijgewerkt_op ?? "",
     };
   }
   return NextResponse.json(result);
 }
 
-// POST: herbereken BLT voor alle woningen en sla op in Supabase
+// POST: herbereken BLT voor alle woningen en sla op in cockpit_blt_cache
 export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -70,13 +66,13 @@ export async function POST() {
       const reservations = await getReservationData(start, end, listing.id);
       const { gemiddeld, mediaan, n } = berekenBLT(reservations);
       if (n > 0) {
-        await admin.from("cockpit_listing_settings").upsert(
+        // listing_id als TEXT — geen precisieverlies voor grote Airbnb IDs
+        await admin.from("cockpit_blt_cache").upsert(
           {
-            listing_id: parseInt(listing.id) || listing.id as unknown as number,
-            listing_name: listing.name,
+            listing_id: listing.id,  // string, altijd exact
             blt_gemiddeld: gemiddeld,
             blt_mediaan: mediaan,
-            blt_bijgewerkt_op: nu,
+            bijgewerkt_op: nu,
           },
           { onConflict: "listing_id" }
         );
