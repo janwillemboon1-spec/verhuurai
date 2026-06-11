@@ -139,22 +139,28 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const [meta, telPerListing] = await Promise.all([
-    admin.from("cockpit_cache_meta").select("waarde").eq("sleutel", "reserveringen_sync").single(),
-    admin.from("cockpit_reserveringen_cache")
-      .select("listing_id, rental_revenue, booking_status")
-      .limit(50000),
-  ]);
+  const meta = await admin.from("cockpit_cache_meta").select("waarde").eq("sleutel", "reserveringen_sync").single();
 
-  // Statistieken per listing
+  // Pagineer door alle cache-rijen heen
   const stats: Record<string, { rijen: number; booked: number; omzet: number }> = {};
-  for (const r of telPerListing.data ?? []) {
-    if (!stats[r.listing_id]) stats[r.listing_id] = { rijen: 0, booked: 0, omzet: 0 };
-    stats[r.listing_id].rijen++;
-    if (r.booking_status === "booked") {
-      stats[r.listing_id].booked++;
-      stats[r.listing_id].omzet += parseFloat(r.rental_revenue ?? "0") || 0;
+  let from = 0;
+  const PAGE = 1000;
+  while (true) {
+    const { data, error } = await admin
+      .from("cockpit_reserveringen_cache")
+      .select("listing_id, rental_revenue, booking_status")
+      .range(from, from + PAGE - 1);
+    if (error || !data || data.length === 0) break;
+    for (const r of data) {
+      if (!stats[r.listing_id]) stats[r.listing_id] = { rijen: 0, booked: 0, omzet: 0 };
+      stats[r.listing_id].rijen++;
+      if (r.booking_status === "booked") {
+        stats[r.listing_id].booked++;
+        stats[r.listing_id].omzet += parseFloat(r.rental_revenue ?? "0") || 0;
+      }
     }
+    if (data.length < PAGE) break;
+    from += PAGE;
   }
 
   const totaalRijen = Object.values(stats).reduce((s, v) => s + v.rijen, 0);
