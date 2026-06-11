@@ -12,9 +12,8 @@ const MODULES = [
     href: "/cockpit/revenue/omzet",
     icon: "💶",
     titel: "Omzet",
-    beschrijving: "Omzetoverzicht per woning, periode en kanaal.",
+    beschrijving: "Omzetoverzicht per woning, periode en kanaal. Met YoY vergelijking en 3 prognosemethodes.",
     kleur: "hover:border-green-300",
-    binnenkort: true,
   },
   {
     href: "/cockpit/revenue/compsets",

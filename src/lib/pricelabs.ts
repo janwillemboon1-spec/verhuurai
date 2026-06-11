@@ -137,6 +137,49 @@ export async function pushPrices(listingId: string): Promise<boolean> {
   return data.status?.includes("updated") ?? false;
 }
 
+export interface PLReservation {
+  listing_id: string;
+  listing_name: string;
+  reservation_id: string;
+  check_in: string;
+  check_out: string;
+  booking_status: string;
+  booked_date: string;
+  rental_revenue: string;
+  total_cost: string;
+  no_of_days: number;
+  currency: string;
+  cancelled_on: string | null;
+  booking_channel: string;
+  cleaning_fees: number;
+}
+
+export async function getReservationData(startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
+  const all: PLReservation[] = [];
+  let page = 1;
+
+  while (true) {
+    const params = new URLSearchParams({
+      pms: PMS,
+      start_date: startDate,
+      end_date: endDate,
+      limit: "500",
+      page: String(page),
+    });
+    if (listingId) params.set("listing_id", listingId);
+
+    const res = await fetch(`${BASE}/reservation_data?${params}`, { headers: headers() });
+    if (!res.ok) break;
+    const data = await res.json();
+    const rows: PLReservation[] = data.data ?? [];
+    all.push(...rows);
+    if (!data.next_page) break;
+    page++;
+  }
+
+  return all;
+}
+
 export function parseOccupancy(val: string | null | undefined): number {
   if (!val) return 0;
   return parseInt(val.replace("%", "").trim(), 10) || 0;
