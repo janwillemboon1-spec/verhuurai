@@ -546,7 +546,6 @@ export default function OmzetPage() {
                         <tr key={t.maand} className={`border-b border-gray-100 ${isToekomst ? "bg-blue-50/30" : ""}`}>
                           <td className="px-4 py-2 font-medium">
                             {new Date(t.maand + "-15").toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}
-                            {isToekomst && <span className="ml-2 text-xs text-blue-400 font-normal">bevestigd</span>}
                           </td>
                           <td className={`px-4 py-2 text-right font-medium ${isToekomst ? "text-blue-700" : ""}`}>
                             {t.omzet > 0 ? fmt(t.omzet) : <span className="text-gray-300">—</span>}
