@@ -203,14 +203,18 @@ export default function CockpitInstellingenPage() {
         </div>
       )}
 
-      {/* Aanbeveling triggers */}
-      {triggers.length > 0 && (
-        <div className="mt-12">
+      {/* Aanbeveling triggers — altijd zichtbaar */}
+      <div className="mt-12">
           <h1 className="text-2xl font-bold text-[#2b3885] mb-1">Aanbeveling triggers</h1>
           <p className="text-gray-500 mb-6 text-sm">
             Stel per trigger in of hij actief is, wat de drempelwaarde is (%) en welke prijsaanpassing wordt aanbevolen.
           </p>
           <div className="space-y-3">
+            {triggers.length === 0 && (
+              <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
+                Geen triggers ingesteld. Klik op "+ Trigger toevoegen" om te beginnen.
+              </div>
+            )}
             {triggers.map(t => (
               <div key={t.trigger_type} className={`bg-white border rounded-xl p-4 transition-all ${t.enabled ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
                 <div className="flex items-start gap-4">
@@ -428,7 +432,6 @@ export default function CockpitInstellingenPage() {
             </button>
           </div>
         </div>
-      )}
     </div>
   );
 }
