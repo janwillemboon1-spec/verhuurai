@@ -184,39 +184,32 @@ export interface PLReservation {
   cleaning_fees: number;
 }
 
-async function fetchReservationDataForPms(pms: string, startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
-  const all: PLReservation[] = [];
-  let page = 1;
-  while (true) {
-    const params = new URLSearchParams({ pms, start_date: startDate, end_date: endDate, limit: "500", page: String(page) });
-    if (listingId) params.set("listing_id", listingId);
-    const res = await fetch(`${BASE}/reservation_data?${params}`, { headers: headers() });
-    if (!res.ok) break;
-    const data = await res.json();
-    const rows: PLReservation[] = data.data ?? [];
-    all.push(...rows);
-    if (!data.next_page) break;
-    page++;
-  }
-  return all;
+async function fetchReservationDataForListing(listing: PLListing, startDate: string, endDate: string): Promise<PLReservation[]> {
+  const params = new URLSearchParams({
+    pms: listing.pms,
+    listing_id: listing.id,
+    start_date: startDate,
+    end_date: endDate,
+    limit: "500",
+  });
+  const res = await fetch(`${BASE}/reservation_data?${params}`, { headers: headers() });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.data ?? [];
 }
 
 export async function getReservationData(startDate: string, endDate: string, listingId?: string): Promise<PLReservation[]> {
-  // Determine which PMS types to query
-  let pmsTypes: string[];
+  const listings = await getListings();
+
   if (listingId) {
-    // For a specific listing, find its PMS type from the listings
-    const listings = await getListings();
     const listing = listings.find((l) => l.id === listingId);
-    pmsTypes = listing ? [listing.pms] : [PMS];
-  } else {
-    // For all listings, query all PMS types
-    const listings = await getListings();
-    pmsTypes = Array.from(new Set(listings.map((l) => l.pms)));
+    if (!listing) return [];
+    return fetchReservationDataForListing(listing, startDate, endDate);
   }
 
+  // Alle woningen parallel ophalen — elke woning past in één pagina
   const results = await Promise.all(
-    pmsTypes.map((pms) => fetchReservationDataForPms(pms, startDate, endDate, listingId))
+    listings.map((l) => fetchReservationDataForListing(l, startDate, endDate))
   );
   return results.flat();
 }
