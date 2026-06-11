@@ -578,11 +578,19 @@ export default function RevenuePage() {
             )}
 
             {gefilterd.length === 0 ? (
-              <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
-                {statusFilter === "in_afwachting"
-                  ? "✓ Geen openstaande aanbevelingen."
-                  : `Geen aanbevelingen met status '${statusFilter}'.`}
-              </div>
+              statusFilter === "in_afwachting" ? (
+                <div className="bg-white border border-gray-200 rounded-xl px-6 py-8 flex items-center gap-6">
+                  <img src="/boni-golf.png" alt="Boni" className="w-28 flex-shrink-0 object-contain" />
+                  <div>
+                    <p className="font-semibold text-gray-800 text-lg mb-1">Alles onder controle, je kunt gaan golfen.</p>
+                    <p className="text-sm text-gray-400">Geen openstaande aanbevelingen op dit moment.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
+                  Geen aanbevelingen met status &apos;{statusFilter}&apos;.
+                </div>
+              )
             ) : (
               <div className="space-y-2">
                 {gefilterd.map(a => (
