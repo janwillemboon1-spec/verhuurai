@@ -394,7 +394,10 @@ type StatusFilter = "in_afwachting" | "uitgevoerd" | "genegeerd";
 export default function RevenuePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<"naam" | "occ15" | "occ30" | "occ60">("naam");
+  type SortKey = "naam" | "occ7" | "occ15" | "occ30" | "occ60" | "occ90" | "base" | "min" | "aanbevolen" | "pickup" | "blt";
+  const [sortKey, setSortKey] = useState<SortKey>("naam");
+  const [sortAsc, setSortAsc] = useState(true);
+  const [zoekterm, setZoekterm] = useState("");
   const [pendingPush, setPendingPush] = useState<Set<string>>(new Set());
   const [pushing, setPushing] = useState(false);
   type StatusRecord = { status: string; bijgewerkt_op: string };
@@ -469,12 +472,39 @@ export default function RevenuePage() {
     });
   }
 
-  const sorted = [...listings].sort((a, b) => {
-    if (sortKey === "occ15") return parseOcc(b.occupancy_next_15) - parseOcc(a.occupancy_next_15);
-    if (sortKey === "occ30") return parseOcc(b.occupancy_next_30) - parseOcc(a.occupancy_next_30);
-    if (sortKey === "occ60") return parseOcc(b.occupancy_next_60) - parseOcc(a.occupancy_next_60);
-    return (a.interneNaam || a.name).localeCompare(b.interneNaam || b.name);
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortAsc(v => !v);
+    else { setSortKey(key); setSortAsc(true); }
+  }
+
+  const gefilterd = listings.filter(l => {
+    if (!zoekterm) return true;
+    const naam = (l.interneNaam || l.name).toLowerCase();
+    return naam.includes(zoekterm.toLowerCase());
   });
+
+  const sorted = [...gefilterd].sort((a, b) => {
+    let val = 0;
+    switch (sortKey) {
+      case "occ7":  val = parseOcc(a.occupancy_next_7)  - parseOcc(b.occupancy_next_7); break;
+      case "occ15": val = parseOcc(a.occupancy_next_15) - parseOcc(b.occupancy_next_15); break;
+      case "occ30": val = parseOcc(a.occupancy_next_30) - parseOcc(b.occupancy_next_30); break;
+      case "occ60": val = parseOcc(a.occupancy_next_60) - parseOcc(b.occupancy_next_60); break;
+      case "occ90": val = parseOcc(a.occupancy_next_90) - parseOcc(b.occupancy_next_90); break;
+      case "base":      val = (a.base ?? 0) - (b.base ?? 0); break;
+      case "min":       val = (a.min ?? 0) - (b.min ?? 0); break;
+      case "aanbevolen": val = (a.recommended_base_price ?? 0) - (b.recommended_base_price ?? 0); break;
+      case "pickup":    val = a.booking_pickup_unique_past_3 - b.booking_pickup_unique_past_3; break;
+      case "blt":       val = (a.blt_mediaan ?? 999) - (b.blt_mediaan ?? 999); break;
+      default: return (a.interneNaam || a.name).localeCompare(b.interneNaam || b.name) * (sortAsc ? 1 : -1);
+    }
+    return sortAsc ? val : -val;
+  });
+
+  function SortIcon({ k }: { k: SortKey }) {
+    if (sortKey !== k) return <span className="text-gray-300 ml-0.5">↕</span>;
+    return <span className="text-[#2b3885] ml-0.5">{sortAsc ? "↑" : "↓"}</span>;
+  }
 
   return (
     <div>
@@ -520,20 +550,20 @@ export default function RevenuePage() {
         <div>
           <h1 className="text-2xl font-bold text-[#2b3885]">Bezetting</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {loading ? "Laden..." : `${listings.length} woningen · eigen% / markt% · klik op rij voor detail`}
+            {loading ? "Laden..." : `${sorted.length}${zoekterm ? ` van ${listings.length}` : ""} woningen · klik kolomkop om te sorteren`}
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span>Sorteren:</span>
-          {(["naam", "occ15", "occ30", "occ60"] as const).map((k) => (
-            <button
-              key={k}
-              onClick={() => setSortKey(k)}
-              className={`px-2 py-1 rounded ${sortKey === k ? "bg-[#2b3885] text-white" : "bg-gray-100 hover:bg-gray-200"}`}
-            >
-              {k === "naam" ? "Naam" : k === "occ15" ? "15d" : k === "occ30" ? "30d" : "60d"}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={zoekterm}
+            onChange={e => setZoekterm(e.target.value)}
+            placeholder="Zoek woning..."
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:border-[#2b3885]"
+          />
+          {zoekterm && (
+            <button onClick={() => setZoekterm("")} className="text-xs text-gray-400 hover:text-gray-600">✕</button>
+          )}
         </div>
       </div>
 
@@ -711,19 +741,27 @@ export default function RevenuePage() {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
-                <th className="text-left px-4 py-3 font-medium">Woning</th>
-                <th className="text-center px-3 py-3 font-medium">
-                  15 dagen{vergelijkMode === "blt" && <span className="block text-purple-400 font-normal text-xs">vs tempo</span>}
-                </th>
-                <th className="text-center px-3 py-3 font-medium">30 dagen</th>
-                <th className="text-center px-3 py-3 font-medium">60 dagen</th>
-                <th className="text-center px-3 py-3 font-medium">90 dagen</th>
-                <th className="text-center px-3 py-3 font-medium">Min</th>
-                <th className="text-center px-3 py-3 font-medium">Basis</th>
-                <th className="text-center px-3 py-3 font-medium">Max</th>
-                <th className="text-center px-3 py-3 font-medium">Aanbevolen</th>
-                <th className="text-center px-3 py-3 font-medium">Pickup 3d</th>
-                <th className="text-center px-3 py-3 font-medium">BLT</th>
+                {([
+                  { key: "naam",      label: "Woning",    align: "left",   extra: null },
+                  { key: "occ15",     label: "15 dagen",  align: "center", extra: vergelijkMode === "blt" ? <span className="block text-purple-400 font-normal normal-case">vs tempo</span> : null },
+                  { key: "occ30",     label: "30 dagen",  align: "center", extra: null },
+                  { key: "occ60",     label: "60 dagen",  align: "center", extra: null },
+                  { key: "occ90",     label: "90 dagen",  align: "center", extra: null },
+                  { key: "min",       label: "Min",       align: "center", extra: null },
+                  { key: "base",      label: "Basis",     align: "center", extra: null },
+                  { key: null,        label: "Max",       align: "center", extra: null },
+                  { key: "aanbevolen",label: "Aanbevolen",align: "center", extra: null },
+                  { key: "pickup",    label: "Pickup 3d", align: "center", extra: null },
+                  { key: "blt",       label: "BLT",       align: "center", extra: null },
+                ] as { key: SortKey | null; label: string; align: string; extra: React.ReactNode }[]).map((col, i) => (
+                  <th key={i}
+                    onClick={() => col.key && toggleSort(col.key)}
+                    className={`px-3 py-3 font-medium ${col.align === "left" ? "text-left pl-4" : "text-center"} ${col.key ? "cursor-pointer hover:text-gray-700 select-none" : ""}`}>
+                    {col.label}
+                    {col.key && <SortIcon k={col.key} />}
+                    {col.extra}
+                  </th>
+                ))}
                 <th className="px-3 py-3" />
               </tr>
             </thead>
