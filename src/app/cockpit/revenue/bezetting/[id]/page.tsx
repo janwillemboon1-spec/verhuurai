@@ -168,7 +168,7 @@ export default function RevenueDetailPage() {
                 : "border-transparent text-gray-400 hover:text-gray-600"
             }`}
           >
-            {t === "kalender" ? "Kalender & overrides" : "Prijsrapport"}
+            {t === "kalender" ? "Kalender & overrides" : "Historie"}
           </button>
         ))}
       </div>
