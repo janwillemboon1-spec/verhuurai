@@ -75,7 +75,7 @@ function YoyBadge({ pct }: { pct: number | null }) {
   if (pct === null) return <span className="text-xs text-gray-300">geen data</span>;
   return (
     <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${pct >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-      {fmtPct(pct)} YoY
+      {fmtPct(pct)} STLY
     </span>
   );
 }
@@ -271,7 +271,7 @@ export default function OmzetPage() {
                   <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
                     <th className="text-left px-4 py-2">Woning</th>
                     <th className="text-right px-4 py-2">Omzet</th>
-                    <th className="text-right px-4 py-2">YoY</th>
+                    <th className="text-right px-4 py-2">STLY</th>
                     <th className="text-right px-4 py-2">ADR</th>
                     <th className="text-right px-4 py-2">Bezetting</th>
                     <th className="text-right px-4 py-2">Nachten</th>
@@ -312,7 +312,7 @@ export default function OmzetPage() {
                     <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
                       <th className="text-left px-4 py-2">Maand</th>
                       <th className="text-right px-4 py-2">Omzet</th>
-                      <th className="text-right px-4 py-2">Vorig jaar</th>
+                      <th className="text-right px-4 py-2">STLY</th>
                       <th className="text-right px-4 py-2">Verschil</th>
                     </tr>
                   </thead>

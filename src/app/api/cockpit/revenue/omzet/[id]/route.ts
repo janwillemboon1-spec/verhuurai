@@ -16,15 +16,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const url = new URL(req.url);
   const start = url.searchParams.get("start") ?? new Date().toISOString().slice(0, 8) + "01";
   const end = url.searchParams.get("end") ?? new Date().toISOString().slice(0, 10);
-  const lyStart = start.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
-  const lyEnd = end.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
-
   const today = new Date().toISOString().slice(0, 10);
+  const actualEnd = end > today ? today : end;
+  const lyStart = start.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
+  const stlyEnd = actualEnd.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
   const futureEnd = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
 
   const [reservations, lyReservations, futureCalendar, admin] = await Promise.all([
-    getReservationData(start, end, params.id),
-    getReservationData(lyStart, lyEnd, params.id),
+    getReservationData(start, actualEnd, params.id),
+    getReservationData(lyStart, stlyEnd, params.id),
     getCalendar(params.id, today, futureEnd),
     Promise.resolve(createAdminClient()),
   ]);

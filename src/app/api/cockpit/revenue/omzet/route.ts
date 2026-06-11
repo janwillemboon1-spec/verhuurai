@@ -17,13 +17,16 @@ export async function GET(req: NextRequest) {
   const start = url.searchParams.get("start") ?? new Date().toISOString().slice(0, 8) + "01";
   const end = url.searchParams.get("end") ?? new Date().toISOString().slice(0, 10);
 
-  // Last year same period
+  // STLY: zelfde verstreken periode vorig jaar (afgekapt op equivalent van vandaag)
+  const today = new Date().toISOString().slice(0, 10);
+  const stlyEnd = end > today ? today : end;
+  const stlyEndLY = stlyEnd.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
   const lyStart = start.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
-  const lyEnd = end.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
+  const actualEnd = end > today ? today : end;
 
   const [reservations, lyReservations, listings, admin] = await Promise.all([
-    getReservationData(start, end),
-    getReservationData(lyStart, lyEnd),
+    getReservationData(start, actualEnd),
+    getReservationData(lyStart, stlyEndLY),
     getListings(),
     Promise.resolve(createAdminClient()),
   ]);

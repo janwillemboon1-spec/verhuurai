@@ -40,7 +40,7 @@ function getPeriode(id: string) {
 function fmt(n: number) { return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n); }
 function YoyBadge({ pct }: { pct: number | null }) {
   if (pct === null) return <span className="text-xs text-gray-300">—</span>;
-  return <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${pct >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}% YoY</span>;
+  return <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${pct >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}% STLY</span>;
 }
 
 export default function OmzetDetailPage() {
@@ -148,7 +148,7 @@ export default function OmzetDetailPage() {
                   <thead><tr className="bg-gray-50 border-b text-xs text-gray-500 uppercase">
                     <th className="text-left px-4 py-2">Maand</th>
                     <th className="text-right px-4 py-2">Omzet</th>
-                    <th className="text-right px-4 py-2">Vorig jaar</th>
+                    <th className="text-right px-4 py-2">STLY</th>
                     <th className="text-right px-4 py-2">ADR</th>
                     <th className="text-right px-4 py-2">Nachten</th>
                   </tr></thead>
