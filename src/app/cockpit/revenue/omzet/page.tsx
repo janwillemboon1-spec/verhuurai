@@ -252,7 +252,6 @@ export default function OmzetPage() {
   const [eigenEnd, setEigenEnd] = useState("");
   const [data, setData] = useState<OmzetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [prognoseToelichting, setPrognoseToelichting] = useState(false);
 
   const laad = useCallback((start: string, end: string) => {
     setLoading(true);
@@ -280,6 +279,9 @@ export default function OmzetPage() {
         <Link href="/cockpit/revenue" className="text-sm text-gray-400 hover:text-[#2b3885] transition-colors">← Revenue</Link>
         <span className="text-gray-200">/</span>
         <h1 className="text-xl font-bold text-[#2b3885]">Omzet</h1>
+        <Link href="/cockpit/revenue/omzet/prognose" className="ml-auto text-xs text-[#2b3885] hover:underline">
+          Prognoses →
+        </Link>
       </div>
 
       {/* Periode tabs */}
@@ -429,49 +431,6 @@ export default function OmzetPage() {
               </div>
             </section>
           )}
-
-          {/* Prognose */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-700">Prognose komende periode</h2>
-              <button onClick={() => setPrognoseToelichting((v) => !v)}
-                className="text-xs text-gray-400 hover:text-gray-600">
-                {prognoseToelichting ? "Verberg toelichting" : "Toelichting"} ▾
-              </button>
-            </div>
-
-            {prognoseToelichting && (
-              <div className="bg-[#eef7fe] rounded-lg p-4 mb-4 text-xs text-[#2b3885] space-y-1">
-                <p><strong>M1 Historisch:</strong> Gemiddelde maandelijkse omzet op basis van huidige periode, geëxtrapoleerd.</p>
-                <p><strong>M2 Seizoen (STLY):</strong> Dezelfde periode vorig jaar als referentie.</p>
-                <p><strong>M3 Boekingen + potentieel:</strong> Bevestigde toekomstige boekingen + 70% van nog-te-boeken nachten × huidige prijs.</p>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              {[
-                { label: "M1 — Historische prestatie", val: data!.prognose.m1, id: 1 },
-                { label: "M2 — Seizoensprognose (STLY)", val: data!.prognose.m2, id: 2 },
-                { label: "M3 — Boekingen + potentieel", val: data!.prognose.m3, id: 3 },
-              ].map((m) => (
-                <div key={m.id} className="bg-white border border-gray-200 rounded-xl p-4">
-                  <p className="text-xs text-gray-400 mb-1">{m.label}</p>
-                  <p className="text-xl font-bold text-gray-900">{fmt(m.val)}</p>
-                  {m.id === 3 && data!.prognose.bevestigdFuture > 0 && (
-                    <p className="text-xs text-gray-400 mt-1">waarvan {fmt(data!.prognose.bevestigdFuture)} bevestigd</p>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* CSV uploads */}
-            <div className="space-y-2">
-              <p className="text-xs text-gray-400 mb-2">Overschrijf een prognose met eigen CSV-data:</p>
-              <CsvUpload methode={1} listing_id="portfolio" label="M1 — Historische prestatie" beschrijving="Eigen historische omzetdata per maand" />
-              <CsvUpload methode={2} listing_id="portfolio" label="M2 — Seizoensprognose" beschrijving="Eigen seizoensgebonden verwachting per maand" />
-              <CsvUpload methode={3} listing_id="portfolio" label="M3 — Onbenut potentieel" beschrijving="Eigen berekening van beschikbaar potentieel per maand" />
-            </div>
-          </section>
 
         </div>
       )}
