@@ -69,15 +69,23 @@ function InlinePrice({
   listingId: string;
   field: "base" | "min" | "max";
   value: number | null;
-  onSave: (id: string, field: string, val: number) => void;
+  onSave: (id: string, field: string, val: number) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
 
-  function commit() {
+  async function commit() {
     const n = parseInt(draft, 10);
-    if (!isNaN(n) && n > 0) onSave(listingId, field, n);
-    setEditing(false);
+    if (!isNaN(n) && n > 0 && n !== value) {
+      setEditing(false);
+      setStatus("saving");
+      await onSave(listingId, field, n);
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2000);
+    } else {
+      setEditing(false);
+    }
   }
 
   if (editing) {
@@ -93,6 +101,15 @@ function InlinePrice({
       />
     );
   }
+
+  if (status === "saving") {
+    return <span className="text-xs text-gray-400 animate-pulse">opslaan…</span>;
+  }
+
+  if (status === "saved") {
+    return <span className="text-xs text-green-600 font-medium">✓ opgeslagen</span>;
+  }
+
   return (
     <button
       onClick={() => { setDraft(String(value ?? "")); setEditing(true); }}
@@ -107,7 +124,6 @@ function InlinePrice({
 export default function RevenuePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<"naam" | "occ15" | "occ30" | "occ60">("naam");
   const [pendingPush, setPendingPush] = useState<Set<string>>(new Set());
   const [pushing, setPushing] = useState(false);
@@ -119,20 +135,20 @@ export default function RevenuePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function handlePriceSave(id: string, field: string, val: number) {
-    setSaving(id);
+  async function handlePriceSave(id: string, field: string, val: number): Promise<void> {
     const listing = listings.find((l) => l.id === id);
     const oudeWaarde = listing ? (listing as unknown as Record<string, unknown>)[field] : null;
-    await fetch(`/api/cockpit/revenue/listings/${id}/update`, {
+    const res = await fetch(`/api/cockpit/revenue/listings/${id}/update`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [field]: val, oude_waarden: { [field]: oudeWaarde }, skip_push: true }),
     });
-    setListings((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, [field]: val } : l))
-    );
-    setPendingPush((prev) => new Set(Array.from(prev).concat(id)));
-    setSaving(null);
+    if (res.ok) {
+      setListings((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, [field]: val } : l))
+      );
+      setPendingPush((prev) => new Set(Array.from(prev).concat(id)));
+    }
   }
 
   async function handlePush() {
@@ -246,7 +262,7 @@ export default function RevenuePage() {
               {sorted.map((l, i) => (
                 <tr
                   key={l.id}
-                  className={`border-b border-gray-100 hover:bg-[#eef7fe] transition-colors ${saving === l.id ? "opacity-60" : ""} ${i % 2 === 0 ? "bg-white" : "bg-gray-50/30"}`}
+                  className={`border-b border-gray-100 hover:bg-[#eef7fe] transition-colors ${i % 2 === 0 ? "bg-white" : "bg-gray-50/30"}`}
                 >
                   <td className="px-4 py-3 max-w-[200px]">
                     <div className="font-medium text-gray-900 truncate">
