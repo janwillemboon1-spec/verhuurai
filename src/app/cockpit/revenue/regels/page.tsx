@@ -9,6 +9,9 @@ interface Regel {
   periode: number;
   conditie: "onder_markt" | "boven_markt";
   drempel: number;
+  periode2: number | null;
+  conditie2: "onder_markt" | "boven_markt" | null;
+  drempel2: number | null;
   aanpassing: number;
   scope: string;
   enabled: boolean;
@@ -20,20 +23,84 @@ const EMPTY_FORM = {
   periode: 30,
   conditie: "onder_markt" as "onder_markt" | "boven_markt",
   drempel: 10,
+  tweedeConditie: false,
+  periode2: 15,
+  conditie2: "onder_markt" as "onder_markt" | "boven_markt",
+  drempel2: 5,
   aanpassing: -5,
   scope: "all",
   enabled: true,
 };
 
+function conditieTekst(conditie: string, periode: number, drempel: number) {
+  return conditie === "onder_markt"
+    ? `bezetting komende ${periode} dagen meer dan ${drempel}% ónder de markt`
+    : `bezetting komende ${periode} dagen meer dan ${drempel}% bóven de markt`;
+}
+
 function regelTekst(r: Regel) {
-  const conditieTekst = r.conditie === "onder_markt"
-    ? `meer dan ${r.drempel}% ónder de markt`
-    : `meer dan ${r.drempel}% bóven de markt`;
+  const c1 = conditieTekst(r.conditie, r.periode, r.drempel);
+  const c2 = r.periode2 && r.conditie2 && r.drempel2
+    ? ` én ${conditieTekst(r.conditie2, r.periode2, r.drempel2)}`
+    : "";
   const actieTekst = r.aanpassing < 0
     ? `verlaag de basisprijs met ${Math.abs(r.aanpassing)}%`
     : `verhoog de basisprijs met ${r.aanpassing}%`;
   const scopeTekst = r.scope === "all" ? "alle woningen" : "geselecteerde woningen";
-  return `Als de bezetting de komende ${r.periode} dagen ${conditieTekst} zit, ${actieTekst} voor ${scopeTekst}.`;
+  return `Als ${c1}${c2}, ${actieTekst} voor ${scopeTekst}.`;
+}
+
+function ConditieRij({
+  prefix,
+  periode,
+  conditie,
+  drempel,
+  onChange,
+}: {
+  prefix: string;
+  periode: number;
+  conditie: "onder_markt" | "boven_markt";
+  drempel: number;
+  onChange: (field: string, val: number | string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      <div>
+        <label className="text-xs text-gray-500 mb-1 block">Periode</label>
+        <select
+          value={periode}
+          onChange={(e) => onChange(`${prefix}periode`, Number(e.target.value))}
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
+        >
+          {[7, 15, 30, 60, 90].map((p) => (
+            <option key={p} value={p}>Komende {p} dagen</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-xs text-gray-500 mb-1 block">Conditie</label>
+        <select
+          value={conditie}
+          onChange={(e) => onChange(`${prefix}conditie`, e.target.value)}
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
+        >
+          <option value="onder_markt">Onder markt</option>
+          <option value="boven_markt">Boven markt</option>
+        </select>
+      </div>
+      <div>
+        <label className="text-xs text-gray-500 mb-1 block">Drempel (%)</label>
+        <input
+          type="number"
+          min="1"
+          max="50"
+          value={drempel}
+          onChange={(e) => onChange(`${prefix}drempel`, Number(e.target.value))}
+          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function RevenueRegelsPage() {
@@ -50,14 +117,34 @@ export default function RevenueRegelsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  function updateForm(field: string, val: unknown) {
+    setForm((prev) => ({ ...prev, [field]: val }));
+  }
+
+  function buildPayload() {
+    return {
+      naam: form.naam,
+      periode: form.periode,
+      conditie: form.conditie,
+      drempel: form.drempel,
+      periode2: form.tweedeConditie ? form.periode2 : null,
+      conditie2: form.tweedeConditie ? form.conditie2 : null,
+      drempel2: form.tweedeConditie ? form.drempel2 : null,
+      aanpassing: form.aanpassing,
+      scope: form.scope,
+      enabled: form.enabled,
+    };
+  }
+
   async function handleSubmit() {
     if (!form.naam) return;
     setSaving(true);
+    const payload = buildPayload();
     if (editId) {
       const res = await fetch(`/api/cockpit/revenue/regels/${editId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const updated = await res.json();
       setRegels((prev) => prev.map((r) => r.id === editId ? updated : r));
@@ -66,7 +153,7 @@ export default function RevenueRegelsPage() {
       const res = await fetch("/api/cockpit/revenue/regels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const created = await res.json();
       setRegels((prev) => [...prev, created]);
@@ -97,6 +184,10 @@ export default function RevenueRegelsPage() {
       periode: regel.periode,
       conditie: regel.conditie,
       drempel: regel.drempel,
+      tweedeConditie: !!(regel.periode2 && regel.conditie2 && regel.drempel2),
+      periode2: regel.periode2 ?? 15,
+      conditie2: regel.conditie2 ?? "onder_markt",
+      drempel2: regel.drempel2 ?? 5,
       aanpassing: regel.aanpassing,
       scope: regel.scope,
       enabled: regel.enabled,
@@ -108,6 +199,15 @@ export default function RevenueRegelsPage() {
     setEditId(null);
     setForm(EMPTY_FORM);
   }
+
+  const previewRegel: Regel = {
+    id: "", naam: form.naam, aangemaakt_op: "",
+    periode: form.periode, conditie: form.conditie, drempel: form.drempel,
+    periode2: form.tweedeConditie ? form.periode2 : null,
+    conditie2: form.tweedeConditie ? form.conditie2 : null,
+    drempel2: form.tweedeConditie ? form.drempel2 : null,
+    aanpassing: form.aanpassing, scope: form.scope, enabled: form.enabled,
+  };
 
   return (
     <div className="max-w-3xl">
@@ -130,7 +230,7 @@ export default function RevenueRegelsPage() {
           {editId ? "Regel bewerken" : "Nieuwe regel"}
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Naam */}
           <div>
             <label className="text-xs text-gray-500 mb-1 block">Naam (ter identificatie)</label>
@@ -138,51 +238,59 @@ export default function RevenueRegelsPage() {
               type="text"
               value={form.naam}
               placeholder="bijv. 'Verlaging bij lage bezetting 30d'"
-              onChange={(e) => setForm({ ...form, naam: e.target.value })}
+              onChange={(e) => updateForm("naam", e.target.value)}
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
             />
           </div>
 
-          {/* Trigger */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Periode</label>
-              <select
-                value={form.periode}
-                onChange={(e) => setForm({ ...form, periode: Number(e.target.value) })}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
-              >
-                {[7, 15, 30, 60, 90].map((p) => (
-                  <option key={p} value={p}>Komende {p} dagen</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Conditie</label>
-              <select
-                value={form.conditie}
-                onChange={(e) => setForm({ ...form, conditie: e.target.value as "onder_markt" | "boven_markt" })}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
-              >
-                <option value="onder_markt">Onder markt</option>
-                <option value="boven_markt">Boven markt</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 mb-1 block">Drempel (%)</label>
-              <input
-                type="number"
-                min="1"
-                max="50"
-                value={form.drempel}
-                onChange={(e) => setForm({ ...form, drempel: Number(e.target.value) })}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
-              />
-            </div>
+          {/* Eerste conditie */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">
+              {form.tweedeConditie ? "Conditie 1 (EN)" : "Conditie"}
+            </p>
+            <ConditieRij
+              prefix=""
+              periode={form.periode}
+              conditie={form.conditie}
+              drempel={form.drempel}
+              onChange={updateForm}
+            />
           </div>
 
+          {/* Tweede conditie toggle + velden */}
+          {form.tweedeConditie ? (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-gray-500">Conditie 2 (EN)</p>
+                <button
+                  onClick={() => updateForm("tweedeConditie", false)}
+                  className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                >
+                  Verwijder tweede conditie
+                </button>
+              </div>
+              <ConditieRij
+                prefix="2_"
+                periode={form.periode2}
+                conditie={form.conditie2}
+                drempel={form.drempel2}
+                onChange={(field, val) => {
+                  const key = field.replace("2_", "") + "2";
+                  updateForm(key, val);
+                }}
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => updateForm("tweedeConditie", true)}
+              className="text-xs text-[#2b3885] hover:underline"
+            >
+              + Tweede conditie toevoegen (EN)
+            </button>
+          )}
+
           {/* Actie */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 pt-1 border-t border-gray-100">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">
                 Prijsaanpassing (% — negatief = verlaging)
@@ -192,7 +300,7 @@ export default function RevenueRegelsPage() {
                 min="-50"
                 max="50"
                 value={form.aanpassing}
-                onChange={(e) => setForm({ ...form, aanpassing: Number(e.target.value) })}
+                onChange={(e) => updateForm("aanpassing", Number(e.target.value))}
                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
               />
             </div>
@@ -200,7 +308,7 @@ export default function RevenueRegelsPage() {
               <label className="text-xs text-gray-500 mb-1 block">Van toepassing op</label>
               <select
                 value={form.scope}
-                onChange={(e) => setForm({ ...form, scope: e.target.value })}
+                onChange={(e) => updateForm("scope", e.target.value)}
                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]"
               >
                 <option value="all">Alle woningen</option>
@@ -211,7 +319,7 @@ export default function RevenueRegelsPage() {
           {/* Preview */}
           {form.naam && (
             <div className="bg-[#eef7fe] rounded-lg px-4 py-3 text-sm text-[#2b3885]">
-              {regelTekst({ ...form, id: "", aangemaakt_op: "" })}
+              {regelTekst(previewRegel)}
             </div>
           )}
 
@@ -260,13 +368,11 @@ export default function RevenueRegelsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-gray-900 text-sm">{r.naam}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        r.conditie === "onder_markt"
-                          ? "bg-red-50 text-red-600"
-                          : "bg-green-50 text-green-600"
-                      }`}>
-                        {r.conditie === "onder_markt" ? "↓ onder markt" : "↑ boven markt"}
-                      </span>
+                      {r.periode2 && (
+                        <span className="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">
+                          2 condities
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-500">{regelTekst(r)}</p>
                   </div>
