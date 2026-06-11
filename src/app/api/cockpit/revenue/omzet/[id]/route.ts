@@ -64,24 +64,26 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const metrics = aggregeer(reservations, dagen);
   const stlyMetrics = aggregeer(stlyReservations, stlyDagen);
 
-  // Trend: laatste 12 maanden
-  const trendMaanden: string[] = [];
-  const d = new Date(trendStartDate);
-  d.setDate(1);
-  while (d.toISOString().slice(0, 10) <= today) {
-    trendMaanden.push(d.toISOString().slice(0, 7));
-    d.setMonth(d.getMonth() + 1);
-  }
+  // Trend: alle 12 maanden van het huidige jaar
+  const huidigJaar = new Date().getFullYear();
+  const trendMaanden = Array.from({ length: 12 }, (_, i) =>
+    `${huidigJaar}-${String(i + 1).padStart(2, "0")}`
+  );
+  const jaarStart = `${huidigJaar}-01-01`;
+  const jaarEind  = `${huidigJaar}-12-31`;
+  const jaarStartLY = `${huidigJaar - 1}-01-01`;
+  const jaarEindLY  = `${huidigJaar - 1}-12-31`;
 
-  const trendData = filterPeriode(allData, trendStart12, today);
-  const trendLyData = filterPeriode(allData, addYears(trendStart12, -1), addYears(today, -1));
-  const maandTrend = groepeerPerMaand(trendData);
+  const trendData   = filterPeriode(allData, jaarStart, jaarEind);
+  const trendLyData = filterPeriode(allData, jaarStartLY, jaarEindLY);
+  const maandTrend   = groepeerPerMaand(trendData);
   const maandTrendLY = groepeerPerMaand(trendLyData);
 
   const trend = trendMaanden.map((m) => {
-    const lyMaand = addYears(m + "-01", -1).slice(0, 7);
+    // m = "2026-01", ly = "2025-01"
+    const lyMaand = `${huidigJaar - 1}-${m.slice(5)}`;
     const cur = aggregeer(maandTrend[m] ?? [], 30);
-    const ly = aggregeer(maandTrendLY[lyMaand] ?? [], 30);
+    const ly  = aggregeer(maandTrendLY[lyMaand] ?? [], 30);
     return { maand: m, omzet: cur.omzet, omzet_ly: ly.omzet, nachten: cur.nachten, adr: cur.adr };
   });
 
