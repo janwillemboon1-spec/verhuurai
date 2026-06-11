@@ -139,13 +139,32 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const [meta, count] = await Promise.all([
+  const [meta, telPerListing] = await Promise.all([
     admin.from("cockpit_cache_meta").select("waarde").eq("sleutel", "reserveringen_sync").single(),
-    admin.from("cockpit_reserveringen_cache").select("listing_id", { count: "exact", head: true }),
+    admin.from("cockpit_reserveringen_cache")
+      .select("listing_id, rental_revenue, booking_status")
+      .limit(50000),
   ]);
+
+  // Statistieken per listing
+  const stats: Record<string, { rijen: number; booked: number; omzet: number }> = {};
+  for (const r of telPerListing.data ?? []) {
+    if (!stats[r.listing_id]) stats[r.listing_id] = { rijen: 0, booked: 0, omzet: 0 };
+    stats[r.listing_id].rijen++;
+    if (r.booking_status === "booked") {
+      stats[r.listing_id].booked++;
+      stats[r.listing_id].omzet += parseFloat(r.rental_revenue ?? "0") || 0;
+    }
+  }
+
+  const totaalRijen = Object.values(stats).reduce((s, v) => s + v.rijen, 0);
+  const totaalOmzet = Object.values(stats).reduce((s, v) => s + v.omzet, 0);
 
   return NextResponse.json({
     sync_op: meta.data?.waarde ?? null,
-    cache_rijen: count.count ?? 0,
+    cache_rijen: totaalRijen,
+    listings_in_cache: Object.keys(stats).length,
+    totaal_omzet_cache: Math.round(totaalOmzet),
+    per_listing: stats,
   });
 }
