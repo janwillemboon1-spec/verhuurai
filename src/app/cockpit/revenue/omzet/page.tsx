@@ -296,6 +296,7 @@ export default function OmzetPage() {
   const [data, setData] = useState<OmzetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncBezig, setSyncBezig] = useState(false);
+  const [syncVoortgang, setSyncVoortgang] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
   useEffect(() => {
@@ -306,14 +307,37 @@ export default function OmzetPage() {
 
   async function syncData() {
     setSyncBezig(true);
+    setSyncVoortgang("Verbinding maken...");
+
     const res = await fetch("/api/cockpit/revenue/omzet/sync", { method: "POST" });
-    const d = await res.json();
-    setLastSync(d.sync_op ?? null);
+    if (!res.body) { setSyncBezig(false); return; }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value);
+      const lines = text.split("\n").filter(l => l.startsWith("data: "));
+      for (const line of lines) {
+        try {
+          const msg = JSON.parse(line.slice(6));
+          if (msg.type === "progress") {
+            setSyncVoortgang(`${msg.listing} (${msg.index}/${msg.totaal_listings})`);
+          } else if (msg.type === "done") {
+            setLastSync(msg.sync_op);
+            setSyncVoortgang(null);
+            setSyncBezig(false);
+            const { start, end } = getPeriode(periodeId);
+            laad(eigenStart && eigenEnd && periodeId === "eigen" ? eigenStart : start,
+                 eigenStart && eigenEnd && periodeId === "eigen" ? eigenEnd   : end);
+          }
+        } catch { continue; }
+      }
+    }
     setSyncBezig(false);
-    // Herlaad na sync
-    const { start, end } = getPeriode(periodeId);
-    laad(eigenStart && eigenEnd && periodeId === "eigen" ? eigenStart : start,
-         eigenStart && eigenEnd && periodeId === "eigen" ? eigenEnd   : end);
+    setSyncVoortgang(null);
   }
 
   const laad = useCallback((start: string, end: string) => {
@@ -350,7 +374,7 @@ export default function OmzetPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2b3885] text-white text-xs font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors"
             >
               <span className={syncBezig ? "animate-spin inline-block" : ""}>↻</span>
-              {syncBezig ? "Data ophalen (~1 min)..." : "Data synchroniseren"}
+              {syncBezig ? (syncVoortgang ?? "Starten...") : "Data synchroniseren"}
             </button>
             {lastSync && (
               <p className="text-xs text-gray-400 mt-1">
