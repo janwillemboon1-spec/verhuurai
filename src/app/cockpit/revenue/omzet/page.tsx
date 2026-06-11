@@ -3,6 +3,36 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
+const PIE_COLORS = ["#2b3885","#4a90d9","#7fbce8","#a8d4f0","#c8e6f7","#e2f2fb"];
+
+function PieChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return null;
+
+  const cx = 80, cy = 80, r = 70;
+  let angle = -Math.PI / 2;
+  const slices = data.map((d) => {
+    const sweep = (d.value / total) * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(angle);
+    const y1 = cy + r * Math.sin(angle);
+    angle += sweep;
+    const x2 = cx + r * Math.cos(angle);
+    const y2 = cy + r * Math.sin(angle);
+    const large = sweep > Math.PI ? 1 : 0;
+    return { ...d, path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`, pct: (d.value / total * 100).toFixed(1) };
+  });
+
+  return (
+    <svg viewBox="0 0 160 160" className="w-full max-w-[160px]">
+      {slices.map((s) => (
+        <path key={s.label} d={s.path} fill={s.color}>
+          <title>{s.label}: {s.pct}%</title>
+        </path>
+      ))}
+    </svg>
+  );
+}
+
 interface KPIs {
   omzet: number;
   omzetIncl: number;
@@ -334,29 +364,57 @@ export default function OmzetPage() {
           {/* Kanalen */}
           <section>
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Kanaaluitsplitsing</h2>
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
-                    <th className="text-left px-4 py-2">Kanaal</th>
-                    <th className="text-right px-4 py-2">Boekingen</th>
-                    <th className="text-right px-4 py-2">Omzet</th>
-                    <th className="text-right px-4 py-2">% van totaal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet).map(([kanaal, k]) => (
-                    <tr key={kanaal} className="border-b border-gray-100">
-                      <td className="px-4 py-2 font-medium capitalize">{kanaal}</td>
-                      <td className="px-4 py-2 text-right text-gray-600">{k.boekingen}</td>
-                      <td className="px-4 py-2 text-right font-medium">{fmt(k.omzet)}</td>
-                      <td className="px-4 py-2 text-right text-gray-500">
-                        {p.omzet > 0 ? `${((k.omzet / p.omzet) * 100).toFixed(1)}%` : "—"}
-                      </td>
+            <div className="flex gap-4 items-start">
+              {/* Tabel — halve breedte */}
+              <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden min-w-0">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
+                      <th className="text-left px-3 py-2">Kanaal</th>
+                      <th className="text-right px-3 py-2">Boekingen</th>
+                      <th className="text-right px-3 py-2">Omzet</th>
+                      <th className="text-right px-3 py-2">%</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet).map(([kanaal, k]) => (
+                      <tr key={kanaal} className="border-b border-gray-100">
+                        <td className="px-3 py-2 font-medium capitalize">{kanaal}</td>
+                        <td className="px-3 py-2 text-right text-gray-600">{k.boekingen}</td>
+                        <td className="px-3 py-2 text-right font-medium">{fmt(k.omzet)}</td>
+                        <td className="px-3 py-2 text-right text-gray-500">
+                          {p.omzet > 0 ? `${((k.omzet / p.omzet) * 100).toFixed(1)}%` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pie chart */}
+              <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4 flex flex-col items-center justify-center min-w-0">
+                {(() => {
+                  const sorted = Object.entries(p.kanalen).sort((a, b) => b[1].omzet - a[1].omzet);
+                  const pieData = sorted.map(([label, k], i) => ({
+                    label,
+                    value: k.omzet,
+                    color: PIE_COLORS[i % PIE_COLORS.length],
+                  }));
+                  return (
+                    <>
+                      <PieChart data={pieData} />
+                      <div className="mt-3 space-y-1 w-full">
+                        {pieData.map((d) => (
+                          <div key={d.label} className="flex items-center gap-2 text-xs">
+                            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                            <span className="capitalize text-gray-600 truncate">{d.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           </section>
 
