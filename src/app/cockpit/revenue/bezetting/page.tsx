@@ -136,6 +136,7 @@ interface Aanbeveling {
 
 interface Trigger {
   trigger_type: string;
+  conditie: string;
   enabled: boolean;
   drempel_pct: number;
   aanpassing_pct: number;
@@ -143,15 +144,16 @@ interface Trigger {
 }
 
 const DEFAULT_TRIGGERS: Trigger[] = [
-  { trigger_type: "bezetting_15d_onder", enabled: true, drempel_pct: 15, aanpassing_pct: -10, label: "Bezetting 15 dagen > X% onder markt" },
-  { trigger_type: "bezetting_30d_onder", enabled: true, drempel_pct: 10, aanpassing_pct: -5, label: "Bezetting 30 dagen > X% onder markt" },
-  { trigger_type: "bezetting_voor_markt", enabled: true, drempel_pct: 15, aanpassing_pct: 10, label: "Bezetting loopt > X% voor op markt" },
-  { trigger_type: "pricelabs_advies", enabled: true, drempel_pct: 12, aanpassing_pct: 0, label: "PriceLabs advies > X% afwijkend" },
-  { trigger_type: "geen_pickup", enabled: true, drempel_pct: 5, aanpassing_pct: -5, label: "Geen nieuwe boekingen + bezetting achter" },
+  { trigger_type: "bezetting_15d_onder", conditie: "bezetting_15d_onder", enabled: true, drempel_pct: 15, aanpassing_pct: -10, label: "Bezetting 15 dagen > X% onder markt" },
+  { trigger_type: "bezetting_30d_onder", conditie: "bezetting_30d_onder", enabled: true, drempel_pct: 10, aanpassing_pct: -5, label: "Bezetting 30 dagen > X% onder markt" },
+  { trigger_type: "bezetting_voor_markt", conditie: "bezetting_voor_markt", enabled: true, drempel_pct: 15, aanpassing_pct: 10, label: "Bezetting loopt > X% voor op markt" },
+  { trigger_type: "pricelabs_advies", conditie: "pricelabs_advies", enabled: true, drempel_pct: 12, aanpassing_pct: 0, label: "PriceLabs advies > X% afwijkend" },
+  { trigger_type: "geen_pickup", conditie: "geen_pickup", enabled: true, drempel_pct: 5, aanpassing_pct: -5, label: "Geen nieuwe boekingen + bezetting achter" },
 ];
 
 function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeveling[] {
-  const tMap = new Map(triggers.map(t => [t.trigger_type, t]));
+  const actief = triggers.filter(t => t.enabled);
+  const byConditie = (c: string) => actief.filter(t => (t.conditie ?? t.trigger_type) === c);
   const aanbevelingen: Aanbeveling[] = [];
 
   for (const l of listings) {
@@ -161,65 +163,69 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
     const base = l.base;
     const rec = l.recommended_base_price;
     const pickup3 = l.booking_pickup_unique_past_3;
-    const heeft = (t: string) => aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t);
 
-    const t15 = tMap.get("bezetting_15d_onder");
-    if (t15?.enabled && d15 <= -t15.drempel_pct && base && !heeft("bezetting_15d_onder")) {
-      const nieuw = Math.round(base * (1 + t15.aanpassing_pct / 100));
-      aanbevelingen.push({
-        listing_id: l.id, trigger_type: "bezetting_15d_onder", naam, prioriteit: "hoog",
-        reden: `Bezetting 15d is ${Math.abs(d15)}% onder markt`,
-        uitleg: `De komende 15 dagen staat de bezetting op ${parseOcc(l.occupancy_next_15)}% terwijl de markt op ${parseOcc(l.market_occupancy_next_15)}% zit. Een verschil van ${Math.abs(d15)}% wijst op te hoge prijsstelling. Verlaging met ${Math.abs(t15.aanpassing_pct)}% kan de boekingskans sterk verbeteren.`,
-        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${t15.aanpassing_pct}%)`,
-        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
-      });
+    for (const t of byConditie("bezetting_15d_onder")) {
+      if (d15 <= -t.drempel_pct && base) {
+        const nieuw = Math.round(base * (1 + t.aanpassing_pct / 100));
+        aanbevelingen.push({
+          listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "hoog",
+          reden: `Bezetting 15d is ${Math.abs(d15)}% onder markt (drempel: ${t.drempel_pct}%)`,
+          uitleg: `De komende 15 dagen staat de bezetting op ${parseOcc(l.occupancy_next_15)}% terwijl de markt op ${parseOcc(l.market_occupancy_next_15)}% zit. Een verschil van ${Math.abs(d15)}% wijst op te hoge prijsstelling. Verlaging met ${Math.abs(t.aanpassing_pct)}% kan de boekingskans sterk verbeteren.`,
+          actie: `${t.aanpassing_pct < 0 ? "Verlaag" : "Verhoog"} basisprijs van €${base} naar €${nieuw} (${t.aanpassing_pct}%)`,
+          veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+        });
+      }
     }
 
-    const t30 = tMap.get("bezetting_30d_onder");
-    if (t30?.enabled && d30 <= -t30.drempel_pct && base && !heeft("bezetting_15d_onder") && !heeft("bezetting_30d_onder")) {
-      const nieuw = Math.round(base * (1 + t30.aanpassing_pct / 100));
-      aanbevelingen.push({
-        listing_id: l.id, trigger_type: "bezetting_30d_onder", naam, prioriteit: "middel",
-        reden: `Bezetting 30d is ${Math.abs(d30)}% onder markt`,
-        uitleg: `De komende 30 dagen zit de bezetting op ${parseOcc(l.occupancy_next_30)}% versus ${parseOcc(l.market_occupancy_next_30)}% in de markt. Verlaging met ${Math.abs(t30.aanpassing_pct)}% geeft een competitiever profiel.`,
-        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${t30.aanpassing_pct}%)`,
-        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
-      });
+    for (const t of byConditie("bezetting_30d_onder")) {
+      if (d30 <= -t.drempel_pct && base && !aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t.trigger_type)) {
+        const nieuw = Math.round(base * (1 + t.aanpassing_pct / 100));
+        aanbevelingen.push({
+          listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel",
+          reden: `Bezetting 30d is ${Math.abs(d30)}% onder markt (drempel: ${t.drempel_pct}%)`,
+          uitleg: `De komende 30 dagen zit de bezetting op ${parseOcc(l.occupancy_next_30)}% versus ${parseOcc(l.market_occupancy_next_30)}% in de markt. Verlaging met ${Math.abs(t.aanpassing_pct)}% geeft een competitiever profiel.`,
+          actie: `${t.aanpassing_pct < 0 ? "Verlaag" : "Verhoog"} basisprijs van €${base} naar €${nieuw} (${t.aanpassing_pct}%)`,
+          veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+        });
+      }
     }
 
-    const tVoor = tMap.get("bezetting_voor_markt");
-    if (tVoor?.enabled && d15 >= tVoor.drempel_pct && d30 >= tVoor.drempel_pct / 2 && base && !heeft("bezetting_voor_markt")) {
-      const nieuw = Math.round(base * (1 + tVoor.aanpassing_pct / 100));
-      aanbevelingen.push({
-        listing_id: l.id, trigger_type: "bezetting_voor_markt", naam, prioriteit: "middel",
-        reden: `Bezetting loopt ${d15}% voor op markt`,
-        uitleg: `Met ${parseOcc(l.occupancy_next_15)}% tegenover ${parseOcc(l.market_occupancy_next_15)}% marktgemiddelde loopt deze woning sterk voor. Er is ruimte de prijs te verhogen (+${tVoor.aanpassing_pct}%) zonder bezetting te verliezen.`,
-        actie: `Verhoog basisprijs van €${base} naar €${nieuw} (+${tVoor.aanpassing_pct}%)`,
-        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
-      });
+    for (const t of byConditie("bezetting_voor_markt")) {
+      if (d15 >= t.drempel_pct && d30 >= t.drempel_pct / 2 && base && !aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t.trigger_type)) {
+        const nieuw = Math.round(base * (1 + t.aanpassing_pct / 100));
+        aanbevelingen.push({
+          listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel",
+          reden: `Bezetting loopt ${d15}% voor op markt`,
+          uitleg: `Met ${parseOcc(l.occupancy_next_15)}% tegenover ${parseOcc(l.market_occupancy_next_15)}% marktgemiddelde loopt deze woning sterk voor. Er is ruimte de prijs te verhogen (+${t.aanpassing_pct}%) zonder bezetting te verliezen.`,
+          actie: `Verhoog basisprijs van €${base} naar €${nieuw} (+${t.aanpassing_pct}%)`,
+          veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+        });
+      }
     }
 
-    const tPL = tMap.get("pricelabs_advies");
-    if (tPL?.enabled && rec && base && rec > base * (1 + tPL.drempel_pct / 100) && !heeft("pricelabs_advies")) {
-      aanbevelingen.push({
-        listing_id: l.id, trigger_type: "pricelabs_advies", naam, prioriteit: "middel",
-        reden: `PriceLabs adviseert €${rec} (huidig €${base})`,
-        uitleg: `PriceLabs berekent een aanbevolen basisprijs van €${rec}, wat ${Math.round(((rec - base) / base) * 100)}% hoger is dan de huidige €${base}. Dit duidt op toegenomen vraag in dit marktsegment.`,
-        actie: `Stel basisprijs in op €${rec} (PriceLabs advies)`,
-        veld: "base", huidigeWaarde: base, nieuweWaarde: rec,
-      });
+    for (const t of byConditie("pricelabs_advies")) {
+      if (rec && base && rec > base * (1 + t.drempel_pct / 100) && !aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t.trigger_type)) {
+        aanbevelingen.push({
+          listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel",
+          reden: `PriceLabs adviseert €${rec} (huidig €${base})`,
+          uitleg: `PriceLabs berekent een aanbevolen basisprijs van €${rec}, wat ${Math.round(((rec - base) / base) * 100)}% hoger is dan de huidige €${base}.`,
+          actie: `Stel basisprijs in op €${rec} (PriceLabs advies)`,
+          veld: "base", huidigeWaarde: base, nieuweWaarde: rec,
+        });
+      }
     }
 
-    const tPickup = tMap.get("geen_pickup");
-    if (tPickup?.enabled && pickup3 === 0 && d30 <= -tPickup.drempel_pct && base && !heeft("bezetting_15d_onder") && !heeft("geen_pickup")) {
-      const nieuw = Math.round(base * (1 + tPickup.aanpassing_pct / 100));
-      aanbevelingen.push({
-        listing_id: l.id, trigger_type: "geen_pickup", naam, prioriteit: "middel",
-        reden: `0 nieuwe boekingen (3d) + bezetting ${Math.abs(d30)}% achter`,
-        uitleg: `Geen nieuwe boekingen in 3 dagen en 30-daagse bezetting ligt ${Math.abs(d30)}% onder de markt. Een verlaging van ${Math.abs(tPickup.aanpassing_pct)}% prikkelt de algoritmen van Airbnb/Booking.com om de woning vaker te tonen.`,
-        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${tPickup.aanpassing_pct}%)`,
-        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
-      });
+    for (const t of byConditie("geen_pickup")) {
+      if (pickup3 === 0 && d30 <= -t.drempel_pct && base && !aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t.trigger_type)) {
+        const nieuw = Math.round(base * (1 + t.aanpassing_pct / 100));
+        aanbevelingen.push({
+          listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel",
+          reden: `0 nieuwe boekingen (3d) + bezetting ${Math.abs(d30)}% achter`,
+          uitleg: `Geen nieuwe boekingen in 3 dagen en bezetting ligt ${Math.abs(d30)}% onder de markt. Een verlaging van ${Math.abs(t.aanpassing_pct)}% prikkelt de zoekalgoritmens.`,
+          actie: `Verlaag basisprijs van €${base} naar €${nieuw} (${t.aanpassing_pct}%)`,
+          veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+        });
+      }
     }
   }
 

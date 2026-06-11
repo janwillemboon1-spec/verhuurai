@@ -4,11 +4,20 @@ import { useEffect, useState } from "react";
 
 interface Trigger {
   trigger_type: string;
+  conditie: string;
   enabled: boolean;
   drempel_pct: number;
   aanpassing_pct: number;
   label: string;
 }
+
+const CONDITIE_OPTIES = [
+  { value: "bezetting_15d_onder", label: "Bezetting 15 dagen onder markt" },
+  { value: "bezetting_30d_onder", label: "Bezetting 30 dagen onder markt" },
+  { value: "bezetting_voor_markt", label: "Bezetting loopt voor op markt" },
+  { value: "pricelabs_advies",     label: "PriceLabs advies afwijkend" },
+  { value: "geen_pickup",          label: "Geen nieuwe boekingen + achterstand" },
+];
 
 const TRIGGER_OMSCHRIJVING: Record<string, string> = {
   bezetting_15d_onder: "Als bezetting 15 dagen > drempel% onder markt → verlaag basisprijs met |aanpassing|%",
@@ -33,6 +42,13 @@ export default function CockpitInstellingenPage() {
   const [triggers, setTriggers] = useState<Trigger[]>([]);
   const [triggerSaving, setTriggerSaving] = useState(false);
   const [triggerSaved, setTriggerSaved] = useState(false);
+  const [nieuweTrigger, setNieuweTrigger] = useState({
+    conditie: "bezetting_15d_onder",
+    label: "",
+    drempel_pct: 15,
+    aanpassing_pct: -10,
+  });
+  const [toevoegen, setToevoegen] = useState(false);
 
   useEffect(() => {
     fetch("/api/cockpit/listings")
@@ -60,6 +76,29 @@ export default function CockpitInstellingenPage() {
 
   function updateTrigger(type: string, field: keyof Trigger, value: unknown) {
     setTriggers(prev => prev.map(t => t.trigger_type === type ? { ...t, [field]: value } : t));
+  }
+
+  async function deleteTrigger(trigger_type: string) {
+    setTriggers(prev => prev.filter(t => t.trigger_type !== trigger_type));
+    await fetch("/api/cockpit/aanbevelingen/triggers", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trigger_type }),
+    });
+  }
+
+  async function voegTriggerToe() {
+    const trigger_type = `${nieuweTrigger.conditie}_${Date.now()}`;
+    const nieuw: Trigger = { ...nieuweTrigger, trigger_type, enabled: true };
+    const res = await fetch("/api/cockpit/aanbevelingen/triggers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trigger: nieuw }),
+    });
+    const data = await res.json();
+    setTriggers(prev => [...prev, { ...nieuw, ...data }]);
+    setNieuweTrigger({ conditie: "bezetting_15d_onder", label: "", drempel_pct: 15, aanpassing_pct: -10 });
+    setToevoegen(false);
   }
 
   async function toggle(listing: Listing) {
@@ -140,7 +179,6 @@ export default function CockpitInstellingenPage() {
             {triggers.map(t => (
               <div key={t.trigger_type} className={`bg-white border rounded-xl p-4 transition-all ${t.enabled ? "border-gray-200" : "border-gray-100 opacity-60"}`}>
                 <div className="flex items-start gap-4">
-                  {/* Toggle */}
                   <button
                     onClick={() => updateTrigger(t.trigger_type, "enabled", !t.enabled)}
                     className={`mt-0.5 relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors cursor-pointer focus:outline-none ${t.enabled ? "bg-[#2b3885]" : "bg-gray-200"}`}
@@ -150,46 +188,94 @@ export default function CockpitInstellingenPage() {
                   </button>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 mb-0.5">{t.label}</p>
-                    <p className="text-xs text-gray-400 mb-3">{TRIGGER_OMSCHRIJVING[t.trigger_type]}</p>
-
-                    <div className="flex gap-6 flex-wrap">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-medium text-gray-900">{t.label || t.trigger_type}</p>
+                      <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                        {CONDITIE_OPTIES.find(c => c.value === (t.conditie ?? t.trigger_type))?.label ?? t.conditie}
+                      </span>
+                    </div>
+                    <div className="flex gap-4 flex-wrap mt-2">
                       <div>
                         <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
-                        <input
-                          type="number" min="1" max="50"
-                          value={t.drempel_pct}
+                        <input type="number" min="1" max="50" value={t.drempel_pct}
                           onChange={e => updateTrigger(t.trigger_type, "drempel_pct", parseInt(e.target.value) || 0)}
-                          className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]"
-                        />
+                          className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                       </div>
-                      {t.trigger_type !== "pricelabs_advies" && (
+                      {(t.conditie ?? t.trigger_type) !== "pricelabs_advies" && (
                         <div>
-                          <label className="text-xs text-gray-500 block mb-1">
-                            Aanpassing (%, negatief = verlaging)
-                          </label>
-                          <input
-                            type="number" min="-50" max="50"
-                            value={t.aanpassing_pct}
+                          <label className="text-xs text-gray-500 block mb-1">Aanpassing (%)</label>
+                          <input type="number" min="-50" max="50" value={t.aanpassing_pct}
                             onChange={e => updateTrigger(t.trigger_type, "aanpassing_pct", parseInt(e.target.value) || 0)}
-                            className="w-24 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]"
-                          />
+                            className="w-24 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                         </div>
                       )}
                     </div>
                   </div>
+
+                  <button onClick={() => deleteTrigger(t.trigger_type)}
+                    className="text-gray-300 hover:text-red-500 transition-colors text-sm flex-shrink-0 mt-0.5"
+                    title="Verwijder trigger">✕</button>
                 </div>
               </div>
             ))}
+
+            {/* Nieuwe trigger */}
+            {toevoegen ? (
+              <div className="bg-[#eef7fe] border border-blue-100 rounded-xl p-4">
+                <p className="text-sm font-semibold text-[#2b3885] mb-3">Nieuwe trigger</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-gray-500 block mb-1">Naam</label>
+                    <input type="text" value={nieuweTrigger.label} placeholder="bijv. 'Zomerverlaging grote woningen'"
+                      onChange={e => setNieuweTrigger(p => ({ ...p, label: e.target.value }))}
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Conditietype</label>
+                    <select value={nieuweTrigger.conditie}
+                      onChange={e => setNieuweTrigger(p => ({ ...p, conditie: e.target.value }))}
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]">
+                      {CONDITIE_OPTIES.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">Drempel (%)</label>
+                    <input type="number" min="1" max="50" value={nieuweTrigger.drempel_pct}
+                      onChange={e => setNieuweTrigger(p => ({ ...p, drempel_pct: parseInt(e.target.value) || 0 }))}
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
+                  </div>
+                  {nieuweTrigger.conditie !== "pricelabs_advies" && (
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Aanpassing (%)</label>
+                      <input type="number" min="-50" max="50" value={nieuweTrigger.aanpassing_pct}
+                        onChange={e => setNieuweTrigger(p => ({ ...p, aanpassing_pct: parseInt(e.target.value) || 0 }))}
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#2b3885]" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={voegTriggerToe} disabled={!nieuweTrigger.label}
+                    className="px-4 py-2 bg-[#2b3885] text-white text-sm rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors">
+                    Toevoegen
+                  </button>
+                  <button onClick={() => setToevoegen(false)}
+                    className="px-4 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors">
+                    Annuleren
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setToevoegen(true)}
+                className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-400 hover:border-[#2b3885] hover:text-[#2b3885] transition-colors">
+                + Trigger toevoegen
+              </button>
+            )}
           </div>
 
           <div className="mt-4">
-            <button
-              onClick={saveTriggers}
-              disabled={triggerSaving}
-              className="px-4 py-2 bg-[#2b3885] text-white text-sm font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors"
-            >
-              {triggerSaved ? "✓ Opgeslagen" : triggerSaving ? "Opslaan..." : "Triggers opslaan"}
+            <button onClick={saveTriggers} disabled={triggerSaving}
+              className="px-4 py-2 bg-[#2b3885] text-white text-sm font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors">
+              {triggerSaved ? "✓ Opgeslagen" : triggerSaving ? "Opslaan..." : "Wijzigingen opslaan"}
             </button>
           </div>
         </div>
