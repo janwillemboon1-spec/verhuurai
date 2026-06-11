@@ -121,6 +121,90 @@ function InlinePrice({
   );
 }
 
+interface Aanbeveling {
+  listing_id: string;
+  naam: string;
+  reden: string;
+  uitleg: string;
+  actie: string;
+  veld: "base" | "min" | "max";
+  huidigeWaarde: number | null;
+  nieuweWaarde: number;
+  prioriteit: "hoog" | "middel";
+}
+
+function berekenAanbevelingen(listings: Listing[]): Aanbeveling[] {
+  const aanbevelingen: Aanbeveling[] = [];
+
+  for (const l of listings) {
+    const naam = l.interneNaam || l.name.split("--")[0].trim();
+    const d15 = parseOcc(l.occupancy_next_15) - parseOcc(l.market_occupancy_next_15);
+    const d30 = parseOcc(l.occupancy_next_30) - parseOcc(l.market_occupancy_next_30);
+    const d60 = parseOcc(l.occupancy_next_60) - parseOcc(l.market_occupancy_next_60);
+    const base = l.base;
+    const rec = l.recommended_base_price;
+    const pickup3 = l.booking_pickup_unique_past_3;
+
+    // Verlaging aanbevelen: loopt achter op markt
+    if (d15 <= -15 && base) {
+      const nieuw = Math.round(base * 0.90);
+      aanbevelingen.push({
+        listing_id: l.id, naam, prioriteit: "hoog",
+        reden: `Bezetting 15d is ${Math.abs(d15)}% onder markt`,
+        uitleg: `De komende 15 dagen staat de bezetting op ${parseOcc(l.occupancy_next_15)}% terwijl de markt op ${parseOcc(l.market_occupancy_next_15)}% zit. Dit verschil van ${Math.abs(d15)}% wijst op te hoge prijsstelling of gebrek aan zichtbaarheid. Een verlaging van 10% van de basisprijs kan de boekingskans sterk verbeteren.`,
+        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (−10%)`,
+        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+      });
+    } else if (d30 <= -10 && base && !aanbevelingen.find(a => a.listing_id === l.id)) {
+      const nieuw = Math.round(base * 0.95);
+      aanbevelingen.push({
+        listing_id: l.id, naam, prioriteit: "middel",
+        reden: `Bezetting 30d is ${Math.abs(d30)}% onder markt`,
+        uitleg: `De komende 30 dagen zit de bezetting op ${parseOcc(l.occupancy_next_30)}% versus ${parseOcc(l.market_occupancy_next_30)}% in de markt. Een lichte prijsverlaging van 5% geeft de woning een competitiever profiel zonder te veel omzet te laten liggen.`,
+        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (−5%)`,
+        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+      });
+    }
+
+    // Verhoging aanbevelen: loopt ver voor op markt
+    if (d15 >= 15 && d30 >= 10 && base && !aanbevelingen.find(a => a.listing_id === l.id)) {
+      const nieuw = Math.round(base * 1.10);
+      aanbevelingen.push({
+        listing_id: l.id, naam, prioriteit: "middel",
+        reden: `Bezetting loopt ${d15}% voor op markt`,
+        uitleg: `Met ${parseOcc(l.occupancy_next_15)}% bezetting voor de komende 15 dagen tegenover ${parseOcc(l.market_occupancy_next_15)}% marktgemiddelde loopt deze woning sterk voor. Dit is een signaal dat de prijs te laag staat — er is ruimte om de basisprijs te verhogen zonder bezetting te verliezen.`,
+        actie: `Verhoog basisprijs van €${base} naar €${nieuw} (+10%)`,
+        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+      });
+    }
+
+    // PriceLabs aanbeveling significant afwijkend
+    if (rec && base && rec > base * 1.12 && !aanbevelingen.find(a => a.listing_id === l.id)) {
+      aanbevelingen.push({
+        listing_id: l.id, naam, prioriteit: "middel",
+        reden: `PriceLabs adviseert €${rec} (huidig €${base})`,
+        uitleg: `PriceLabs berekent op basis van marktdata en bezettingspatronen een aanbevolen basisprijs van €${rec}, wat ${Math.round(((rec - base) / base) * 100)}% hoger is dan de huidige €${base}. Dit kan duiden op sterk toegenomen vraag in dit marktsegment.`,
+        actie: `Stel basisprijs in op €${rec} (PriceLabs advies)`,
+        veld: "base", huidigeWaarde: base, nieuweWaarde: rec,
+      });
+    }
+
+    // Geen pickup + achterstand
+    if (pickup3 === 0 && d30 <= -5 && base && !aanbevelingen.find(a => a.listing_id === l.id)) {
+      const nieuw = Math.round(base * 0.95);
+      aanbevelingen.push({
+        listing_id: l.id, naam, prioriteit: "middel",
+        reden: `0 nieuwe boekingen in 3 dagen + bezetting loopt achter`,
+        uitleg: `Er zijn de afgelopen 3 dagen geen nieuwe boekingen binnengekomen en de 30-daagse bezetting ligt ${Math.abs(d30)}% onder de markt. Dit patroon duidt op een te hoge prijs of te weinig zichtbaarheid. Een kleine verlaging kan de algoritmen van Airbnb/Booking.com prikkelen om de woning vaker te tonen.`,
+        actie: `Verlaag basisprijs van €${base} naar €${nieuw} (−5%)`,
+        veld: "base", huidigeWaarde: base, nieuweWaarde: nieuw,
+      });
+    }
+  }
+
+  return aanbevelingen.sort((a, b) => (a.prioriteit === "hoog" ? -1 : 1) - (b.prioriteit === "hoog" ? -1 : 1));
+}
+
 export default function RevenuePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -319,6 +403,91 @@ export default function RevenuePage() {
           </table>
         </div>
       )}
+
+      {/* Aanbevelingen */}
+      {!loading && listings.length > 0 && (() => {
+        const aanbevelingen = berekenAanbevelingen(listings);
+        if (aanbevelingen.length === 0) return (
+          <div className="mt-8">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Aanbevelingen</h2>
+            <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 text-sm text-gray-400">
+              ✓ Geen aanbevelingen — alle woningen lopen goed in verhouding tot de markt.
+            </div>
+          </div>
+        );
+        return (
+          <div className="mt-8">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">
+              Aanbevelingen <span className="ml-1.5 text-xs font-normal text-gray-400">({aanbevelingen.length})</span>
+            </h2>
+            <div className="space-y-3">
+              {aanbevelingen.map((a) => (
+                <AanbevelingKaart
+                  key={a.listing_id + a.reden}
+                  aanbeveling={a}
+                  onUitvoer={async () => {
+                    await handlePriceSave(a.listing_id, a.veld, a.nieuweWaarde);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function AanbevelingKaart({ aanbeveling: a, onUitvoer }: { aanbeveling: Aanbeveling; onUitvoer: () => Promise<void> }) {
+  const [uitgevoerd, setUitgevoerd] = useState(false);
+  const [bezig, setBezig] = useState(false);
+  const [uitgevouwen, setUitgevouwen] = useState(false);
+
+  async function uitvoeren() {
+    setBezig(true);
+    await onUitvoer();
+    setBezig(false);
+    setUitgevoerd(true);
+  }
+
+  return (
+    <div className={`bg-white border rounded-xl p-4 transition-all ${
+      a.prioriteit === "hoog" ? "border-amber-200" : "border-gray-200"
+    } ${uitgevoerd ? "opacity-50" : ""}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            {a.prioriteit === "hoog" && (
+              <span className="text-xs font-medium bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">Urgent</span>
+            )}
+            <span className="font-medium text-gray-900 text-sm">{a.naam}</span>
+            <span className="text-xs text-gray-400">{a.reden}</span>
+          </div>
+          <p className="text-sm font-medium text-[#2b3885] mb-1">{a.actie}</p>
+          <button
+            onClick={() => setUitgevouwen(v => !v)}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {uitgevouwen ? "▲ Verberg uitleg" : "▼ Waarom deze aanbeveling?"}
+          </button>
+          {uitgevouwen && (
+            <p className="mt-2 text-xs text-gray-500 leading-relaxed max-w-2xl">{a.uitleg}</p>
+          )}
+        </div>
+        <div className="flex-shrink-0">
+          {uitgevoerd ? (
+            <span className="text-xs text-green-600 font-medium">✓ Uitgevoerd</span>
+          ) : (
+            <button
+              onClick={uitvoeren}
+              disabled={bezig}
+              className="px-3 py-1.5 bg-[#2b3885] text-white text-xs font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-50 transition-colors"
+            >
+              {bezig ? "Bezig..." : "Uitvoeren"}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
