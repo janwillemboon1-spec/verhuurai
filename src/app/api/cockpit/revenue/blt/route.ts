@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getReservationData, PLReservation } from "@/lib/pricelabs";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getReservationData, PLReservation, getListings } from "@/lib/pricelabs";
 import { NextResponse } from "next/server";
 
 const COCKPIT_EMAIL = "info@bnbassistant.com";
@@ -22,6 +23,7 @@ function berekenBLT(reservations: PLReservation[]): { gemiddeld: number; mediaan
   return { gemiddeld, mediaan, n: blts.length };
 }
 
+// GET: haal opgeslagen BLT op uit Supabase
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,24 +31,59 @@ export async function GET() {
     return NextResponse.json({ error: "Geen toegang" }, { status: 401 });
   }
 
-  // Laatste 24 maanden voor betrouwbare BLT berekening
-  const end = new Date().toISOString().slice(0, 10);
-  const start = new Date(Date.now() - 730 * 86400000).toISOString().slice(0, 10);
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("cockpit_listing_settings")
+    .select("listing_id, blt_mediaan, blt_gemiddeld, blt_bijgewerkt_op")
+    .not("blt_mediaan", "is", null);
 
-  const reservations = await getReservationData(start, end);
+  const result: Record<string, { gemiddeld: number; mediaan: number; bijgewerkt_op: string }> = {};
+  for (const row of data ?? []) {
+    result[String(row.listing_id)] = {
+      gemiddeld: row.blt_gemiddeld ?? 0,
+      mediaan: row.blt_mediaan ?? 0,
+      bijgewerkt_op: row.blt_bijgewerkt_op ?? "",
+    };
+  }
+  return NextResponse.json(result);
+}
 
-  // Groepeer per listing
-  const perListing = new Map<string, PLReservation[]>();
-  for (const r of reservations) {
-    const curr = perListing.get(r.listing_id) ?? [];
-    curr.push(r);
-    perListing.set(r.listing_id, curr);
+// POST: herbereken BLT voor alle woningen en sla op in Supabase
+export async function POST() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== COCKPIT_EMAIL) {
+    return NextResponse.json({ error: "Geen toegang" }, { status: 401 });
   }
 
-  const result: Record<string, { gemiddeld: number; mediaan: number; n: number }> = {};
-  Array.from(perListing.entries()).forEach(([id, rows]) => {
-    result[id] = berekenBLT(rows);
-  });
+  const end = new Date().toISOString().slice(0, 10);
+  const start = new Date(Date.now() - 730 * 86400000).toISOString().slice(0, 10);
+  const nu = new Date().toISOString();
 
-  return NextResponse.json(result);
+  const listings = await getListings();
+  const admin = createAdminClient();
+  let count = 0;
+
+  // Serieel per listing om rate limit te vermijden
+  for (const listing of listings) {
+    try {
+      const reservations = await getReservationData(start, end, listing.id);
+      const { gemiddeld, mediaan, n } = berekenBLT(reservations);
+      if (n > 0) {
+        await admin.from("cockpit_listing_settings").upsert(
+          {
+            listing_id: parseInt(listing.id) || listing.id as unknown as number,
+            listing_name: listing.name,
+            blt_gemiddeld: gemiddeld,
+            blt_mediaan: mediaan,
+            blt_bijgewerkt_op: nu,
+          },
+          { onConflict: "listing_id" }
+        );
+        count++;
+      }
+    } catch { continue; }
+  }
+
+  return NextResponse.json({ ok: true, berekend: count });
 }

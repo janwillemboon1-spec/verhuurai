@@ -369,18 +369,20 @@ export default function RevenuePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("in_afwachting");
   const [vernieuwen, setVernieuwen] = useState(false);
 
+  const [herberekeningBezig, setHerberekeningBezig] = useState(false);
+
+  async function herbereken() {
+    setHerberekeningBezig(true);
+    await fetch("/api/cockpit/revenue/blt", { method: "POST" });
+    await laadAlles(false);
+    setHerberekeningBezig(false);
+  }
+
   async function laadAlles(showLoader = false) {
     if (showLoader) setVernieuwen(true);
     await Promise.all([
-      Promise.all([
-        fetch("/api/cockpit/revenue/listings").then(r => r.json()),
-        fetch("/api/cockpit/revenue/blt").then(r => r.json()).catch(() => ({})),
-      ]).then(([listingsData, bltData]: [Listing[], Record<string, { gemiddeld: number; mediaan: number }>]) => {
-        setListings(listingsData.map(l => ({
-          ...l,
-          blt_gemiddeld: bltData[l.id]?.gemiddeld,
-          blt_mediaan: bltData[l.id]?.mediaan,
-        })));
+      fetch("/api/cockpit/revenue/listings").then(r => r.json()).then((listingsData: Listing[]) => {
+        setListings(listingsData);
       }),
       fetch("/api/cockpit/aanbevelingen/status").then(r => r.json())
         .then((rows: { listing_id: string; trigger_type: string; status: string; bijgewerkt_op: string }[]) => {
@@ -448,6 +450,11 @@ export default function RevenuePage() {
         <span className="text-gray-200">/</span>
         <span className="text-sm text-gray-600 font-medium">Bezetting</span>
         <div className="ml-auto flex items-center gap-4">
+          <button onClick={herbereken} disabled={herberekeningBezig}
+            className="text-xs text-gray-400 hover:text-[#2b3885] disabled:opacity-50 transition-colors"
+            title="Herbereken BLT voor alle woningen (duurt ~30 sec)">
+            {herberekeningBezig ? "BLT berekenen..." : "↻ BLT herbereken"}
+          </button>
           {pendingPush.size > 0 && (
             <button
               onClick={handlePush}
