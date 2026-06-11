@@ -297,6 +297,14 @@ export default function OmzetPage() {
   const [loading, setLoading] = useState(true);
   const [syncBezig, setSyncBezig] = useState(false);
   const [syncVoortgang, setSyncVoortgang] = useState<string | null>(null);
+  type OmzetSortKey = "naam" | "omzet" | "omzet_ly" | "adr" | "bezetting" | "nachten" | "revpar";
+  const [sortKey, setSortKey] = useState<OmzetSortKey>("omzet");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  function toggleOmzetSort(k: OmzetSortKey) {
+    if (sortKey === k) setSortAsc(v => !v);
+    else { setSortKey(k); setSortAsc(k === "naam"); }
+  }
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [cacheStats, setCacheStats] = useState<{ rijen: number; listings: number; omzet: number } | null>(null);
   const [syncMislukt, setSyncMislukt] = useState<string[] | null>(null);
@@ -538,18 +546,38 @@ export default function OmzetPage() {
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase">
-                    <th className="text-left px-4 py-2">Woning</th>
-                    <th className="text-right px-4 py-2">Omzet</th>
-                    <th className="text-right px-4 py-2">STLY</th>
-                    <th className="text-right px-4 py-2">ADR</th>
-                    <th className="text-right px-4 py-2">Bezetting</th>
-                    <th className="text-right px-4 py-2">Nachten</th>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase select-none">
+                    {([
+                      { k: "naam",      label: "Woning",    align: "left"  },
+                      { k: "omzet",     label: "Omzet",     align: "right" },
+                      { k: "omzet_ly",  label: "STLY",      align: "right" },
+                      { k: "adr",       label: "ADR",        align: "right" },
+                      { k: "bezetting", label: "Bezetting", align: "right" },
+                      { k: "nachten",   label: "Nachten",   align: "right" },
+                    ] as { k: OmzetSortKey; label: string; align: string }[]).map(col => (
+                      <th key={col.k}
+                        onClick={() => toggleOmzetSort(col.k)}
+                        className={`px-4 py-2 cursor-pointer hover:text-gray-700 transition-colors ${col.align === "left" ? "text-left" : "text-right"}`}>
+                        {col.label}
+                        {sortKey === col.k
+                          ? <span className="ml-0.5 text-[#2b3885]">{sortAsc ? "↑" : "↓"}</span>
+                          : <span className="ml-0.5 text-gray-300">↕</span>}
+                      </th>
+                    ))}
                     <th className="px-4 py-2" />
                   </tr>
                 </thead>
                 <tbody>
-                  {data!.listings.map((l) => (
+                  {[...data!.listings].sort((a, b) => {
+                    let v = 0;
+                    if (sortKey === "naam")      v = a.listing_naam.localeCompare(b.listing_naam);
+                    else if (sortKey === "omzet")     v = a.omzet - b.omzet;
+                    else if (sortKey === "omzet_ly")  v = (a.omzet_ly ?? 0) - (b.omzet_ly ?? 0);
+                    else if (sortKey === "adr")       v = a.adr - b.adr;
+                    else if (sortKey === "bezetting") v = a.bezetting - b.bezetting;
+                    else if (sortKey === "nachten")   v = a.nachten - b.nachten;
+                    return sortAsc ? v : -v;
+                  }).map((l) => (
                     <tr key={l.listing_id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="px-4 py-2">
                         <div className="font-medium text-gray-900">{l.listing_naam}</div>
