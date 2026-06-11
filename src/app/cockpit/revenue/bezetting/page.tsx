@@ -26,6 +26,8 @@ interface Listing {
   last_date_pushed: string | null;
   occupancy_next_7: string;
   market_occupancy_next_7: string;
+  blt_gemiddeld?: number;
+  blt_mediaan?: number;
 }
 
 function parseOcc(val: string) {
@@ -125,7 +127,7 @@ function InlinePrice({
 }
 
 type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
-type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated";
+type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated" | "blt_kort" | "blt_lang";
 
 interface TriggerConditie {
   conditie: ConditieType;
@@ -203,6 +205,16 @@ function checkConditie(l: Listing, c: TriggerConditie): boolean {
       const daysSince = (Date.now() - new Date(l.last_date_pushed).getTime()) / 86400000;
       return daysSince >= dagen;
     }
+    case "blt_kort": {
+      // BLT mediaan is korter dan X dagen (last-minute woning)
+      const blt = l.blt_mediaan ?? l.blt_gemiddeld ?? 999;
+      return blt <= (drempel_pct ?? 30);
+    }
+    case "blt_lang": {
+      // BLT mediaan is langer dan X dagen (ver-van-tevoren woning)
+      const blt = l.blt_mediaan ?? l.blt_gemiddeld ?? 0;
+      return blt >= (drempel_pct ?? 60);
+    }
   }
   return false;
 }
@@ -214,6 +226,8 @@ function conditieTekst(c: TriggerConditie): string {
     case "pricelabs_advies": return `PriceLabs advies meer dan ${c.drempel_pct ?? 10}% hoger`;
     case "geen_pickup": return `geen nieuwe boekingen in ${c.dagen ?? 3} dagen`;
     case "prijs_niet_updated": return `prijs meer dan ${c.dagen ?? 3} dagen niet geüpdated`;
+    case "blt_kort": return `gemiddelde boekingstijd < ${c.drempel_pct ?? 30} dagen (last-minute woning)`;
+    case "blt_lang": return `gemiddelde boekingstijd > ${c.drempel_pct ?? 60} dagen (ver vooruit geboekt)`;
     default: return c.conditie;
   }
 }
@@ -347,10 +361,17 @@ export default function RevenuePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("in_afwachting");
 
   useEffect(() => {
-    fetch("/api/cockpit/revenue/listings")
-      .then((r) => r.json())
-      .then(setListings)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch("/api/cockpit/revenue/listings").then(r => r.json()),
+      fetch("/api/cockpit/revenue/blt").then(r => r.json()).catch(() => ({})),
+    ]).then(([listingsData, bltData]: [Listing[], Record<string, { gemiddeld: number; mediaan: number }>]) => {
+      const merged = listingsData.map(l => ({
+        ...l,
+        blt_gemiddeld: bltData[l.id]?.gemiddeld,
+        blt_mediaan: bltData[l.id]?.mediaan,
+      }));
+      setListings(merged);
+    }).finally(() => setLoading(false));
     fetch("/api/cockpit/aanbevelingen/status")
       .then((r) => r.json())
       .then((rows: { listing_id: string; trigger_type: string; status: string }[]) => {

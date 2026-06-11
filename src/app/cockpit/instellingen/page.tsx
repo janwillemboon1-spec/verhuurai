@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type ActieType = "basisprijs" | "minimumprijs" | "dso_percent" | "dso_fixed";
-type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated";
+type ConditieType = "bezetting_onder" | "bezetting_boven" | "pricelabs_advies" | "geen_pickup" | "prijs_niet_updated" | "blt_kort" | "blt_lang";
 
 interface TriggerConditie {
   conditie: ConditieType;
@@ -32,12 +32,14 @@ const ACTIE_OPTIES: { value: ActieType; label: string }[] = [
   { value: "dso_fixed",    label: "DSO — vaste prijs (€)" },
 ];
 
-const CONDITIE_TYPE_OPTIES: { value: ConditieType; label: string }[] = [
-  { value: "bezetting_onder",    label: "Bezetting onder markt" },
-  { value: "bezetting_boven",    label: "Bezetting boven markt" },
-  { value: "pricelabs_advies",   label: "PriceLabs advies afwijkend" },
-  { value: "geen_pickup",        label: "Geen nieuwe boekingen" },
-  { value: "prijs_niet_updated", label: "Prijs niet geüpdated" },
+const CONDITIE_TYPE_OPTIES: { value: ConditieType; label: string; tooltip: string }[] = [
+  { value: "bezetting_onder",    label: "Bezetting onder markt",       tooltip: "Eigen bezetting loopt achter op markt" },
+  { value: "bezetting_boven",    label: "Bezetting boven markt",       tooltip: "Eigen bezetting loopt voor op markt" },
+  { value: "pricelabs_advies",   label: "PriceLabs advies afwijkend",  tooltip: "PriceLabs adviseert significant andere prijs" },
+  { value: "geen_pickup",        label: "Geen nieuwe boekingen",       tooltip: "Geen nieuwe boekingen in N dagen" },
+  { value: "prijs_niet_updated", label: "Prijs niet geüpdated",        tooltip: "Basisprijs N dagen niet gepusht" },
+  { value: "blt_kort",           label: "BLT < drempel (last-minute)", tooltip: "Woning heeft korte boekingstijd — last-minute karakter" },
+  { value: "blt_lang",           label: "BLT > drempel (ver vooruit)", tooltip: "Woning wordt ver van tevoren geboekt" },
 ];
 
 const LEGE_CONDITIE: TriggerConditie = { conditie: "bezetting_onder", periode: 30, drempel_pct: 10, dagen: 3 };
@@ -357,6 +359,13 @@ export default function CockpitInstellingenPage() {
                                 <div>
                                   <input type="number" min="1" max="90" placeholder="Dagen" value={c.dagen ?? 3}
                                     onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], dagen: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
+                                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+                                </div>
+                              )}
+                              {(c.conditie === "blt_kort" || c.conditie === "blt_lang") && (
+                                <div>
+                                  <input type="number" min="1" max="365" placeholder="Dagen BLT" value={c.drempel_pct ?? (c.conditie === "blt_kort" ? 30 : 60)}
+                                    onChange={e => setNieuweTrigger(p => { const cs = [...p.condities]; cs[i] = { ...cs[i], drempel_pct: parseInt(e.target.value) || 0 }; return { ...p, condities: cs }; })}
                                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
                                 </div>
                               )}
