@@ -62,6 +62,14 @@ export async function getListings(): Promise<PLListing[]> {
   return data.listings ?? [];
 }
 
+export async function getListingNaamPL(listingId: string): Promise<string> {
+  const res = await fetch(`${BASE}/listings/${listingId}?pms=${PMS}`, { headers: headers() });
+  if (!res.ok) return listingId;
+  const data = await res.json();
+  const naam = data.listing?.name ?? data.name ?? null;
+  return naam ? naam.split("--")[0].trim() : listingId;
+}
+
 export async function updateListing(
   id: string,
   fields: { base?: number; min?: number; max?: number }

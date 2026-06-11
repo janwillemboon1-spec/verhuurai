@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getOverrides, upsertOverride, deleteOverride, pushPrices } from "@/lib/pricelabs";
+import { getOverrides, upsertOverride, deleteOverride, pushPrices, getListingNaamPL } from "@/lib/pricelabs";
 import { logPrijsWijziging } from "@/lib/prijs-log";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,7 +19,8 @@ async function getListingNaam(listingId: string): Promise<string> {
     .select("interne_naam")
     .eq("listing_id", listingId)
     .single();
-  return data?.interne_naam ?? listingId;
+  if (data?.interne_naam) return data.interne_naam;
+  return getListingNaamPL(listingId);
 }
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {

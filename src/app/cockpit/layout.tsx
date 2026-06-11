@@ -11,7 +11,7 @@ export default async function CockpitLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-[#2b3885] text-white px-6 py-3 flex items-center gap-6">
-        <span className="font-bold text-lg tracking-tight">Cockpit</span>
+        <a href="/cockpit" className="font-bold text-lg tracking-tight hover:text-blue-200 transition-colors">Cockpit</a>
         <a href="/cockpit/berichten" className="text-sm hover:text-blue-200 transition-colors">
           Berichten
         </a>

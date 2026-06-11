@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateListing, pushPrices } from "@/lib/pricelabs";
+import { updateListing, pushPrices, getListingNaamPL } from "@/lib/pricelabs";
 import { logPrijsWijziging } from "@/lib/prijs-log";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .select("interne_naam")
     .eq("listing_id", params.id)
     .single();
-  const listingNaam = setting?.interne_naam ?? body.listing_naam ?? params.id;
+  const listingNaam = setting?.interne_naam ?? await getListingNaamPL(params.id);
 
   // Log elke gewijzigd veld
   for (const [veld, nieuweWaarde] of Object.entries(fields)) {
