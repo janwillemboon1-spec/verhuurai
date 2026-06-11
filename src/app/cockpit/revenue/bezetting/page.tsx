@@ -367,32 +367,36 @@ export default function RevenuePage() {
   const [statussen, setStatussen] = useState<Map<string, StatusRecord>>(new Map());
   const [triggers, setTriggers] = useState<Trigger[]>(DEFAULT_TRIGGERS);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("in_afwachting");
+  const [vernieuwen, setVernieuwen] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/cockpit/revenue/listings").then(r => r.json()),
-      fetch("/api/cockpit/revenue/blt").then(r => r.json()).catch(() => ({})),
-    ]).then(([listingsData, bltData]: [Listing[], Record<string, { gemiddeld: number; mediaan: number }>]) => {
-      const merged = listingsData.map(l => ({
-        ...l,
-        blt_gemiddeld: bltData[l.id]?.gemiddeld,
-        blt_mediaan: bltData[l.id]?.mediaan,
-      }));
-      setListings(merged);
-    }).finally(() => setLoading(false));
-    fetch("/api/cockpit/aanbevelingen/status")
-      .then((r) => r.json())
-      .then((rows: { listing_id: string; trigger_type: string; status: string; bijgewerkt_op: string }[]) => {
-        const m = new Map(rows.map(r => [
-          `${r.listing_id}__${r.trigger_type}`,
-          { status: r.status, bijgewerkt_op: r.bijgewerkt_op ?? "" }
-        ]));
-        setStatussen(m);
-      });
-    fetch("/api/cockpit/aanbevelingen/triggers")
-      .then((r) => r.json())
-      .then((rows: Trigger[]) => { if (rows.length > 0) setTriggers(rows); });
-  }, []);
+  async function laadAlles(showLoader = false) {
+    if (showLoader) setVernieuwen(true);
+    await Promise.all([
+      Promise.all([
+        fetch("/api/cockpit/revenue/listings").then(r => r.json()),
+        fetch("/api/cockpit/revenue/blt").then(r => r.json()).catch(() => ({})),
+      ]).then(([listingsData, bltData]: [Listing[], Record<string, { gemiddeld: number; mediaan: number }>]) => {
+        setListings(listingsData.map(l => ({
+          ...l,
+          blt_gemiddeld: bltData[l.id]?.gemiddeld,
+          blt_mediaan: bltData[l.id]?.mediaan,
+        })));
+      }),
+      fetch("/api/cockpit/aanbevelingen/status").then(r => r.json())
+        .then((rows: { listing_id: string; trigger_type: string; status: string; bijgewerkt_op: string }[]) => {
+          setStatussen(new Map(rows.map(r => [
+            `${r.listing_id}__${r.trigger_type}`,
+            { status: r.status, bijgewerkt_op: r.bijgewerkt_op ?? "" }
+          ])));
+        }),
+      fetch("/api/cockpit/aanbevelingen/triggers").then(r => r.json())
+        .then((rows: Trigger[]) => { if (rows.length > 0) setTriggers(rows); }),
+    ]);
+    setLoading(false);
+    if (showLoader) setVernieuwen(false);
+  }
+
+  useEffect(() => { laadAlles(); }, []);
 
   async function handlePriceSave(id: string, field: string, val: number): Promise<void> {
     const listing = listings.find((l) => l.id === id);
@@ -546,6 +550,15 @@ export default function RevenuePage() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-gray-700">Aanbevelingen</h2>
+              <div className="flex items-center gap-3">
+              <button
+                onClick={() => laadAlles(true)}
+                disabled={vernieuwen}
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#2b3885] disabled:opacity-50 transition-colors"
+              >
+                <span className={vernieuwen ? "animate-spin inline-block" : ""}>↻</span>
+                {vernieuwen ? "Laden..." : "Vernieuwen"}
+              </button>
               <div className="flex gap-1 text-xs">
                 {(["in_afwachting", "uitgevoerd", "genegeerd"] as StatusFilter[]).map(s => (
                   <button key={s} onClick={() => setStatusFilter(s)}
@@ -554,6 +567,7 @@ export default function RevenuePage() {
                     {telPerStatus[s] > 0 && <span className="ml-1 opacity-70">({telPerStatus[s]})</span>}
                   </button>
                 ))}
+              </div>
               </div>
             </div>
             {/* Cooldown woningen */}
