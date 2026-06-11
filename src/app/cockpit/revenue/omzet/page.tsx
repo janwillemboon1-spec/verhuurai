@@ -606,7 +606,15 @@ export default function OmzetPage() {
                     let v = 0;
                     if (sortKey === "naam")      v = a.listing_naam.localeCompare(b.listing_naam);
                     else if (sortKey === "omzet")     v = a.omzet - b.omzet;
-                    else if (sortKey === "omzet_ly")  v = (a.omzet_ly ?? 0) - (b.omzet_ly ?? 0);
+                    else if (sortKey === "omzet_ly") {
+                      // Sorteer op yoy_pct (wat getoond wordt); null naar het einde
+                      const pa = a.yoy_pct;
+                      const pb = b.yoy_pct;
+                      if (pa == null && pb == null) v = 0;
+                      else if (pa == null) v = sortAsc ? 1 : -1;
+                      else if (pb == null) v = sortAsc ? -1 : 1;
+                      else v = pa - pb;
+                    }
                     else if (sortKey === "adr")       v = a.adr - b.adr;
                     else if (sortKey === "bezetting") v = a.bezetting - b.bezetting;
                     else if (sortKey === "nachten")   v = a.nachten - b.nachten;
