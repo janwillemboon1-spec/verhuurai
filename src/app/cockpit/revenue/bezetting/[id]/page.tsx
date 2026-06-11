@@ -38,12 +38,56 @@ const STATUS_STYLE: Record<string, string> = {
   "Booked (Check-Out)": "bg-blue-100 text-blue-600",
 };
 
+interface LogEntry {
+  id: string;
+  aangemaakt_op: string;
+  wijziging_type: "handmatig" | "automatisch";
+  veld: string;
+  oude_waarde: string | null;
+  nieuwe_waarde: string;
+  override_datum: string | null;
+  regel_naam: string | null;
+}
+
+const SNELKEUZE = [
+  { label: "Week", dagen: 7 },
+  { label: "Maand", dagen: 30 },
+  { label: "Jaar", dagen: 365 },
+];
+
+function datumOffset(dagen: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - dagen);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function RevenueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [meta, setMeta] = useState<ListingMeta | null>(null);
   const [calendar, setCalendar] = useState<CalendarDay[]>([]);
   const [overrides, setOverrides] = useState<Override[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"kalender" | "rapport">("kalender");
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const [logVanaf, setLogVanaf] = useState(datumOffset(30));
+  const [logTot, setLogTot] = useState(today);
+
+  function loadLog(v: string, t: string) {
+    setLogLoading(true);
+    fetch(`/api/cockpit/revenue/log/${id}?vanaf=${v}&tot=${t}`)
+      .then((r) => r.json())
+      .then(setLogEntries)
+      .finally(() => setLogLoading(false));
+  }
+
+  function applySnelkeuze(dagen: number) {
+    const v = datumOffset(dagen);
+    setLogVanaf(v);
+    setLogTot(today);
+    loadLog(v, today);
+  }
 
   // New override form
   const [form, setForm] = useState({
@@ -112,8 +156,95 @@ export default function RevenueDetailPage() {
         <h1 className="text-xl font-bold text-[#2b3885] truncate">{displayName}</h1>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {(["kalender", "rapport"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => { setTab(t); if (t === "rapport") loadLog(logVanaf, logTot); }}
+            className={`px-4 py-2 text-sm font-medium capitalize border-b-2 -mb-px transition-colors ${
+              tab === t
+                ? "border-[#2b3885] text-[#2b3885]"
+                : "border-transparent text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            {t === "kalender" ? "Kalender & overrides" : "Prijsrapport"}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="text-sm text-gray-400 animate-pulse">Kalender laden...</div>
+      ) : tab === "rapport" ? (
+        <div className="space-y-4">
+          {/* Periode filters */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap items-end gap-4">
+            <div className="flex gap-2">
+              {SNELKEUZE.map((s) => (
+                <button key={s.label} onClick={() => applySnelkeuze(s.dagen)}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-[#2b3885] hover:text-white transition-colors">
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Vanaf</label>
+                <input type="date" value={logVanaf} onChange={(e) => setLogVanaf(e.target.value)}
+                  className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Tot en met</label>
+                <input type="date" value={logTot} onChange={(e) => setLogTot(e.target.value)}
+                  className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#2b3885]" />
+              </div>
+              <button onClick={() => loadLog(logVanaf, logTot)}
+                className="mt-4 px-4 py-1.5 bg-[#2b3885] text-white text-sm rounded-lg hover:bg-[#232f6e] transition-colors">
+                Zoeken
+              </button>
+            </div>
+          </div>
+
+          {logLoading ? (
+            <div className="text-sm text-gray-400 animate-pulse">Rapport laden...</div>
+          ) : logEntries.length === 0 ? (
+            <div className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl p-8 text-center">
+              Geen prijswijzigingen gevonden in deze periode.
+            </div>
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-medium">
+                {logEntries.length} wijzigingen
+              </div>
+              <div className="divide-y divide-gray-100">
+                {logEntries.map((e) => (
+                  <div key={e.id} className="px-4 py-3 flex items-start gap-3">
+                    <span className={`mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold flex-shrink-0 ${
+                      e.wijziging_type === "automatisch" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                    }`}>
+                      {e.wijziging_type === "automatisch" ? "A" : "H"}
+                    </span>
+                    <div>
+                      <p className="text-xs text-gray-400">
+                        {new Date(e.aangemaakt_op).toLocaleString("nl-NL", {
+                          day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                        })}
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium capitalize">{e.veld}</span>
+                        {e.override_datum && <span className="text-gray-400"> · {e.override_datum}</span>}
+                        {e.oude_waarde && <span className="text-gray-400"> van <span className="line-through">{e.oude_waarde}</span> naar </span>}
+                        {!e.oude_waarde && <span className="text-gray-400"> → </span>}
+                        <span className="font-medium">{e.nieuwe_waarde}</span>
+                        {e.regel_naam && <span className="text-xs text-purple-500 ml-2">via: {e.regel_naam}</span>}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-8">
 

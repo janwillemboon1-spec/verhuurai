@@ -119,10 +119,12 @@ export default function RevenuePage() {
 
   async function handlePriceSave(id: string, field: string, val: number) {
     setSaving(id);
+    const listing = listings.find((l) => l.id === id);
+    const oudeWaarde = listing ? (listing as unknown as Record<string, unknown>)[field] : null;
     await fetch(`/api/cockpit/revenue/listings/${id}/update`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: val }),
+      body: JSON.stringify({ [field]: val, oude_waarden: { [field]: oudeWaarde } }),
     });
     setListings((prev) =>
       prev.map((l) => (l.id === id ? { ...l, [field]: val } : l))
@@ -145,9 +147,14 @@ export default function RevenuePage() {
         </Link>
         <span className="text-gray-200">/</span>
         <span className="text-sm text-gray-600 font-medium">Bezetting</span>
-        <Link href="/cockpit/revenue/regels" className="ml-auto text-xs text-[#2b3885] hover:underline">
-          Automatiseringsregels →
-        </Link>
+        <div className="ml-auto flex gap-4">
+          <Link href="/cockpit/revenue/logboek" className="text-xs text-[#2b3885] hover:underline">
+            Logboek →
+          </Link>
+          <Link href="/cockpit/revenue/regels" className="text-xs text-[#2b3885] hover:underline">
+            Automatiseringsregels →
+          </Link>
+        </div>
       </div>
       <div className="flex items-center justify-between mb-6">
         <div>
