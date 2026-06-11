@@ -1,10 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getReservationData, getListings, getCalendar } from "@/lib/pricelabs";
+import { getReservationData, getListings } from "@/lib/pricelabs";
 import { aggregeer, groepeerPerListing, groepeerPerMaand, dagenInPeriode, berekenPrognose } from "@/lib/omzet-aggregatie";
 import { NextRequest, NextResponse } from "next/server";
 
 const COCKPIT_EMAIL = "info@bnbassistant.com";
+
+function addYears(dateStr: string, years: number): string {
+  return dateStr.replace(/^(\d{4})/, (y) => String(parseInt(y) + years));
+}
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -17,21 +21,31 @@ export async function GET(req: NextRequest) {
   const start = url.searchParams.get("start") ?? new Date().toISOString().slice(0, 8) + "01";
   const end = url.searchParams.get("end") ?? new Date().toISOString().slice(0, 10);
 
-  // STLY: zelfde verstreken periode vorig jaar (afgekapt op equivalent van vandaag)
   const today = new Date().toISOString().slice(0, 10);
-  const stlyEnd = end > today ? today : end;
-  const stlyEndLY = stlyEnd.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
-  const lyStart = start.replace(/^(\d{4})/, (y) => String(parseInt(y) - 1));
   const actualEnd = end > today ? today : end;
 
-  const [reservations, lyReservations, listings, admin] = await Promise.all([
+  // STLY: zelfde periode een jaar eerder
+  const stlyStart = addYears(start, -1);
+  const stlyEnd = addYears(actualEnd, -1);
+
+  // Altijd laatste 12 maanden voor de trend (onafhankelijk van periode-selector)
+  const trendEnd = today;
+  const trendStart = new Date();
+  trendStart.setMonth(trendStart.getMonth() - 11);
+  trendStart.setDate(1);
+  const trendStartStr = trendStart.toISOString().slice(0, 10);
+  const trendLyStart = addYears(trendStartStr, -1);
+  const trendLyEnd = addYears(trendEnd, -1);
+
+  const [reservations, stlyReservations, trendData, trendLyData, listings, admin] = await Promise.all([
     getReservationData(start, actualEnd),
-    getReservationData(lyStart, stlyEndLY),
+    getReservationData(stlyStart, stlyEnd),
+    getReservationData(trendStartStr, trendEnd),
+    getReservationData(trendLyStart, trendLyEnd),
     getListings(),
     Promise.resolve(createAdminClient()),
   ]);
 
-  // Get interne namen
   const { data: settings } = await admin
     .from("cockpit_listing_settings")
     .select("listing_id, interne_naam");
@@ -39,7 +53,6 @@ export async function GET(req: NextRequest) {
     String(s.listing_id), s.interne_naam ?? "",
   ]));
 
-  // Get CSV overrides
   const { data: csvRows } = await admin
     .from("cockpit_omzet_csv")
     .select("*")
@@ -50,54 +63,63 @@ export async function GET(req: NextRequest) {
     csvData[row.methode][row.maand] = parseFloat(row.omzet);
   }
 
-  const dagen = dagenInPeriode(start, end);
+  const dagen = dagenInPeriode(start, actualEnd);
+  const stlyDagen = dagenInPeriode(stlyStart, stlyEnd);
   const perListing = groepeerPerListing(reservations);
-  const perListingLY = groepeerPerListing(lyReservations);
+  const perListingSTLY = groepeerPerListing(stlyReservations);
 
-  // Portfolio totals
+  // Portfolio KPIs
   const portfolioMetrics = aggregeer(reservations, dagen * listings.length);
-  const portfolioLY = aggregeer(lyReservations, dagenInPeriode(lyStart, lyEnd) * listings.length);
+  const portfolioSTLY = aggregeer(stlyReservations, stlyDagen * listings.length);
 
   // Per-listing breakdown
   const listingBreakdown = listings.map((l) => {
     const rows = perListing[l.id] ?? [];
-    const lyRows = perListingLY[l.id] ?? [];
+    const stlyRows = perListingSTLY[l.id] ?? [];
     const metrics = aggregeer(rows, dagen);
-    const lyMetrics = aggregeer(lyRows, dagenInPeriode(lyStart, lyEnd));
+    const stlyMetrics = aggregeer(stlyRows, stlyDagen);
     return {
       listing_id: l.id,
       listing_naam: namenMap.get(l.id) || l.name.split("--")[0].trim(),
       ...metrics,
-      omzet_ly: lyMetrics.omzet,
-      yoy_pct: lyMetrics.omzet > 0
-        ? ((metrics.omzet - lyMetrics.omzet) / lyMetrics.omzet) * 100
+      omzet_ly: stlyMetrics.omzet,
+      yoy_pct: stlyMetrics.omzet > 0
+        ? ((metrics.omzet - stlyMetrics.omzet) / stlyMetrics.omzet) * 100
         : null,
     };
   }).sort((a, b) => b.omzet - a.omzet);
 
-  // Monthly trend (current year vs LY)
-  const maandelijksTrend = groepeerPerMaand(reservations);
-  const maandelijksTrendLY = groepeerPerMaand(lyReservations);
-  const maandenSet = new Set([
-    ...Object.keys(maandelijksTrend),
-    ...Object.keys(maandelijksTrendLY),
-  ]);
-  const trend = Array.from(maandenSet).sort().map((m) => ({
-    maand: m,
-    omzet: aggregeer(maandelijksTrend[m] ?? [], 30).omzet,
-    omzet_ly: aggregeer(maandelijksTrendLY[m] ?? [], 30).omzet,
-  }));
+  // Maandelijkse trend: laatste 12 maanden met STLY-uitlijning
+  const maandTrend = groepeerPerMaand(trendData);
+  const maandTrendLY = groepeerPerMaand(trendLyData);
 
-  // Prognose (simplified portfolio level - no future calendar for all listings)
-  const prognose = berekenPrognose(reservations, lyReservations, [], csvData, start, end);
+  // Genereer de 12 maanden
+  const trendMaanden: string[] = [];
+  const d = new Date(trendStart);
+  d.setDate(1);
+  while (d.toISOString().slice(0, 10) <= trendEnd) {
+    trendMaanden.push(d.toISOString().slice(0, 7)); // YYYY-MM
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  const trend = trendMaanden.map((m) => {
+    const lyMaand = addYears(m + "-01", -1).slice(0, 7); // zelfde maand vorig jaar
+    return {
+      maand: m,
+      omzet: aggregeer(maandTrend[m] ?? [], 30).omzet,
+      omzet_ly: aggregeer(maandTrendLY[lyMaand] ?? [], 30).omzet,
+    };
+  });
+
+  const prognose = berekenPrognose(reservations, stlyReservations, [], csvData, start, actualEnd);
 
   return NextResponse.json({
-    periode: { start, end, lyStart, lyEnd },
+    periode: { start, end: actualEnd, stlyStart, stlyEnd },
     portfolio: {
       ...portfolioMetrics,
-      omzet_ly: portfolioLY.omzet,
-      yoy_pct: portfolioLY.omzet > 0
-        ? ((portfolioMetrics.omzet - portfolioLY.omzet) / portfolioLY.omzet) * 100
+      omzet_ly: portfolioSTLY.omzet,
+      yoy_pct: portfolioSTLY.omzet > 0
+        ? ((portfolioMetrics.omzet - portfolioSTLY.omzet) / portfolioSTLY.omzet) * 100
         : null,
     },
     listings: listingBreakdown,
