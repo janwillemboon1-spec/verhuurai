@@ -12,7 +12,8 @@ export async function getReserveringenUitCache(
     .from("cockpit_reserveringen_cache")
     .select("*")
     .gte("check_in", startDate)
-    .lte("check_in", endDate);
+    .lte("check_in", endDate)
+    .limit(50000); // Supabase default limiet is 1000 — expliciet overschrijven
 
   if (listingId) query = query.eq("listing_id", listingId);
 
