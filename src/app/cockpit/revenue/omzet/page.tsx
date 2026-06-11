@@ -298,13 +298,18 @@ export default function OmzetPage() {
   const [syncBezig, setSyncBezig] = useState(false);
   const [syncVoortgang, setSyncVoortgang] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
-  const [cacheRijen, setCacheRijen] = useState<number | null>(null);
+  const [cacheStats, setCacheStats] = useState<{ rijen: number; listings: number; omzet: number } | null>(null);
   const [syncMislukt, setSyncMislukt] = useState<string[] | null>(null);
 
   useEffect(() => {
     fetch("/api/cockpit/revenue/omzet/sync")
       .then(r => r.json())
-      .then(d => { setLastSync(d.sync_op ?? null); setCacheRijen(d.cache_rijen ?? null); });
+      .then(d => {
+        setLastSync(d.sync_op ?? null);
+        if (d.cache_rijen != null) {
+          setCacheStats({ rijen: d.cache_rijen, listings: d.listings_in_cache ?? 0, omzet: d.totaal_omzet_cache ?? 0 });
+        }
+      });
   }, []);
 
   async function syncData() {
@@ -335,7 +340,7 @@ export default function OmzetPage() {
             setSyncVoortgang(`✓ ${msg.listing} — ${msg.reserveringen} reserveringen`);
           } else if (msg.type === "done") {
             setLastSync(msg.sync_op);
-            setCacheRijen(null); // wordt ververst bij volgende GET
+            // cache stats worden ververst bij page reload
             setSyncVoortgang(null);
             setSyncBezig(false);
             if (msg.mislukt?.length) setSyncMislukt(msg.mislukt);
@@ -389,7 +394,11 @@ export default function OmzetPage() {
             {lastSync && (
               <p className="text-xs text-gray-400 mt-1">
                 Laatste sync: {new Date(lastSync).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                {cacheRijen !== null && <span className="ml-1 text-gray-300">· {cacheRijen} rijen</span>}
+              </p>
+            )}
+            {cacheStats && (
+              <p className={`text-xs mt-0.5 ${cacheStats.listings < 27 ? "text-amber-500" : "text-gray-400"}`}>
+                {cacheStats.listings}/27 woningen · {cacheStats.rijen} rijen · €{cacheStats.omzet.toLocaleString("nl-NL")} totaal in cache
               </p>
             )}
             {!lastSync && !syncBezig && (
