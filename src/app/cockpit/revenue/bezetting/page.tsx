@@ -257,14 +257,18 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
       return { actie: `${t.aanpassing_pct < 0 ? "Verlaag" : "Verhoog"} basisprijs van €${base} naar €${n} (${t.aanpassing_pct}%)`, veld: "base", nieuw: n };
     };
 
+    const own15 = parseOcc(l.occupancy_next_15), mkt15 = parseOcc(l.market_occupancy_next_15);
+    const own30 = parseOcc(l.occupancy_next_30), mkt30 = parseOcc(l.market_occupancy_next_30);
+    const own60 = parseOcc(l.occupancy_next_60), mkt60 = parseOcc(l.market_occupancy_next_60);
+
     for (const t of byConditie("bezetting_15d_onder")) {
       if (d15 <= -t.drempel_pct && base) {
         const { actie, veld, nieuw } = maakActieTekst(t, base);
         aanbevelingen.push({
           listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "hoog", actie_type: t.actie_type ?? "basisprijs",
           dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
-          reden: `Bezetting 15d is ${Math.abs(d15)}% onder markt`,
-          uitleg: `De komende 15 dagen staat de bezetting op ${parseOcc(l.occupancy_next_15)}% terwijl de markt op ${parseOcc(l.market_occupancy_next_15)}% zit. Een verschil van ${Math.abs(d15)}% wijst op te hoge prijsstelling.`,
+          reden: `15d bezetting: ${own15}% eigen — ${mkt15}% markt (${d15}%)`,
+          uitleg: `De komende 15 dagen staat de bezetting op ${own15}% terwijl de markt op ${mkt15}% zit. Een achterstand van ${Math.abs(d15)}% wijst op te hoge prijsstelling of gebrek aan zichtbaarheid.`,
           actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
         });
       }
@@ -276,8 +280,8 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
         aanbevelingen.push({
           listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel", actie_type: t.actie_type ?? "basisprijs",
           dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
-          reden: `Bezetting 30d is ${Math.abs(d30)}% onder markt`,
-          uitleg: `De komende 30 dagen zit de bezetting op ${parseOcc(l.occupancy_next_30)}% versus ${parseOcc(l.market_occupancy_next_30)}% in de markt.`,
+          reden: `30d bezetting: ${own30}% eigen — ${mkt30}% markt (${d30}%)`,
+          uitleg: `De komende 30 dagen zit de bezetting op ${own30}% versus ${mkt30}% in de markt. Een verlaging van ${Math.abs(t.aanpassing_pct)}% geeft een competitiever profiel.`,
           actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
         });
       }
@@ -289,8 +293,8 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
         aanbevelingen.push({
           listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel", actie_type: t.actie_type ?? "basisprijs",
           dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
-          reden: `Bezetting loopt ${d15}% voor op markt`,
-          uitleg: `Met ${parseOcc(l.occupancy_next_15)}% tegenover ${parseOcc(l.market_occupancy_next_15)}% marktgemiddelde loopt deze woning sterk voor.`,
+          reden: `15d bezetting: ${own15}% eigen — ${mkt15}% markt (+${d15}%)`,
+          uitleg: `Met ${own15}% (15d) en ${own30}% (30d) bezetting tegenover ${mkt15}% en ${mkt30}% marktgemiddelde loopt deze woning duidelijk voor. Er is ruimte de prijs te verhogen zonder bezetting te verliezen.`,
           actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
         });
       }
@@ -299,11 +303,12 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
     for (const t of byConditie("pricelabs_advies")) {
       if (rec && base && rec > base * (1 + t.drempel_pct / 100) && !aanbevelingen.some(a => a.listing_id === l.id && a.trigger_type === t.trigger_type)) {
         const { actie, veld, nieuw } = maakActieTekst(t, base, rec);
+        const pctAfwijking = Math.round(((rec - base) / base) * 100);
         aanbevelingen.push({
           listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel", actie_type: t.actie_type ?? "basisprijs",
           dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
-          reden: `PriceLabs adviseert €${rec} (huidig €${base})`,
-          uitleg: `PriceLabs berekent een aanbevolen basisprijs van €${rec}, wat ${Math.round(((rec - base) / base) * 100)}% hoger is dan de huidige €${base}.`,
+          reden: `PriceLabs advies: €${rec} — huidig €${base} (+${pctAfwijking}%)`,
+          uitleg: `PriceLabs berekent op basis van marktdata een aanbevolen basisprijs van €${rec}, wat ${pctAfwijking}% hoger is dan de huidige €${base}. Dit wijst op toegenomen vraag in dit marktsegment.`,
           actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
         });
       }
@@ -315,8 +320,8 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
         aanbevelingen.push({
           listing_id: l.id, trigger_type: t.trigger_type, naam, prioriteit: "middel", actie_type: t.actie_type ?? "basisprijs",
           dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
-          reden: `0 nieuwe boekingen (3d) + bezetting ${Math.abs(d30)}% achter`,
-          uitleg: `Geen nieuwe boekingen in 3 dagen en bezetting ligt ${Math.abs(d30)}% onder de markt.`,
+          reden: `0 nieuwe boekingen (3d) — 30d: ${own30}% eigen vs ${mkt30}% markt (${d30}%)`,
+          uitleg: `Geen nieuwe boekingen in 3 dagen en de 30-daagse bezetting ligt ${Math.abs(d30)}% onder de markt (${own30}% vs ${mkt30}%). Een verlaging van ${Math.abs(t.aanpassing_pct)}% prikkelt de zoekalgoritmens.`,
           actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
         });
       }
@@ -333,13 +338,15 @@ function berekenAanbevelingen(listings: Listing[], triggers: Trigger[]): Aanbeve
 
       const { actie, veld, nieuw } = maakActieTekst(t, base, l.recommended_base_price);
       const conditiesSamenvatting = t.condities!.map(conditieTekst).join(" én ");
+      // Concrete bezettingscijfers toevoegen aan de uitleg
+      const bezettingContext = `15d: ${own15}% eigen / ${mkt15}% markt — 30d: ${own30}% eigen / ${mkt30}% markt — 60d: ${own60}% eigen / ${mkt60}% markt`;
       aanbevelingen.push({
         listing_id: l.id, trigger_type: t.trigger_type, naam,
         prioriteit: t.drempel_pct >= 15 ? "hoog" : "middel",
         actie_type: t.actie_type ?? "basisprijs",
         dso_periode: t.dso_periode, dso_price_type: t.dso_price_type,
         reden: t.label,
-        uitleg: `Alle condities zijn voldaan: ${conditiesSamenvatting}.`,
+        uitleg: `Alle condities voldaan: ${conditiesSamenvatting}. — ${bezettingContext}.`,
         actie, veld, huidigeWaarde: base, nieuweWaarde: nieuw,
       });
     }
