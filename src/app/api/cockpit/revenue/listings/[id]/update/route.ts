@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const ok = await updateListing(params.id, fields);
   if (!ok) return NextResponse.json({ error: "Bijwerken mislukt" }, { status: 500 });
-  await pushPrices(params.id);
+  if (!body.skip_push) await pushPrices(params.id);
 
   // Naam ophalen voor het log
   const admin = createAdminClient();

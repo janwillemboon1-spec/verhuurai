@@ -109,6 +109,8 @@ export default function RevenuePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<"naam" | "occ15" | "occ30" | "occ60">("naam");
+  const [pendingPush, setPendingPush] = useState<Set<string>>(new Set());
+  const [pushing, setPushing] = useState(false);
 
   useEffect(() => {
     fetch("/api/cockpit/revenue/listings")
@@ -124,12 +126,25 @@ export default function RevenuePage() {
     await fetch(`/api/cockpit/revenue/listings/${id}/update`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: val, oude_waarden: { [field]: oudeWaarde } }),
+      body: JSON.stringify({ [field]: val, oude_waarden: { [field]: oudeWaarde }, skip_push: true }),
     });
     setListings((prev) =>
       prev.map((l) => (l.id === id ? { ...l, [field]: val } : l))
     );
+    setPendingPush((prev) => new Set(Array.from(prev).concat(id)));
     setSaving(null);
+  }
+
+  async function handlePush() {
+    setPushing(true);
+    const ids = Array.from(pendingPush);
+    await Promise.all(
+      ids.map((id) =>
+        fetch(`/api/cockpit/revenue/listings/${id}/push`, { method: "POST" })
+      )
+    );
+    setPendingPush(new Set());
+    setPushing(false);
   }
 
   const sorted = [...listings].sort((a, b) => {
@@ -147,7 +162,25 @@ export default function RevenuePage() {
         </Link>
         <span className="text-gray-200">/</span>
         <span className="text-sm text-gray-600 font-medium">Bezetting</span>
-        <div className="ml-auto flex gap-4">
+        <div className="ml-auto flex items-center gap-4">
+          {pendingPush.size > 0 && (
+            <button
+              onClick={handlePush}
+              disabled={pushing}
+              className="flex items-center gap-2 px-4 py-1.5 bg-[#2b3885] text-white text-sm font-medium rounded-lg hover:bg-[#232f6e] disabled:opacity-60 transition-colors animate-pulse-once"
+            >
+              {pushing ? (
+                <>
+                  <span className="animate-spin inline-block">↻</span>
+                  Versturen...
+                </>
+              ) : (
+                <>
+                  ↑ Prijzen versturen ({pendingPush.size})
+                </>
+              )}
+            </button>
+          )}
           <Link href="/cockpit/revenue/logboek" className="text-xs text-[#2b3885] hover:underline">
             Logboek →
           </Link>
