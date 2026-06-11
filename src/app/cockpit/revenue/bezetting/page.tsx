@@ -663,6 +663,7 @@ export default function RevenuePage() {
                 <th className="text-center px-3 py-3 font-medium">Max</th>
                 <th className="text-center px-3 py-3 font-medium">Aanbevolen</th>
                 <th className="text-center px-3 py-3 font-medium">Pickup 3d</th>
+                <th className="text-center px-3 py-3 font-medium">BLT</th>
                 <th className="px-3 py-3" />
               </tr>
             </thead>
@@ -712,6 +713,15 @@ export default function RevenuePage() {
                     <span className={`text-sm font-medium ${l.booking_pickup_unique_past_3 > 0 ? "text-green-600" : "text-gray-400"}`}>
                       {l.booking_pickup_unique_past_3}
                     </span>
+                  </td>
+                  <td className="px-3 py-3 text-center">
+                    {l.blt_mediaan != null ? (
+                      <span className="text-sm text-gray-700" title={`Gemiddeld: ${l.blt_gemiddeld}d — Mediaan: ${l.blt_mediaan}d`}>
+                        {l.blt_mediaan}d
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 text-sm">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-3 text-center">
                     <Link
