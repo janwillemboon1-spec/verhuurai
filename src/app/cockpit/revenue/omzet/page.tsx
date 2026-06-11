@@ -80,10 +80,62 @@ function YoyBadge({ pct }: { pct: number | null }) {
   );
 }
 
+const MAAND_MAP: Record<string, string> = {
+  Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",
+  Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12",
+};
+
+function parseCsv(text: string, filterJaar?: string): { rows: { maand: string; omzet: number }[]; jaren: string[]; format: string } {
+  const lines = text.trim().split("\n");
+  const header = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+
+  // Detect PriceLabs format: has Month, Year, Revenue columns
+  const isPriceLabs = header.includes("Month") && header.includes("Year") && header.includes("Revenue");
+
+  if (isPriceLabs) {
+    const idxMonth = header.indexOf("Month");
+    const idxYear = header.indexOf("Year");
+    const idxRevenue = header.indexOf("Revenue");
+
+    const aggr: Record<string, number> = {};
+    const jarenSet = new Set<string>();
+
+    for (const line of lines.slice(1)) {
+      const cols = line.split(",").map((c) => c.trim().replace(/"/g, ""));
+      const month = MAAND_MAP[cols[idxMonth]] ?? null;
+      const jaar = cols[idxYear];
+      const rev = parseFloat(cols[idxRevenue] ?? "0");
+      if (!month || !jaar || isNaN(rev) || rev <= 0) continue;
+      jarenSet.add(jaar);
+      const key = `${jaar}-${month}`;
+      aggr[key] = (aggr[key] ?? 0) + rev;
+    }
+
+    const jaren = Array.from(jarenSet).sort();
+    const rows = Object.entries(aggr)
+      .filter(([k]) => !filterJaar || k.startsWith(filterJaar))
+      .map(([maand, omzet]) => ({ maand, omzet: Math.round(omzet * 100) / 100 }))
+      .sort((a, b) => a.maand.localeCompare(b.maand));
+
+    return { rows, jaren, format: "pricelabs" };
+  }
+
+  // Simple maand,omzet format
+  const rows = lines.slice(1).map((line) => {
+    const [maand, omzet] = line.split(",");
+    return { maand: maand?.trim() ?? "", omzet: parseFloat(omzet?.trim() ?? "0") };
+  }).filter((r) => r.maand && !isNaN(r.omzet) && r.omzet > 0);
+
+  return { rows, jaren: [], format: "simple" };
+}
+
 function CsvUpload({ methode, listing_id, label, beschrijving }: { methode: number; listing_id: string; label: string; beschrijving: string }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [huidig, setHuidig] = useState<{ maand: string; omzet: number }[]>([]);
+  const [beschikbareJaren, setBeschikbareJaren] = useState<string[]>([]);
+  const [gekozenJaar, setGekozenJaar] = useState<string>("");
+  const [parsedRows, setParsedRows] = useState<{ maand: string; omzet: number }[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -97,26 +149,38 @@ function CsvUpload({ methode, listing_id, label, beschrijving }: { methode: numb
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = async (ev) => {
+    reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const lines = text.trim().split("\n").slice(1); // skip header
-      const rows = lines.map((line) => {
-        const [maand, omzet] = line.split(",");
-        return { maand: maand.trim(), omzet: parseFloat(omzet?.trim() ?? "0") };
-      }).filter((r) => r.maand && !isNaN(r.omzet));
-
-      setStatus("Uploaden...");
-      const res = await fetch("/api/cockpit/revenue/omzet/csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ methode, listing_id, rows }),
-      });
-      const d = await res.json();
-      setStatus(d.ok ? `✓ ${d.rows} rijen opgeslagen` : `Fout: ${d.error}`);
-      setHuidig(rows);
+      const { rows, jaren, format } = parseCsv(text);
+      if (format === "pricelabs" && jaren.length > 0) {
+        setBeschikbareJaren(jaren);
+        setGekozenJaar(jaren[jaren.length - 2] ?? jaren[jaren.length - 1]); // default vorig jaar
+        setParsedRows(rows);
+      } else {
+        setBeschikbareJaren([]);
+        setParsedRows(rows);
+      }
     };
     reader.readAsText(file);
   }
+
+  async function uploadRows(rows: { maand: string; omzet: number }[]) {
+    setStatus("Uploaden...");
+    const res = await fetch("/api/cockpit/revenue/omzet/csv", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ methode, listing_id, rows }),
+    });
+    const d = await res.json();
+    setStatus(d.ok ? `✓ ${d.rows} maanden opgeslagen` : `Fout: ${d.error}`);
+    setHuidig(rows);
+  }
+
+  const previewRows = beschikbareJaren.length > 0
+    ? parsedRows.filter((r) => r.maand.startsWith(gekozenJaar))
+    : parsedRows;
+
+  const jaarTotaal = previewRows.reduce((s, r) => s + r.omzet, 0);
 
   return (
     <div className="border border-gray-100 rounded-lg overflow-hidden">
@@ -134,14 +198,46 @@ function CsvUpload({ methode, listing_id, label, beschrijving }: { methode: numb
       {open && (
         <div className="px-4 py-4 space-y-3 bg-white">
           <p className="text-xs text-gray-500">
-            CSV-formaat: <code className="bg-gray-100 px-1 rounded">maand,omzet</code> — bijv. <code className="bg-gray-100 px-1 rounded">2026-01,4500</code>
+            Ondersteund: PriceLabs Portfolio Analytics export <strong>of</strong> eenvoudig formaat{" "}
+            <code className="bg-gray-100 px-1 rounded">maand,omzet</code>
           </p>
           <input type="file" accept=".csv" onChange={handleFile}
             className="text-sm text-gray-600 file:mr-3 file:px-3 file:py-1 file:rounded file:border-0 file:bg-[#eef7fe] file:text-[#2b3885] file:text-sm cursor-pointer" />
+
+          {beschikbareJaren.length > 0 && (
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-gray-500">Jaar als basis:</label>
+              <select value={gekozenJaar} onChange={(e) => setGekozenJaar(e.target.value)}
+                className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-[#2b3885]">
+                {beschikbareJaren.map((j) => (
+                  <option key={j} value={j}>{j}</option>
+                ))}
+              </select>
+              {jaarTotaal > 0 && (
+                <span className="text-xs text-gray-400">Totaal: {fmt(jaarTotaal)}</span>
+              )}
+            </div>
+          )}
+
+          {previewRows.length > 0 && (
+            <div className="text-xs text-gray-400 max-h-24 overflow-y-auto">
+              {previewRows.map((r) => `${r.maand}: ${fmt(r.omzet)}`).join(" · ")}
+            </div>
+          )}
+
+          {previewRows.length > 0 && (
+            <button
+              onClick={() => uploadRows(previewRows)}
+              className="px-3 py-1.5 bg-[#2b3885] text-white text-sm rounded hover:bg-[#232f6e] transition-colors"
+            >
+              Opslaan als prognose
+            </button>
+          )}
+
           {status && <p className="text-xs text-green-600">{status}</p>}
-          {huidig.length > 0 && (
+          {huidig.length > 0 && parsedRows.length === 0 && (
             <div className="text-xs text-gray-400">
-              Huidige data: {huidig.map((r) => `${r.maand}: ${fmt(r.omzet)}`).join(" · ")}
+              Huidige data: {huidig.slice(0, 6).map((r) => `${r.maand}: ${fmt(r.omzet)}`).join(" · ")}{huidig.length > 6 ? " ..." : ""}
             </div>
           )}
         </div>
