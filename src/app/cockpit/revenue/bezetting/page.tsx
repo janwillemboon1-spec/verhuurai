@@ -680,8 +680,8 @@ export default function RevenuePage() {
                           actie_type: a.actie_type,
                           veld: a.veld,
                           nieuwe_waarde: a.nieuweWaarde,
-                          dso_periode: a.dso_periode ?? 15,
-                          aanpassing_pct: a.nieuweWaarde,
+                          dso_periode: a.dso_periode,        // exact uit de trigger — geen fallback
+                          aanpassing_pct: a.nieuweWaarde,    // voor DSO = aanpassing%, niet nieuwe basisprijs
                           trigger_type: a.trigger_type,
                         }),
                       });
