@@ -570,16 +570,11 @@ export default function RevenuePage() {
               </div>
               </div>
             </div>
-            {/* Cooldown woningen */}
-            {cooldownLijst.length > 0 && (
-              <div className="mb-3 space-y-1">
-                {cooldownLijst.map(c => (
-                  <div key={c.lid} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg px-4 py-2 text-xs text-gray-400">
-                    <span><span className="font-medium text-gray-600">{c.naam}</span> — {c.status === "uitgevoerd" ? "Uitgevoerd" : "Genegeerd"} op {c.tijdstip.toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                    <span className="text-gray-300">⏱ Nieuwe aanbeveling over {c.resterend}u</span>
-                  </div>
-                ))}
-              </div>
+            {/* Subtiele cooldown info — alleen het aantal, geen details */}
+            {statusFilter === "in_afwachting" && cooldownLijst.length > 0 && (
+              <p className="text-xs text-gray-400 mb-3">
+                ⏱ {cooldownLijst.length} {cooldownLijst.length === 1 ? "woning heeft" : "woningen hebben"} een actie ondergaan — nieuwe aanbeveling verschijnt na 72u.
+              </p>
             )}
 
             {gefilterd.length === 0 ? (
