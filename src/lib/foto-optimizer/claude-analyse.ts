@@ -68,14 +68,16 @@ Criteria meanings (true = already good, false = needs improvement):
 - rommel: room is clean and clutter-free
 - belichting: lighting is bright, even, and welcoming
 - rimpels: no visible wrinkles in bedding/curtains/fabric (set true if not applicable)
-- enscenering: room has good staging/styling with tasteful accessories
+- enscenering: room has at least some furniture and basic accessories (set true if room has furniture — only false if room is completely empty or nearly bare)
 - opschaling: image is sharp and high-resolution (not blurry or low-res)
 - lucht: sky is blue and clear (set true if not an outdoor/exterior photo)
 
 Rules:
 - Set "overgeslagen": true ONLY if this cannot be identified as an interior/exterior room photo (e.g. a document, portrait, abstract close-up, or completely unusable photo). Set overslaanReden to a brief Dutch explanation.
-- For editPrompt: write a detailed English instruction for an AI image editor. Start with "Professional Airbnb listing photo of a [room type]:". Address ONLY the issues where criteria are false. Be specific about what to fix and what staging items to add. Always end with: "CRITICAL: Preserve the exact color palette, temperature, and mood of the original photo — do NOT change wall colors, furniture colors, or the warm/cool tone of the lighting. Only adjust brightness/exposure if needed. Preserve all existing furniture, architecture, and room layout. Photorealistic result."
-- If ALL criteria are already true and room already looks professional, write editPrompt as: "Enhance this professional [room type] photo with minimal adjustments only: slightly increase brightness if needed. Do NOT change colors, temperature, or any stylistic elements. Keep everything exactly as is. Photorealistic result."`,
+- For editPrompt: write a detailed English instruction for an AI image editor. Start with "Professional Airbnb listing photo of a [room type]:". Address ONLY the issues where criteria are false. Always end with the PRESERVATION BLOCK (see below).
+- STAGING RULES (only if enscenering=false): ONLY add very small decorative items: a book or magazine on a table, a small vase with flowers, a small plant. NEVER add televisions, large lamps, ceiling lights, large furniture, electronics, or any object larger than 30cm. If the room already has furniture and some accessories, set enscenering=true.
+- PRESERVATION BLOCK — always append this verbatim at the end of editPrompt: "ABSOLUTE RULES: (1) Do NOT change wall colors — if walls are warm grey, keep them warm grey; if white, keep white. (2) Do NOT change the color temperature — keep warm tones warm and cool tones cool. (3) Do NOT add televisions, large appliances, ceiling fixtures, or large furniture. (4) Do NOT remove or relocate existing furniture. (5) Only adjust brightness/exposure minimally. (6) The final photo must look like the same room photographed by a professional — not a CGI render. Photorealistic result."
+- If ALL criteria are already true, write editPrompt as: "Improve the technical quality of this [room type] photo only: slightly increase brightness if the room appears dark, improve sharpness slightly. ABSOLUTE RULES: Do NOT change any colors, temperature, furniture, or room layout. No additions, no removals. The result must look identical to the original but slightly brighter and sharper. Photorealistic result."`,
           },
         ],
       },
