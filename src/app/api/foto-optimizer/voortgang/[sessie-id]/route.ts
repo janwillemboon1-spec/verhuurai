@@ -23,15 +23,26 @@ export async function GET(
         .select("status")
         .eq("sessie_id", sessieId);
 
-      return {
-        sessieId,
-        totaal: sessie.aantal_fotos || 0,
-        klaar: bewerkingen?.filter(b => b.status === "klaar").length || 0,
-        overgeslagen: bewerkingen?.filter(b => b.status === "overgeslagen").length || 0,
-        fout: bewerkingen?.filter(b => b.status === "fout").length || 0,
-        huidigeFoto: null,
-        status: sessie.status as FotoVoortgang["status"],
-      };
+      const klaar = bewerkingen?.filter(b => b.status === "klaar").length || 0;
+      const overgeslagen = bewerkingen?.filter(b => b.status === "overgeslagen").length || 0;
+      const fout = bewerkingen?.filter(b => b.status === "fout").length || 0;
+      const totaal = sessie.aantal_fotos || 0;
+
+      // Als alle foto's verwerkt zijn maar sessie nog niet op klaar staat:
+      // fix dit in de DB en stuur klaar terug zodat de client kan doorverwijzen
+      const alleKlaar = totaal > 0 && (klaar + overgeslagen + fout) >= totaal;
+      let status = sessie.status as FotoVoortgang["status"];
+
+      if (alleKlaar && status === "verwerking") {
+        status = "klaar";
+        // Fix de sessie-status in de DB
+        await admin
+          .from("foto_sessies")
+          .update({ status: "klaar", klaar_op: new Date().toISOString() })
+          .eq("id", sessieId);
+      }
+
+      return { sessieId, totaal, klaar, overgeslagen, fout, huidigeFoto: null, status };
     } catch {
       return null;
     }
@@ -49,8 +60,6 @@ export async function GET(
 
       const interval = setInterval(async () => {
         ticks++;
-
-        // DB is altijd de bron van waarheid — geen afhankelijkheid van global state
         const voortgang = await haalVanDb();
 
         if (voortgang) {
@@ -62,12 +71,11 @@ export async function GET(
           }
         }
 
-        // Stop na 15 minuten
         if (ticks > 900) {
           clearInterval(interval);
           try { controller.close(); } catch {}
         }
-      }, 2000); // elke 2 seconden DB pollen
+      }, 2000);
 
       request.signal.addEventListener("abort", () => {
         clearInterval(interval);

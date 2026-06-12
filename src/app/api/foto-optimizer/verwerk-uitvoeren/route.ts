@@ -132,51 +132,25 @@ export async function POST(request: Request) {
       throw new Error("Foto's ophalen mislukt: " + error?.message);
     }
 
-    // Bijhouden welke uitzonderingen al gebruikt zijn (A-E, max 1x per sessie)
-    const gebruikteUitzonderingen = new Set<string>();
-
-    // Sequentieel verwerken — nodig voor uitzondering-tracking
-    for (const bewerking of bewerkingen) {
-      const actueel = global.fotoVoortgang.get(sessieId);
-      if (actueel) {
-        global.fotoVoortgang.set(sessieId, {
-          ...actueel,
-          huidigeFoto: bewerking.volgnummer,
-        });
-      }
-
-      try {
-            const gebruikteUitzondering = await verwerkEenFoto(sessieId, bewerking, gebruikteUitzonderingen);
-            if (gebruikteUitzondering) gebruikteUitzonderingen.add(gebruikteUitzondering);
-
-            const huidig = global.fotoVoortgang.get(sessieId);
-            if (huidig) {
-              global.fotoVoortgang.set(sessieId, {
-                ...huidig,
-                klaar: huidig.klaar + 1,
-              });
-            }
-          } catch (err) {
-            console.error(`Foto ${bewerking.volgnummer} mislukt:`, err);
-
-            await admin
-              .from("foto_bewerkingen")
-              .update({
-                status: "fout",
-                overgeslagen_reden: err instanceof Error ? err.message : "Onbekende fout",
-                klaar_op: new Date().toISOString(),
-              })
-              .eq("id", bewerking.id);
-
-            const huidig = global.fotoVoortgang.get(sessieId);
-            if (huidig) {
-              global.fotoVoortgang.set(sessieId, {
-                ...huidig,
-                fout: huidig.fout + 1,
-              });
-            }
-      }
-    }
+    // Parallel verwerken — alle foto's tegelijk voor snelheid
+    const leegeSet = new Set<string>();
+    await Promise.all(
+      bewerkingen.map(async (bewerking) => {
+        try {
+          await verwerkEenFoto(sessieId, bewerking, leegeSet);
+        } catch (err) {
+          console.error(`Foto ${bewerking.volgnummer} mislukt:`, err);
+          await admin
+            .from("foto_bewerkingen")
+            .update({
+              status: "fout",
+              overgeslagen_reden: err instanceof Error ? err.message : "Onbekende fout",
+              klaar_op: new Date().toISOString(),
+            })
+            .eq("id", bewerking.id);
+        }
+      })
+    );
 
     // Sessie afronden
     await admin
