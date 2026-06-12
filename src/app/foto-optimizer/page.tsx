@@ -166,8 +166,8 @@ export default function FotoOptimizerPage() {
         <div className="bg-primary/5 border border-primary/10 rounded-xl px-5 py-4 mb-8 text-sm text-text-secondary leading-relaxed">
           <p>
             <span className="font-semibold text-primary">Onze belofte: </span>
-            We polijsten helderheid, scherpte, witbalans en duidelijkheid. We voegen nooit meubilair toe, veranderen geen indelingen, verzinnen geen uitzichten en verbergen geen schade.
-            <span className="font-medium text-primary"> De verbeterde foto representeert dezelfde ruimte.</span>
+            We polijsten helderheid, scherpte, witbalans en duidelijkheid. Alle meubels en accessoires blijven identiek — niets wordt verplaatst of toegevoegd. Zichtbare rommel wordt opgeruimd en kreukels in beddengoed gladgestreken.
+            <span className="font-medium text-primary"> De verbeterde foto representeert dezelfde ruimte, op zijn best.</span>
           </p>
         </div>
 
