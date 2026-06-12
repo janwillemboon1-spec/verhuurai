@@ -142,8 +142,7 @@ export default function FotoOptimizerPage() {
             Foto Optimizer
           </h1>
           <p className="text-text-secondary max-w-lg mx-auto leading-relaxed">
-            Upload jouw vakantieverhuur foto's. Boni verbetert ze naar
-            5-sterren hotelkwaliteit — dezelfde standaard als Four Seasons en Marriott.
+            Upload jouw advertentie foto&apos;s. Boni verbetert ze naar 5-sterren kwaliteit.
           </p>
         </div>
 
@@ -162,14 +161,6 @@ export default function FotoOptimizerPage() {
           ))}
         </div>
 
-        {/* Belofte */}
-        <div className="bg-primary/5 border border-primary/10 rounded-xl px-5 py-4 mb-8 text-sm text-text-secondary leading-relaxed">
-          <p>
-            <span className="font-semibold text-primary">Onze belofte: </span>
-            We polijsten helderheid, scherpte, witbalans en duidelijkheid. Alle meubels en accessoires blijven identiek — niets wordt verplaatst of toegevoegd. Zichtbare rommel wordt opgeruimd en kreukels in beddengoed gladgestreken.
-            <span className="font-medium text-primary"> De verbeterde foto representeert dezelfde ruimte, op zijn best.</span>
-          </p>
-        </div>
 
         <div className="card p-6 md:p-8 space-y-6">
 
