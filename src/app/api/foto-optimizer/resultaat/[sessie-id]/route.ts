@@ -10,7 +10,7 @@ export async function GET(
 
   const { data: sessie, error } = await admin
     .from("foto_sessies")
-    .select("id, naam, status, aantal_fotos, totaal_prijs, klaar_op")
+    .select("id, naam, status, aantal_fotos, totaal_prijs, klaar_op, regeneratie_gedaan")
     .eq("id", sessieId)
     .single();
 
@@ -20,7 +20,7 @@ export async function GET(
 
   const { data: bewerkingen } = await admin
     .from("foto_bewerkingen")
-    .select("id, volgnummer, ruimte, origineel_pad, bewerkt_pad, status, overgeslagen_reden, analyse_json")
+    .select("id, volgnummer, ruimte, origineel_pad, bewerkt_pad, status, overgeslagen_reden, analyse_json, feedback_type, feedback_toelichting, is_geregenereerd")
     .eq("sessie_id", sessieId)
     .order("volgnummer", { ascending: true });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
@@ -9,13 +9,13 @@ interface Bewerking {
   id: string;
   volgnummer: number;
   ruimte: string | null;
-  origineel_pad: string | null;
-  bewerkt_pad: string | null;
   origineelUrl: string | null;
   bewerktUrl: string | null;
   status: string;
   overgeslagen_reden: string | null;
-  analyse_json: Record<string, any> | null;
+  feedback_type: string | null;
+  feedback_toelichting: string | null;
+  is_geregenereerd: boolean;
 }
 
 interface Sessie {
@@ -23,58 +23,131 @@ interface Sessie {
   naam: string;
   status: string;
   aantal_fotos: number;
-  totaal_prijs: number;
-  klaar_op: string | null;
+  regeneratie_gedaan: boolean;
+}
+
+interface FeedbackFormState {
+  type: "fout_van_boni" | "kwestie_van_smaak";
+  toelichting: string;
 }
 
 const RUIMTE_LABELS: Record<string, string> = {
-  woonkamer: "Woonkamer",
-  keuken: "Keuken",
-  eetgedeelte: "Eetgedeelte",
-  slaapkamer: "Slaapkamer",
-  badkamer: "Badkamer",
-  buitenruimte: "Buitenruimte",
-  exterieur: "Exterieur",
-  overig: "Overig",
+  woonkamer: "Woonkamer", keuken: "Keuken", eetgedeelte: "Eetgedeelte",
+  slaapkamer: "Slaapkamer", badkamer: "Badkamer", buitenruimte: "Buitenruimte",
+  exterieur: "Exterieur", overig: "Overig",
 };
-
 const RUIMTE_VOLGORDE = ["woonkamer", "keuken", "eetgedeelte", "slaapkamer", "badkamer", "buitenruimte", "exterieur", "overig"];
 
-
-export default function ResultaatPage({
-  params,
-}: {
-  params: { "sessie-id": string };
-}) {
+export default function ResultaatPage({ params }: { params: { "sessie-id": string } }) {
   const sessieId = params["sessie-id"];
   const [sessie, setSessie] = useState<Sessie | null>(null);
   const [bewerkingen, setBewerkingen] = useState<Bewerking[]>([]);
   const [laden, setLaden] = useState(true);
   const [fout, setFout] = useState<string | null>(null);
-  // Per foto: true = toon bewerkt (na), false = toon origineel (voor)
   const [zipLaden, setZipLaden] = useState(false);
 
-  useEffect(() => {
+  // Feedback state
+  const [feedbackModal, setFeedbackModal] = useState<string | null>(null); // bewerkingId
+  const [feedbackForm, setFeedbackForm] = useState<FeedbackFormState>({ type: "fout_van_boni", toelichting: "" });
+  const [feedbackOpslaan, setFeedbackOpslaan] = useState(false);
+  const [lokaalFeedback, setLokaalFeedback] = useState<Record<string, { type: string; toelichting: string }>>({});
+
+  // Regeneratie state
+  const [waarschuwingOpen, setWaarschuwingOpen] = useState(false);
+  const [regenereerBezig, setRegenereerBezig] = useState(false);
+  const [regenereerVoortgang, setRegenereerVoortgang] = useState({ klaar: 0, totaal: 0 });
+
+  const laadData = useCallback(() => {
     fetch(`/api/foto-optimizer/resultaat/${sessieId}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) { setFout(data.error); return; }
         setSessie(data.sessie);
         setBewerkingen(data.bewerkingen);
+        // Bestaande feedback inladen
+        const bestaand: Record<string, { type: string; toelichting: string }> = {};
+        data.bewerkingen.forEach((b: Bewerking) => {
+          if (b.feedback_type) {
+            bestaand[b.id] = { type: b.feedback_type, toelichting: b.feedback_toelichting || "" };
+          }
+        });
+        setLokaalFeedback(bestaand);
       })
       .catch(() => setFout("Kon resultaten niet laden."))
       .finally(() => setLaden(false));
   }, [sessieId]);
 
+  useEffect(() => { laadData(); }, [laadData]);
+
+  // Polling tijdens regeneratie
+  useEffect(() => {
+    if (!regenereerBezig) return;
+    const interval = setInterval(async () => {
+      const res = await fetch(`/api/foto-optimizer/regenereer-status/${sessieId}`);
+      const data = await res.json();
+      setRegenereerVoortgang({ klaar: data.klaar, totaal: data.totaal });
+      if (data.gedaan) {
+        clearInterval(interval);
+        setRegenereerBezig(false);
+        laadData(); // Herlaad met nieuwe foto URLs
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [regenereerBezig, sessieId, laadData]);
+
   const klaare = bewerkingen.filter(b => b.status === "klaar");
   const overgeslagen = bewerkingen.filter(b => b.status === "overgeslagen" || b.status === "fout");
-
-  // Groepeer per ruimte
   const perRuimte = RUIMTE_VOLGORDE.reduce<Record<string, Bewerking[]>>((acc, r) => {
     const fotos = klaare.filter(b => (b.ruimte || "overig") === r);
     if (fotos.length > 0) acc[r] = fotos;
     return acc;
   }, {});
+
+  const metToelichting = Object.values(lokaalFeedback).filter(f => f.toelichting.trim()).length;
+  const kanRegenereren = metToelichting > 0 && !sessie?.regeneratie_gedaan && !regenereerBezig;
+
+  const openFeedbackModal = (bewerkingId: string) => {
+    const bestaand = lokaalFeedback[bewerkingId];
+    setFeedbackForm({
+      type: (bestaand?.type as any) || "fout_van_boni",
+      toelichting: bestaand?.toelichting || "",
+    });
+    setFeedbackModal(bewerkingId);
+  };
+
+  const slaFeedbackOp = async () => {
+    if (!feedbackModal) return;
+    setFeedbackOpslaan(true);
+    try {
+      await fetch("/api/foto-optimizer/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bewerkingId: feedbackModal,
+          type: feedbackForm.type,
+          toelichting: feedbackForm.toelichting.trim() || null,
+        }),
+      });
+      setLokaalFeedback(prev => ({
+        ...prev,
+        [feedbackModal]: { type: feedbackForm.type, toelichting: feedbackForm.toelichting },
+      }));
+      setFeedbackModal(null);
+    } finally {
+      setFeedbackOpslaan(false);
+    }
+  };
+
+  const startRegeneratie = async () => {
+    setWaarschuwingOpen(false);
+    setRegenereerBezig(true);
+    setRegenereerVoortgang({ klaar: 0, totaal: metToelichting });
+    await fetch("/api/foto-optimizer/regenereer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessieId }),
+    });
+  };
 
   const downloadZip = async () => {
     setZipLaden(true);
@@ -85,27 +158,23 @@ export default function ResultaatPage({
     setTimeout(() => setZipLaden(false), 3000);
   };
 
-  if (laden) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <BoniAvatar size={80} animate className="mx-auto mb-4" />
-          <p className="text-text-secondary">Resultaten laden...</p>
-        </div>
+  if (laden) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <BoniAvatar size={80} animate className="mx-auto mb-4" />
+        <p className="text-text-secondary">Resultaten laden...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (fout) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="card p-8 max-w-md text-center">
-          <p className="text-danger mb-4">{fout}</p>
-          <Link href="/foto-optimizer" className="btn-primary">Nieuwe analyse starten</Link>
-        </div>
+  if (fout) return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="card p-8 max-w-md text-center">
+        <p className="text-danger mb-4">{fout}</p>
+        <Link href="/foto-optimizer" className="btn-primary">Nieuwe analyse starten</Link>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
@@ -119,11 +188,9 @@ export default function ResultaatPage({
           </h1>
           <p className="text-text-secondary">
             {sessie?.naam && `Hey ${sessie.naam} — `}
-            {klaare.length} foto{klaare.length !== 1 ? "'s" : ""} professioneel bewerkt door Boni.
+            {klaare.length} foto{klaare.length !== 1 ? "'s" : ""} bewerkt door Boni.
           </p>
-
-          {/* Stats */}
-          <div className="flex justify-center gap-4 mt-4 flex-wrap">
+          <div className="flex justify-center gap-3 mt-4 flex-wrap">
             <span className="bg-success/10 text-success text-sm font-semibold px-3 py-1 rounded-full">
               ✓ {klaare.length} bewerkt
             </span>
@@ -135,26 +202,14 @@ export default function ResultaatPage({
           </div>
         </div>
 
-        {/* Download knop */}
+        {/* Download */}
         <div className="card p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <p className="font-semibold text-primary">Download alle bewerkte foto&apos;s</p>
             <p className="text-sm text-text-secondary">{klaare.length} foto&apos;s als ZIP-bestand</p>
           </div>
-          <button
-            onClick={downloadZip}
-            disabled={zipLaden}
-            className="btn-primary shrink-0 flex items-center gap-2"
-          >
-            {zipLaden ? (
-              <>
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Bezig...
-              </>
-            ) : "⬇ Download ZIP"}
+          <button onClick={downloadZip} disabled={zipLaden} className="btn-primary shrink-0 flex items-center gap-2">
+            {zipLaden ? <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Bezig...</> : "⬇ Download ZIP"}
           </button>
         </div>
 
@@ -165,35 +220,52 @@ export default function ResultaatPage({
               <span>{RUIMTE_LABELS[ruimte] || ruimte}</span>
               <span className="text-sm font-normal text-text-secondary">({fotos.length})</span>
             </h2>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {fotos.map(foto => (
-                <div key={foto.id} className="card overflow-hidden">
-                  {foto.origineelUrl && foto.bewerktUrl ? (
-                    <BeforeAfterSlider
-                      voorUrl={foto.origineelUrl}
-                      naUrl={foto.bewerktUrl}
-                      alt={`Foto ${foto.volgnummer}`}
-                    />
-                  ) : (
-                    <div className="aspect-[3/2] bg-border flex items-center justify-center text-text-secondary text-sm">
-                      Geen afbeelding
-                    </div>
-                  )}
-                  {foto.ruimte && (
-                    <div className="px-3 py-2">
+              {fotos.map(foto => {
+                const fb = lokaalFeedback[foto.id];
+                return (
+                  <div key={foto.id} className="card overflow-hidden">
+                    {foto.origineelUrl && foto.bewerktUrl ? (
+                      <BeforeAfterSlider
+                        voorUrl={foto.origineelUrl}
+                        naUrl={foto.bewerktUrl}
+                        alt={`Foto ${foto.volgnummer}`}
+                      />
+                    ) : (
+                      <div className="aspect-[3/2] bg-border flex items-center justify-center text-text-secondary text-sm">
+                        Geen afbeelding
+                      </div>
+                    )}
+                    <div className="px-3 py-2 flex items-center justify-between">
                       <p className="text-xs text-text-secondary">
-                        {RUIMTE_LABELS[foto.ruimte] || foto.ruimte} · #{foto.volgnummer}
+                        {foto.ruimte ? RUIMTE_LABELS[foto.ruimte] || foto.ruimte : ""} · #{foto.volgnummer}
+                        {foto.is_geregenereerd && <span className="ml-1 text-success font-semibold">· Geregenereerd</span>}
                       </p>
+                      {/* Feedback knop */}
+                      {!sessie?.regeneratie_gedaan && (
+                        <button
+                          onClick={() => openFeedbackModal(foto.id)}
+                          title="Fout melden"
+                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
+                            fb
+                              ? fb.type === "fout_van_boni"
+                                ? "bg-danger/10 text-danger"
+                                : "bg-warning/10 text-warning"
+                              : "text-text-secondary hover:text-danger hover:bg-danger/5"
+                          }`}
+                        >
+                          👎 {fb ? (fb.type === "fout_van_boni" ? "Fout" : "Smaak") : "Melden"}
+                        </button>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
 
-        {/* Overgeslagen foto's */}
+        {/* Overgeslagen */}
         {overgeslagen.length > 0 && (
           <div className="mb-10">
             <h2 className="font-display text-xl text-primary mb-4">
@@ -202,39 +274,167 @@ export default function ResultaatPage({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {overgeslagen.map(foto => (
                 <div key={foto.id} className="card overflow-hidden opacity-60">
-                  <div className="aspect-square bg-border flex items-center justify-center p-3">
+                  <div className="aspect-square bg-border flex items-center justify-center">
                     {foto.origineelUrl ? (
                       <img src={foto.origineelUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-text-secondary text-xs text-center">#{foto.volgnummer}</span>
+                      <span className="text-text-secondary text-xs">#{foto.volgnummer}</span>
                     )}
                   </div>
-                  <div className="p-2">
-                    <p className="text-xs text-text-secondary text-center">{foto.overgeslagen_reden || "Overgeslagen"}</p>
-                  </div>
+                  <p className="text-xs text-text-secondary text-center p-2">{foto.overgeslagen_reden || "Overgeslagen"}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Onderste download + CTA */}
+        {/* Regenereer sectie */}
+        {!sessie?.regeneratie_gedaan && (
+          <div className={`card p-5 mb-6 border-2 transition-colors ${kanRegenereren ? "border-accent/30 bg-accent/5" : "border-border"}`}>
+            {regenereerBezig ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <svg className="animate-spin w-5 h-5 text-accent shrink-0" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  <p className="font-semibold text-primary">
+                    Regenereren... {regenereerVoortgang.klaar} van {regenereerVoortgang.totaal} klaar
+                  </p>
+                </div>
+                <div className="h-2 bg-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent rounded-full transition-all duration-500"
+                    style={{ width: `${regenereerVoortgang.totaal > 0 ? (regenereerVoortgang.klaar / regenereerVoortgang.totaal) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-primary">Niet tevreden met een resultaat?</p>
+                  <p className="text-sm text-text-secondary mt-0.5">
+                    Klik 👎 bij een foto, geef een toelichting, en Boni genereert hem opnieuw.
+                    {metToelichting > 0 && (
+                      <span className="text-accent font-semibold ml-1">{metToelichting} foto{metToelichting !== 1 ? "'s" : ""} klaar voor regeneratie.</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-text-secondary mt-1">Eenmalig · max 10 foto&apos;s</p>
+                </div>
+                <button
+                  onClick={() => setWaarschuwingOpen(true)}
+                  disabled={!kanRegenereren}
+                  className={`btn-primary shrink-0 ${!kanRegenereren ? "opacity-40 cursor-not-allowed" : ""}`}
+                >
+                  🔄 Regenereer {metToelichting > 0 ? `${metToelichting} foto${metToelichting !== 1 ? "'s" : ""}` : "foto's"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {sessie?.regeneratie_gedaan && (
+          <div className="bg-success/10 border border-success/20 rounded-xl p-4 mb-6 text-sm text-success font-semibold text-center">
+            ✓ Regeneratie voltooid — foto&apos;s zijn bijgewerkt
+          </div>
+        )}
+
+        {/* Onderste CTA */}
         <div className="card p-6 text-center space-y-4">
           <p className="font-semibold text-primary">Tevreden met de resultaten?</p>
-          <p className="text-text-secondary text-sm">
-            Download je foto&apos;s en gebruik ze direct in je Airbnb advertentie.
-          </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button onClick={downloadZip} disabled={zipLaden} className="btn-primary flex items-center justify-center gap-2">
               ⬇ Download alle foto&apos;s (ZIP)
             </button>
-            <Link href="/listing-optimizer" className="btn-secondary">
-              Listing Optimizer →
-            </Link>
+            <Link href="/listing-optimizer" className="btn-secondary">Listing Optimizer →</Link>
           </div>
         </div>
-
       </div>
+
+      {/* Feedback modal */}
+      {feedbackModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setFeedbackModal(null)}>
+          <div className="card p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display text-xl text-primary">Fout melden</h3>
+
+            {/* Type keuze */}
+            <div className="space-y-2">
+              {(["fout_van_boni", "kwestie_van_smaak"] as const).map(type => (
+                <label key={type} className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
+                  feedbackForm.type === type ? "border-accent bg-accent/5" : "border-border hover:border-primary/20"
+                }`}>
+                  <input
+                    type="radio"
+                    name="feedbackType"
+                    value={type}
+                    checked={feedbackForm.type === type}
+                    onChange={() => setFeedbackForm(p => ({ ...p, type }))}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <p className="font-semibold text-primary text-sm">
+                      {type === "fout_van_boni" ? "Fout van Boni" : "Kwestie van smaak"}
+                    </p>
+                    <p className="text-xs text-text-secondary">
+                      {type === "fout_van_boni"
+                        ? "Boni heeft iets gedaan wat niet mag of objectief fout is"
+                        : "Het resultaat is technisch correct maar niet mijn voorkeur"}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {/* Toelichting */}
+            <div>
+              <label className="block text-sm font-semibold text-primary mb-1.5">
+                Toelichting <span className="text-accent">*</span>
+                <span className="text-text-secondary font-normal ml-1">(verplicht voor regeneratie)</span>
+              </label>
+              <textarea
+                value={feedbackForm.toelichting}
+                onChange={e => setFeedbackForm(p => ({ ...p, toelichting: e.target.value }))}
+                placeholder="Beschrijf wat er mis is en wat je wilt zien in de nieuwe versie..."
+                className="textarea h-24 w-full"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setFeedbackModal(null)} className="btn-secondary flex-1">Annuleren</button>
+              <button
+                onClick={slaFeedbackOp}
+                disabled={feedbackOpslaan}
+                className="btn-primary flex-1"
+              >
+                {feedbackOpslaan ? "Opslaan..." : "Opslaan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Waarschuwing modal */}
+      {waarschuwingOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setWaarschuwingOpen(false)}>
+          <div className="card p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display text-xl text-primary">Weet je het zeker?</h3>
+            <p className="text-text-secondary text-sm leading-relaxed">
+              De huidige bewerkte versies van <strong>{metToelichting} foto{metToelichting !== 1 ? "'s" : ""}</strong> worden vervangen door nieuwe versies op basis van jouw toelichting.
+              <span className="block mt-2 font-semibold text-danger">Dit kan niet ongedaan worden gemaakt.</span>
+            </p>
+            <p className="text-xs text-text-secondary bg-warning/10 border border-warning/20 rounded-lg p-3">
+              ⚠ Regeneratie is eenmalig per sessie. Na bevestiging kun je niet opnieuw regenereren.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setWaarschuwingOpen(false)} className="btn-secondary flex-1">Annuleren</button>
+              <button onClick={startRegeneratie} className="btn-primary flex-1 bg-danger hover:bg-red-600">
+                Ja, regenereer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
