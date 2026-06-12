@@ -2,6 +2,7 @@ import { stripe } from "@/lib/stripe";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { Resend } from "resend";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 declare global {
   var sessies: Map<string, any>;
@@ -33,6 +34,21 @@ export async function POST(request: Request) {
       const session = event.data.object as any;
       const metadata = session.metadata || {};
 
+      // --- Foto Optimizer betaling ---
+      if (metadata.tool === "foto-optimizer") {
+        try {
+          const admin = createAdminClient();
+          await admin
+            .from("foto_sessies")
+            .update({ status: "betaald" })
+            .eq("stripe_session_id", session.id);
+        } catch (err) {
+          console.error("Foto optimizer webhook fout:", err);
+        }
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      // --- Listing Optimizer / bestaande tools ---
       const sessieId = uuidv4();
       const email = metadata.email || session.customer_email || "";
       const naam = metadata.naam || "";
