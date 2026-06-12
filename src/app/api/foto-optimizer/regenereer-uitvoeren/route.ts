@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   try {
     const { data: bewerkingen } = await admin
       .from("foto_bewerkingen")
-      .select("id, volgnummer, origineel_pad, feedback_toelichting, feedback_type")
+      .select("id, volgnummer, origineel_pad, feedback_toelichting, feedback_type, analyse_json")
       .eq("sessie_id", sessieId)
       .not("feedback_toelichting", "is", null)
       .not("is_geregenereerd", "is", true)
@@ -40,8 +40,10 @@ export async function POST(request: Request) {
         const origineelBuffer = Buffer.from(await blob.arrayBuffer());
         const { buffer: sharpBuffer, isLandscape } = await verwerkMetSharp(origineelBuffer);
 
-        // Prompt met gebruikersinstructie als primaire correctie
-        const editPrompt = `Transform this vacation rental photo into a 5-star hotel quality photograph. CRITICAL CORRECTION — the user identified a specific problem with the previous result and provided this instruction: "${bewerking.feedback_toelichting}". Apply this as the primary correction. ${REGELS_BLOK}`;
+        // Origineel prompt uit analyse_json ophalen + toelichting toevoegen
+        const origineelPrompt = (bewerking.analyse_json as any)?.editPrompt as string | undefined;
+        const basisPrompt = origineelPrompt || `Transform this vacation rental photo into a 5-star hotel quality photograph: ${REGELS_BLOK}`;
+        const editPrompt = `${basisPrompt} ADDITIONAL CORRECTION FOR THIS SPECIFIC PHOTO: "${bewerking.feedback_toelichting}". Apply this correction specifically for this photo.`;
 
         const resultBuffer = await bewerkMetOpenAI(sharpBuffer, editPrompt, isLandscape);
 
