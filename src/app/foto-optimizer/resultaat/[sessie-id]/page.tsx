@@ -16,6 +16,7 @@ interface Bewerking {
   feedback_type: string | null;
   feedback_toelichting: string | null;
   is_geregenereerd: boolean;
+  gebruiker_herverwerkt_op: string | null;
 }
 
 interface Sessie {
@@ -51,6 +52,12 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
   const [feedbackForm, setFeedbackForm] = useState<FeedbackFormState>({ type: "fout_van_boni", toelichting: "" });
   const [feedbackOpslaan, setFeedbackOpslaan] = useState(false);
   const [lokaalFeedback, setLokaalFeedback] = useState<Record<string, { type: string; toelichting: string }>>({});
+
+  // Herverwerk state (per foto)
+  const [herverwerkModal, setHerverwerkModal] = useState<string | null>(null);
+  const [herverwerkInstructie, setHerverwerkInstructie] = useState("");
+  const [herverwerkBezig, setHerverwerkBezig] = useState<string | null>(null); // bewerkingId
+  const [bewerktUrls, setBewerktUrls] = useState<Record<string, string>>({});
 
   // Regeneratie state
   const [waarschuwingOpen, setWaarschuwingOpen] = useState(false);
@@ -136,6 +143,33 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     } finally {
       setFeedbackOpslaan(false);
     }
+  };
+
+  const startHerverwerk = async () => {
+    if (!herverwerkModal) return;
+    const id = herverwerkModal;
+    setHerverwerkModal(null);
+    setHerverwerkBezig(id);
+    try {
+      const res = await fetch("/api/foto-optimizer/herverwerk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bewerkingId: id, instructie: herverwerkInstructie }),
+      });
+      const data = await res.json();
+      if (res.ok && data.nieuweUrl) {
+        setBewerktUrls(prev => ({ ...prev, [id]: data.nieuweUrl }));
+        setBewerkingen(prev => prev.map(b =>
+          b.id === id ? { ...b, gebruiker_herverwerkt_op: new Date().toISOString() } : b
+        ));
+      } else {
+        alert(data.error || "Herverwerking mislukt.");
+      }
+    } catch {
+      alert("Verbinding mislukt.");
+    }
+    setHerverwerkBezig(null);
+    setHerverwerkInstructie("");
   };
 
   const startRegeneratie = async () => {
@@ -233,40 +267,72 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {fotos.map(foto => {
                 const fb = lokaalFeedback[foto.id];
+                const bewerktUrl = bewerktUrls[foto.id] || foto.bewerktUrl;
+                const bezig = herverwerkBezig === foto.id;
+                const alHerverwerkt = !!foto.gebruiker_herverwerkt_op;
                 return (
                   <div key={foto.id} className="card overflow-hidden">
-                    {foto.origineelUrl && foto.bewerktUrl ? (
-                      <BeforeAfterSlider
-                        voorUrl={foto.origineelUrl}
-                        naUrl={foto.bewerktUrl}
-                        alt={`Foto ${foto.volgnummer}`}
-                      />
+                    {foto.origineelUrl && bewerktUrl ? (
+                      <div className="relative">
+                        <BeforeAfterSlider
+                          voorUrl={foto.origineelUrl}
+                          naUrl={bewerktUrl}
+                          alt={`Foto ${foto.volgnummer}`}
+                        />
+                        {bezig && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
+                            <div className="text-center text-white">
+                              <svg className="animate-spin w-8 h-8 mx-auto mb-2" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                              </svg>
+                              <p className="text-sm font-semibold">Herverwerken...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="aspect-[3/2] bg-border flex items-center justify-center text-text-secondary text-sm">
                         Geen afbeelding
                       </div>
                     )}
-                    <div className="px-3 py-2 flex items-center justify-between">
+                    <div className="px-3 py-2 flex items-center justify-between gap-2">
                       <p className="text-xs text-text-secondary">
                         {foto.ruimte ? RUIMTE_LABELS[foto.ruimte] || foto.ruimte : ""} · #{foto.volgnummer}
-                        {foto.is_geregenereerd && <span className="ml-1 text-success font-semibold">· Geregenereerd</span>}
+                        {foto.is_geregenereerd && <span className="ml-1 text-success font-semibold">· Hergenereerd</span>}
+                        {alHerverwerkt && <span className="ml-1 text-primary font-semibold">· Herverwerkt</span>}
                       </p>
-                      {/* Feedback knop */}
-                      {!sessie?.regeneratie_gedaan && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Herverwerk knop */}
                         <button
-                          onClick={() => openFeedbackModal(foto.id)}
-                          title="Fout melden"
-                          className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                            fb
-                              ? fb.type === "fout_van_boni"
-                                ? "bg-danger/10 text-danger"
-                                : "bg-warning/10 text-warning"
-                              : "text-text-secondary hover:text-danger hover:bg-danger/5"
+                          onClick={() => { setHerverwerkModal(foto.id); setHerverwerkInstructie(""); }}
+                          disabled={alHerverwerkt || bezig}
+                          title={alHerverwerkt ? "Al herverwerkt" : "Herverwerken"}
+                          className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                            alHerverwerkt || bezig
+                              ? "text-text-secondary/40 cursor-not-allowed"
+                              : "text-text-secondary hover:text-primary hover:bg-primary/5"
                           }`}
                         >
-                          👎 {fb ? (fb.type === "fout_van_boni" ? "Fout" : "Smaak") : "Melden"}
+                          🔄
                         </button>
-                      )}
+                        {/* Feedback knop */}
+                        {!sessie?.regeneratie_gedaan && (
+                          <button
+                            onClick={() => openFeedbackModal(foto.id)}
+                            title="Fout melden"
+                            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
+                              fb
+                                ? fb.type === "fout_van_boni"
+                                  ? "bg-danger/10 text-danger"
+                                  : "bg-warning/10 text-warning"
+                                : "text-text-secondary hover:text-danger hover:bg-danger/5"
+                            }`}
+                          >
+                            👎 {fb ? (fb.type === "fout_van_boni" ? "Fout" : "Smaak") : "Melden"}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -360,6 +426,40 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
           </div>
         </div>
       </div>
+
+      {/* Herverwerk modal */}
+      {herverwerkModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setHerverwerkModal(null)}>
+          <div className="card p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display text-xl text-primary">Foto herverwerken 🔄</h3>
+            <p className="text-sm text-text-secondary">
+              Boni verwerkt deze foto opnieuw met hetzelfde basisproces.
+              Voeg optioneel een instructie toe om het resultaat bij te sturen.
+            </p>
+            <div>
+              <label className="block text-sm font-semibold text-primary mb-1.5">
+                Instructie <span className="text-text-secondary font-normal">(optioneel)</span>
+              </label>
+              <textarea
+                value={herverwerkInstructie}
+                onChange={e => setHerverwerkInstructie(e.target.value)}
+                placeholder="Bijv. 'maak de foto helderder' of 'verwijder de rommel op de tafel'..."
+                className="textarea h-20 w-full"
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-warning bg-warning/10 rounded-lg p-3">
+              ⚠ Dit kan niet ongedaan worden gemaakt. Je kunt deze foto daarna niet meer zelf herverwerken.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setHerverwerkModal(null)} className="btn-secondary flex-1">Annuleren</button>
+              <button onClick={startHerverwerk} className="btn-primary flex-1">
+                Herverwerken (~45s)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Feedback modal */}
       {feedbackModal && (

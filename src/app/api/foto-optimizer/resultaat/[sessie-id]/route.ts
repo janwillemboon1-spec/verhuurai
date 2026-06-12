@@ -20,7 +20,7 @@ export async function GET(
 
   const { data: bewerkingen } = await admin
     .from("foto_bewerkingen")
-    .select("id, volgnummer, ruimte, origineel_pad, bewerkt_pad, status, overgeslagen_reden, analyse_json, feedback_type, feedback_toelichting, is_geregenereerd")
+    .select("id, volgnummer, ruimte, origineel_pad, bewerkt_pad, status, overgeslagen_reden, analyse_json, feedback_type, feedback_toelichting, is_geregenereerd, gebruiker_herverwerkt_op")
     .eq("sessie_id", sessieId)
     .order("volgnummer", { ascending: true });
 
