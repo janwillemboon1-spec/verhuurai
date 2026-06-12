@@ -14,8 +14,9 @@ if (!global.fotoVoortgang) global.fotoVoortgang = new Map();
 
 async function verwerkEenFoto(
   sessieId: string,
-  bewerking: { id: string; volgnummer: number; origineel_pad: string }
-): Promise<void> {
+  bewerking: { id: string; volgnummer: number; origineel_pad: string },
+  gebruikteUitzonderingen: Set<string>
+): Promise<string | null> { // geeft gebruikte uitzondering terug, of null
   const admin = createAdminClient();
 
   // Status: verwerking
@@ -39,7 +40,7 @@ async function verwerkEenFoto(
   const { buffer: sharpBuffer, isLandscape } = await verwerkMetSharp(origineelBuffer);
 
   // Stap 2: Claude Vision — ruimtedetectie + analyse + editprompt
-  const analyse = await analyseMetClaude(sharpBuffer);
+  const analyse = await analyseMetClaude(sharpBuffer, gebruikteUitzonderingen);
 
   if (analyse.overgeslagen) {
     await admin
@@ -52,7 +53,7 @@ async function verwerkEenFoto(
         klaar_op: new Date().toISOString(),
       })
       .eq("id", bewerking.id);
-    return;
+    return null;
   }
 
   // Stap 3: OpenAI gpt-image-1 generatieve bewerking
@@ -92,10 +93,13 @@ async function verwerkEenFoto(
         ruimte: analyse.ruimte,
         editPrompt: analyse.editPrompt,
         openaiGelukt,
+        gebruikteUitzondering: analyse.gebruikteUitzondering,
       },
       klaar_op: new Date().toISOString(),
     })
     .eq("id", bewerking.id);
+
+  return analyse.gebruikteUitzondering;
 }
 
 export async function POST(request: Request) {
@@ -119,25 +123,22 @@ export async function POST(request: Request) {
       throw new Error("Foto's ophalen mislukt: " + error?.message);
     }
 
-    const voortgang = global.fotoVoortgang.get(sessieId);
+    // Bijhouden welke uitzonderingen al gebruikt zijn (A-E, max 1x per sessie)
+    const gebruikteUitzonderingen = new Set<string>();
 
-    // Verwerk in batches van 3
-    for (let i = 0; i < bewerkingen.length; i += 3) {
-      const batch = bewerkingen.slice(i, i + 3);
-
-      // Altijd verse state lezen — nooit de stale `voortgang` uit begin van functie
+    // Sequentieel verwerken — nodig voor uitzondering-tracking
+    for (const bewerking of bewerkingen) {
       const actueel = global.fotoVoortgang.get(sessieId);
       if (actueel) {
         global.fotoVoortgang.set(sessieId, {
           ...actueel,
-          huidigeFoto: batch[0].volgnummer,
+          huidigeFoto: bewerking.volgnummer,
         });
       }
 
-      await Promise.all(
-        batch.map(async (bewerking) => {
-          try {
-            await verwerkEenFoto(sessieId, bewerking);
+      try {
+            const gebruikteUitzondering = await verwerkEenFoto(sessieId, bewerking, gebruikteUitzonderingen);
+            if (gebruikteUitzondering) gebruikteUitzonderingen.add(gebruikteUitzondering);
 
             const huidig = global.fotoVoortgang.get(sessieId);
             if (huidig) {
@@ -165,9 +166,7 @@ export async function POST(request: Request) {
                 fout: huidig.fout + 1,
               });
             }
-          }
-        })
-      );
+      }
     }
 
     // Sessie afronden
