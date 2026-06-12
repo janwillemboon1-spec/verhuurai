@@ -25,6 +25,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sessie niet gevonden" }, { status: 404 });
     }
 
+    // Al klaar of al bezig: geen nieuwe verwerking starten
+    if (sessie.status === "klaar") {
+      return NextResponse.json({ ok: true, klaar: true });
+    }
+    if (sessie.status === "verwerking") {
+      return NextResponse.json({ ok: true, alBezig: true });
+    }
     if (sessie.status !== "betaald") {
       return NextResponse.json({ error: "Sessie niet betaald" }, { status: 403 });
     }
