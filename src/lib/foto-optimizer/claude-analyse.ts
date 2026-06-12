@@ -74,8 +74,8 @@ Criteria meanings (true = already good, false = needs improvement):
 
 Rules:
 - Set "overgeslagen": true ONLY if this cannot be identified as an interior/exterior room photo (e.g. a document, portrait, abstract close-up, or completely unusable photo). Set overslaanReden to a brief Dutch explanation.
-- For editPrompt: write a detailed English instruction for an AI image editor. Start with "Professional Airbnb listing photo of a [room type]:". Address ONLY the issues where criteria are false. Be specific about what to fix and what staging items to add. Always end with: "Preserve all existing furniture, architecture, and room layout. Photorealistic result."
-- If ALL criteria are already true and room already looks professional, write editPrompt as: "Enhance this professional [room type] photo subtly: slightly increase brightness and warmth, enhance colors minimally. Keep everything exactly as is. Photorealistic result."`,
+- For editPrompt: write a detailed English instruction for an AI image editor. Start with "Professional Airbnb listing photo of a [room type]:". Address ONLY the issues where criteria are false. Be specific about what to fix and what staging items to add. Always end with: "CRITICAL: Preserve the exact color palette, temperature, and mood of the original photo — do NOT change wall colors, furniture colors, or the warm/cool tone of the lighting. Only adjust brightness/exposure if needed. Preserve all existing furniture, architecture, and room layout. Photorealistic result."
+- If ALL criteria are already true and room already looks professional, write editPrompt as: "Enhance this professional [room type] photo with minimal adjustments only: slightly increase brightness if needed. Do NOT change colors, temperature, or any stylistic elements. Keep everything exactly as is. Photorealistic result."`,
           },
         ],
       },

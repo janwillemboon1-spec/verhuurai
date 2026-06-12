@@ -36,7 +36,7 @@ async function verwerkEenFoto(
   const origineelBuffer = Buffer.from(await blob.arrayBuffer());
 
   // Stap 1: Sharp basiscorrecties
-  const sharpBuffer = await verwerkMetSharp(origineelBuffer);
+  const { buffer: sharpBuffer, isLandscape } = await verwerkMetSharp(origineelBuffer);
 
   // Stap 2: Claude Vision — ruimtedetectie + analyse + editprompt
   const analyse = await analyseMetClaude(sharpBuffer);
@@ -60,7 +60,7 @@ async function verwerkEenFoto(
   let openaiGelukt = true;
 
   try {
-    resultBuffer = await bewerkMetOpenAI(sharpBuffer, analyse.editPrompt);
+    resultBuffer = await bewerkMetOpenAI(sharpBuffer, analyse.editPrompt, isLandscape);
   } catch (openaiErr) {
     console.error(`OpenAI fout foto ${bewerking.volgnummer}:`, openaiErr);
     // Fallback: Sharp-resultaat gebruiken
