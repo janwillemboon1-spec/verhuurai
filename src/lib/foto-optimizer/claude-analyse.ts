@@ -14,7 +14,7 @@ export async function analyseMetClaude(imageBuffer: Buffer): Promise<AnalyseResu
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 512,
+    max_tokens: 1500,
     messages: [
       {
         role: "user",
@@ -50,6 +50,7 @@ Rules:
 
   try {
     const clean = text.replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
+    console.log("Claude response:", clean.slice(0, 200));
     const result = JSON.parse(clean);
 
     if (result.overgeslagen) {
@@ -66,7 +67,8 @@ Rules:
       editPrompt: result.editPrompt || "",
       overgeslagen: false,
     };
-  } catch {
+  } catch (err) {
+    console.error("Claude analyse fout:", err);
     return {
       ruimte: "overig",
       editPrompt: "",
