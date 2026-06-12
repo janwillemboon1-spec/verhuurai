@@ -147,20 +147,28 @@ export default function FotoOptimizerPage() {
           </p>
         </div>
 
-        {/* Wat wordt er verbeterd */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-8 text-center">
+        {/* Wat wordt verbeterd */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6 text-center">
           {[
-            { icon: "💡", label: "Belichting" },
-            { icon: "🎨", label: "Kleur & compositie" },
-            { icon: "🛋️", label: "Staging" },
-            { icon: "🌤️", label: "Lucht & sfeer" },
-            { icon: "✨", label: "Kwaliteit" },
+            { icon: "💡", label: "Helderheid" },
+            { icon: "🔍", label: "Scherpte" },
+            { icon: "⚖️", label: "Witbalans" },
+            { icon: "✨", label: "Duidelijkheid" },
           ].map(item => (
             <div key={item.label} className="bg-surface border border-border rounded-xl py-3 px-2">
               <div className="text-xl mb-1">{item.icon}</div>
               <div className="text-xs font-medium text-text-secondary">{item.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Belofte */}
+        <div className="bg-primary/5 border border-primary/10 rounded-xl px-5 py-4 mb-8 text-sm text-text-secondary leading-relaxed">
+          <p>
+            <span className="font-semibold text-primary">Onze belofte: </span>
+            We polijsten helderheid, scherpte, witbalans en duidelijkheid. We voegen nooit meubilair toe, veranderen geen indelingen, verzinnen geen uitzichten en verbergen geen schade.
+            <span className="font-medium text-primary"> De verbeterde foto representeert dezelfde ruimte.</span>
+          </p>
         </div>
 
         <div className="card p-6 md:p-8 space-y-6">
