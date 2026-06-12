@@ -23,9 +23,16 @@ export async function GET(
   const totaal = bewerkingen?.length || 0;
   const klaar = bewerkingen?.filter(b => b.is_geregenereerd).length || 0;
 
-  return NextResponse.json({
-    totaal,
-    klaar,
-    gedaan: sessie?.regeneratie_gedaan ?? false,
-  });
+  // Als alle foto's geregenereerd zijn maar sessie nog niet gemarkeerd:
+  // fix dit zelf zodat de client kan doorgaan
+  let gedaan = sessie?.regeneratie_gedaan ?? false;
+  if (!gedaan && totaal > 0 && klaar >= totaal) {
+    await admin
+      .from("foto_sessies")
+      .update({ regeneratie_gedaan: true })
+      .eq("id", sessieId);
+    gedaan = true;
+  }
+
+  return NextResponse.json({ totaal, klaar, gedaan });
 }
