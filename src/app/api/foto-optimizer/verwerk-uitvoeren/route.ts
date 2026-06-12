@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verwerkMetSharp } from "@/lib/foto-optimizer/sharp-verwerking";
 import { analyseMetClaude } from "@/lib/foto-optimizer/claude-analyse";
 import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
@@ -36,8 +35,18 @@ async function verwerkEenFoto(
 
   const origineelBuffer = Buffer.from(await blob.arrayBuffer());
 
-  // Stap 1: Sharp basiscorrecties
-  const { buffer: sharpBuffer, isLandscape } = await verwerkMetSharp(origineelBuffer);
+  // Stap 1: Sharp basiscorrecties (dynamische import met fallback)
+  let sharpBuffer: Buffer = origineelBuffer;
+  let isLandscape = true;
+  try {
+    const { verwerkMetSharp } = await import("@/lib/foto-optimizer/sharp-verwerking");
+    const sharpResultaat = await verwerkMetSharp(origineelBuffer);
+    sharpBuffer = sharpResultaat.buffer;
+    isLandscape = sharpResultaat.isLandscape;
+    console.log(`Sharp OK foto ${bewerking.volgnummer}`);
+  } catch (sharpErr) {
+    console.error(`Sharp fout foto ${bewerking.volgnummer}, gebruik origineel:`, sharpErr);
+  }
 
   // Stap 2: Claude Vision — ruimtedetectie + analyse + editprompt
   const analyse = await analyseMetClaude(sharpBuffer, gebruikteUitzonderingen);

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verwerkMetSharp } from "@/lib/foto-optimizer/sharp-verwerking";
 import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
 
 export const maxDuration = 600;
@@ -38,7 +37,16 @@ export async function POST(request: Request) {
         if (!blob) continue;
 
         const origineelBuffer = Buffer.from(await blob.arrayBuffer());
-        const { buffer: sharpBuffer, isLandscape } = await verwerkMetSharp(origineelBuffer);
+        let sharpBuffer: Buffer = origineelBuffer;
+        let isLandscape = true;
+        try {
+          const { verwerkMetSharp } = await import("@/lib/foto-optimizer/sharp-verwerking");
+          const r = await verwerkMetSharp(origineelBuffer);
+          sharpBuffer = r.buffer;
+          isLandscape = r.isLandscape;
+        } catch (sharpErr) {
+          console.error("Sharp fout regeneratie, gebruik origineel:", sharpErr);
+        }
 
         // Origineel prompt uit analyse_json ophalen + toelichting toevoegen
         const origineelPrompt = (bewerking.analyse_json as any)?.editPrompt as string | undefined;
