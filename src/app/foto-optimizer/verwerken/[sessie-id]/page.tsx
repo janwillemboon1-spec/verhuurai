@@ -6,11 +6,10 @@ import { BoniAvatar } from "@/components/BoniAvatar";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
 
 const STAPPEN = [
-  "Oriëntatie & belichting corrigeren...",
-  "Kleuren & witbalans optimaliseren...",
+  "Belichting & kleuren optimaliseren...",
   "Ruimte analyseren...",
   "Staging & compositie verbeteren...",
-  "Afwerking & kwaliteitscontrole...",
+  "Kwaliteit verhogen...",
 ];
 
 export default function VerwerkingPage({
@@ -106,7 +105,7 @@ export default function VerwerkingPage({
             {isKlaar
               ? "Alle foto's zijn bewerkt. Je wordt doorgestuurd..."
               : voortgang
-              ? `${STAPPEN[stapIndex]}`
+              ? STAPPEN[stapIndex % STAPPEN.length]
               : "Verwerking wordt gestart..."}
           </p>
         </div>

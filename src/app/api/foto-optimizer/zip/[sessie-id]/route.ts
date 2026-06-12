@@ -1,6 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import archiver from "archiver";
-import { PassThrough } from "stream";
+import { zipSync, strToU8 } from "fflate";
 
 export const maxDuration = 120;
 
@@ -13,7 +12,7 @@ export async function GET(
 
   const { data: sessie } = await admin
     .from("foto_sessies")
-    .select("id, naam, status")
+    .select("id, status")
     .eq("id", sessieId)
     .single();
 
@@ -32,32 +31,28 @@ export async function GET(
     return new Response("Geen bewerkte foto's gevonden", { status: 404 });
   }
 
-  // Alle bewerkte foto's downloaden en in ZIP stoppen
-  const archive = archiver("zip", { zlib: { level: 5 } });
-  const pass = new PassThrough();
-  archive.pipe(pass);
+  // Download alle bewerkte foto's en verzamel in object voor fflate
+  const bestanden: Record<string, Uint8Array> = {};
 
-  for (const b of bewerkingen) {
-    if (!b.bewerkt_pad) continue;
-    const { data: blob } = await admin.storage
-      .from("foto-bewerkt")
-      .download(b.bewerkt_pad);
-    if (!blob) continue;
-    const buffer = Buffer.from(await blob.arrayBuffer());
-    const ruimteLabel = b.ruimte || "foto";
-    const naam = `${String(b.volgnummer).padStart(3, "0")}_${ruimteLabel}_bewerkt.png`;
-    archive.append(buffer, { name: naam });
+  await Promise.all(
+    bewerkingen.map(async (b) => {
+      if (!b.bewerkt_pad) return;
+      const { data: blob } = await admin.storage
+        .from("foto-bewerkt")
+        .download(b.bewerkt_pad);
+      if (!blob) return;
+      const buffer = await blob.arrayBuffer();
+      const ruimteLabel = b.ruimte || "foto";
+      const naam = `${String(b.volgnummer).padStart(3, "0")}_${ruimteLabel}_bewerkt.png`;
+      bestanden[naam] = new Uint8Array(buffer);
+    })
+  );
+
+  if (Object.keys(bestanden).length === 0) {
+    return new Response("Foto's konden niet worden gedownload", { status: 500 });
   }
 
-  await archive.finalize();
-
-  // Stream bufferen
-  const chunks: Buffer[] = [];
-  for await (const chunk of pass) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-  }
-  const zipBuffer = Buffer.concat(chunks);
-
+  const zipBuffer = zipSync(bestanden, { level: 6 });
   const bestandsnaam = `hostboni-fotos-${sessieId.slice(0, 8)}.zip`;
 
   return new Response(zipBuffer, {
