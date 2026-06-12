@@ -39,18 +39,6 @@ const RUIMTE_LABELS: Record<string, string> = {
 
 const RUIMTE_VOLGORDE = ["woonkamer", "keuken", "eetgedeelte", "slaapkamer", "badkamer", "buitenruimte", "exterieur", "overig"];
 
-const CRITERIA_LABELS: Record<string, string> = {
-  orientatie: "Oriëntatie gecorrigeerd",
-  hoek: "Hoek & perspectief verbeterd",
-  compositie: "Compositie verbeterd",
-  kleur: "Kleuren & witbalans gecorrigeerd",
-  rommel: "Rommel verwijderd",
-  belichting: "Belichting verbeterd",
-  rimpels: "Beddengoed gladgestreken",
-  enscenering: "Staging toegevoegd",
-  opschaling: "Kwaliteit verhoogd",
-  lucht: "Lucht verbeterd",
-};
 
 export default function ResultaatPage({
   params,
@@ -186,12 +174,6 @@ export default function ResultaatPage({
               {fotos.map(foto => {
                 const isNa = toonNa[foto.id] ?? true;
                 const fotoUrl = isNa ? foto.bewerktUrl : foto.origineelUrl;
-                const verbeteringen = foto.analyse_json?.criteria
-                  ? Object.entries(foto.analyse_json.criteria)
-                      .filter(([, v]) => v === false)
-                      .map(([k]) => CRITERIA_LABELS[k])
-                      .filter(Boolean)
-                  : [];
 
                 return (
                   <div key={foto.id} className="card overflow-hidden">
@@ -248,15 +230,11 @@ export default function ResultaatPage({
                         </button>
                       </div>
 
-                      {/* Verbeteringen */}
-                      {verbeteringen.length > 0 && (
-                        <div className="space-y-0.5">
-                          {verbeteringen.map(v => (
-                            <p key={v} className="text-xs text-text-secondary flex items-center gap-1">
-                              <span className="text-success">✓</span> {v}
-                            </p>
-                          ))}
-                        </div>
+                      {/* Ruimte label */}
+                      {foto.ruimte && (
+                        <p className="text-xs text-text-secondary">
+                          {RUIMTE_LABELS[foto.ruimte] || foto.ruimte}
+                        </p>
                       )}
                     </div>
                   </div>

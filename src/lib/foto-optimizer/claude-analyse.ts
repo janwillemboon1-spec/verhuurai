@@ -4,29 +4,17 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export interface AnalyseResultaat {
   ruimte: string;
-  criteria: Record<string, boolean>;
   editPrompt: string;
   overgeslagen: boolean;
   overslaanReden?: string;
 }
-
-const STAGING_PER_RUIMTE: Record<string, string> = {
-  woonkamer: "a tasteful throw blanket over the sofa, a coffee table book, a small vase with fresh flowers, decorative scatter cushions",
-  keuken: "a bowl of fresh fruit on the counter, a wooden cutting board, a coffee machine, fresh herbs in a small pot",
-  eetgedeelte: "a simple table runner, place settings with plates and glasses, a small floral centerpiece",
-  slaapkamer: "crisp hotel-quality bedding, two decorative throw pillows, a small book and reading lamp on the nightstand, a folded throw blanket at the foot of the bed",
-  badkamer: "neatly folded white towels, a scented candle, a small green plant, a elegant soap dispenser",
-  buitenruimte: "colorful outdoor cushions on furniture, potted plants or flowers, a lantern or string lights",
-  exterieur: "a well-maintained entrance, clear pathway, potted plants near the door",
-  overig: "simple tasteful decor elements appropriate for the space",
-};
 
 export async function analyseMetClaude(imageBuffer: Buffer): Promise<AnalyseResultaat> {
   const base64 = imageBuffer.toString("base64");
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    max_tokens: 512,
     messages: [
       {
         role: "user",
@@ -37,65 +25,36 @@ export async function analyseMetClaude(imageBuffer: Buffer): Promise<AnalyseResu
           },
           {
             type: "text",
-            text: `You are a professional real estate photography expert analyzing a vacation rental photo.
+            text: `You are analyzing a vacation rental photo.
 
-Analyze this photo and respond with ONLY valid JSON (no markdown, no code blocks, no explanation):
+Respond with ONLY valid JSON (no markdown, no code blocks):
 
 {
   "ruimte": "woonkamer|keuken|eetgedeelte|slaapkamer|badkamer|buitenruimte|exterieur|overig",
   "overgeslagen": false,
   "overslaanReden": null,
-  "criteria": {
-    "orientatie": true,
-    "hoek": true,
-    "compositie": true,
-    "kleur": true,
-    "rommel": true,
-    "belichting": true,
-    "rimpels": true,
-    "enscenering": true,
-    "opschaling": true,
-    "lucht": true
-  },
   "editPrompt": ""
 }
 
-Criteria meanings (true = already good, false = needs improvement):
-- orientatie: photo is correctly oriented (not rotated/upside down)
-- hoek: camera angle and perspective are good (straight walls, no keystone distortion)
-- compositie: composition is well-framed (rule of thirds, good cropping)
-- kleur: colors and white balance look natural and correct
-- rommel: room is clean and clutter-free
-- belichting: lighting is bright, even, and welcoming
-- rimpels: no visible wrinkles in bedding/curtains/fabric (set true if not applicable)
-- enscenering: room has at least some furniture and basic accessories (set true if room has furniture — only false if room is completely empty or nearly bare)
-- opschaling: image is sharp and high-resolution (not blurry or low-res)
-- lucht: sky is blue and clear (set true if not an outdoor/exterior photo)
-
 Rules:
-- Set "overgeslagen": true ONLY if this cannot be identified as an interior/exterior room photo (e.g. a document, portrait, abstract close-up, or completely unusable photo). Set overslaanReden to a brief Dutch explanation.
-- For editPrompt: write a detailed English instruction for an AI image editor. Start with "Professional Airbnb listing photo of a [room type]:". Address ONLY the issues where criteria are false. Always end with the PRESERVATION BLOCK (see below).
-- STAGING RULES (only if enscenering=false): ONLY add very small decorative items: a book or magazine on a table, a small vase with flowers, a small plant. NEVER add televisions, large lamps, ceiling lights, large furniture, electronics, or any object larger than 30cm. If the room already has furniture and some accessories, set enscenering=true.
-- PRESERVATION BLOCK — always append this verbatim at the end of editPrompt: "ABSOLUTE RULES: (1) Do NOT change wall colors — preserve the exact wall color including warm or cool undertones. (2) Do NOT change the color temperature or mood — keep warm tones warm and cool tones cool. (3) Do NOT change the color of ANY individual element: rugs must stay their original color (dark jute stays dark, light stays light), sofas stay their color, cushions stay their color, floors stay their color. (4) Do NOT add televisions, large appliances, ceiling fixtures, large lamps, or any large furniture. (5) Do NOT remove or relocate existing furniture or rugs. (6) Only adjust overall brightness/exposure minimally if the room looks dark. (7) The final photo must look like the exact same room photographed by a professional — same colors, same furniture, same rug, just better lit and sharper. Photorealistic photography, not CGI."
-- If ALL criteria are already true, write editPrompt as: "Improve the technical quality of this [room type] photo only: slightly increase brightness if the room appears dark, improve sharpness slightly. ABSOLUTE RULES: Do NOT change any colors, temperature, furniture, or room layout. No additions, no removals. The result must look identical to the original but slightly brighter and sharper. Photorealistic result."`,
+- Set "overgeslagen": true ONLY if this is not a room photo (e.g. a document, close-up of a face, blurry unusable image). Set overslaanReden in Dutch.
+- For editPrompt: write one clear English instruction. Start with "Professional Airbnb photo of a [room type]:". The goal is bright, sharp, and clean. End with the RULES block.
+- RULES block to append verbatim: "STRICT RULES: Make the photo brighter and sharper. Do NOT add any objects, furniture, televisions, lamps, or decorations. Do NOT remove existing furniture. Do NOT change any colors. Keep the exact same room layout. Photorealistic result — this must look like the same room, just better lit and sharper."`,
           },
         ],
       },
     ],
   });
 
-  const text =
-    response.content[0].type === "text" ? response.content[0].text.trim() : "";
+  const text = response.content[0].type === "text" ? response.content[0].text.trim() : "";
 
   try {
-    // Strip any accidental markdown code fences
     const clean = text.replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
     const result = JSON.parse(clean);
 
     if (result.overgeslagen) {
       return {
         ruimte: "overig",
-        criteria: {},
         editPrompt: "",
         overgeslagen: true,
         overslaanReden: result.overslaanReden || "Foto niet herkenbaar als ruimte",
@@ -104,14 +63,12 @@ Rules:
 
     return {
       ruimte: result.ruimte || "overig",
-      criteria: result.criteria || {},
       editPrompt: result.editPrompt || "",
       overgeslagen: false,
     };
   } catch {
     return {
       ruimte: "overig",
-      criteria: {},
       editPrompt: "",
       overgeslagen: true,
       overslaanReden: "Analyse mislukt — foto overgeslagen",
