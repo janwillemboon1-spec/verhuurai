@@ -142,8 +142,8 @@ export default function FotoOptimizerPage() {
             Foto Optimizer
           </h1>
           <p className="text-text-secondary max-w-lg mx-auto leading-relaxed">
-            Upload jouw vakantieverhuur foto's. Boni verbetert ze automatisch:
-            belichting, compositie, staging, rimpels en meer.
+            Upload jouw vakantieverhuur foto's. Boni verbetert ze naar
+            5-sterren hotelkwaliteit — dezelfde standaard als Four Seasons en Marriott.
           </p>
         </div>
 
