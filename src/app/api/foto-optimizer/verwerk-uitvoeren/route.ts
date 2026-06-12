@@ -125,10 +125,11 @@ export async function POST(request: Request) {
     for (let i = 0; i < bewerkingen.length; i += 3) {
       const batch = bewerkingen.slice(i, i + 3);
 
-      // Huidig batchnummer bijhouden voor SSE
-      if (voortgang) {
+      // Altijd verse state lezen — nooit de stale `voortgang` uit begin van functie
+      const actueel = global.fotoVoortgang.get(sessieId);
+      if (actueel) {
         global.fotoVoortgang.set(sessieId, {
-          ...voortgang,
+          ...actueel,
           huidigeFoto: batch[0].volgnummer,
         });
       }
