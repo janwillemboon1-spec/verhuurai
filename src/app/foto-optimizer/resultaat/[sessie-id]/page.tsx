@@ -142,11 +142,21 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     setWaarschuwingOpen(false);
     setRegenereerBezig(true);
     setRegenereerVoortgang({ klaar: 0, totaal: metToelichting });
-    await fetch("/api/foto-optimizer/regenereer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessieId }),
-    });
+    try {
+      const res = await fetch("/api/foto-optimizer/regenereer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessieId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setRegenereerBezig(false);
+        setFout(data.error || "Regeneratie kon niet worden gestart.");
+      }
+    } catch {
+      setRegenereerBezig(false);
+      setFout("Verbinding mislukt. Probeer opnieuw.");
+    }
   };
 
   const downloadZip = async () => {

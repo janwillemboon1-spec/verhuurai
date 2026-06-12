@@ -19,11 +19,13 @@ export async function POST(request: Request) {
       .select("id, volgnummer, origineel_pad, feedback_toelichting, feedback_type")
       .eq("sessie_id", sessieId)
       .not("feedback_toelichting", "is", null)
-      .eq("is_geregenereerd", false)
+      .not("is_geregenereerd", "is", true)
       .order("volgnummer", { ascending: true })
       .limit(10);
 
     if (!bewerkingen || bewerkingen.length === 0) {
+      // Toch afsluiten zodat de polling stopt
+      await admin.from("foto_sessies").update({ regeneratie_gedaan: true }).eq("id", sessieId);
       return NextResponse.json({ ok: true, bericht: "Niets te regenereren" });
     }
 

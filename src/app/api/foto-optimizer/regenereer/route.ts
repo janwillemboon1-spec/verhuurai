@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       .select("id")
       .eq("sessie_id", sessieId)
       .not("feedback_toelichting", "is", null)
-      .eq("is_geregenereerd", false)
+      .not("is_geregenereerd", "is", true) // matcht NULL én FALSE
       .limit(10);
 
     if (!kandidaten || kandidaten.length === 0) {
