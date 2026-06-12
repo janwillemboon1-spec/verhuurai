@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verwerkMetSharp } from "@/lib/foto-optimizer/sharp-verwerking";
+import { verwerkMetSharp, corrigeerKleur } from "@/lib/foto-optimizer/sharp-verwerking";
 import { analyseMetClaude } from "@/lib/foto-optimizer/claude-analyse";
 import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
@@ -60,7 +60,9 @@ async function verwerkEenFoto(
   let openaiGelukt = true;
 
   try {
-    resultBuffer = await bewerkMetOpenAI(sharpBuffer, analyse.editPrompt, isLandscape);
+    const openaiBuffer = await bewerkMetOpenAI(sharpBuffer, analyse.editPrompt, isLandscape);
+    // Kleurcorrectie: corrigeer 60% van de globale toonverschuiving terug naar origineel
+    resultBuffer = await corrigeerKleur(origineelBuffer, openaiBuffer);
   } catch (openaiErr) {
     console.error(`OpenAI fout foto ${bewerking.volgnummer}:`, openaiErr);
     // Fallback: Sharp-resultaat gebruiken
