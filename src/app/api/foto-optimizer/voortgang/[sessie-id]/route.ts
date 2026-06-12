@@ -1,16 +1,41 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
 
-declare global {
-  var fotoVoortgang: Map<string, FotoVoortgang>;
-}
-
 export async function GET(
   request: Request,
   { params }: { params: { "sessie-id": string } }
 ) {
   const sessieId = params["sessie-id"];
   const encoder = new TextEncoder();
+
+  const haalVanDb = async (): Promise<FotoVoortgang | null> => {
+    try {
+      const admin = createAdminClient();
+      const { data: sessie } = await admin
+        .from("foto_sessies")
+        .select("status, aantal_fotos")
+        .eq("id", sessieId)
+        .single();
+      if (!sessie) return null;
+
+      const { data: bewerkingen } = await admin
+        .from("foto_bewerkingen")
+        .select("status")
+        .eq("sessie_id", sessieId);
+
+      return {
+        sessieId,
+        totaal: sessie.aantal_fotos || 0,
+        klaar: bewerkingen?.filter(b => b.status === "klaar").length || 0,
+        overgeslagen: bewerkingen?.filter(b => b.status === "overgeslagen").length || 0,
+        fout: bewerkingen?.filter(b => b.status === "fout").length || 0,
+        huidigeFoto: null,
+        status: sessie.status as FotoVoortgang["status"],
+      };
+    } catch {
+      return null;
+    }
+  };
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -20,52 +45,13 @@ export async function GET(
         } catch {}
       };
 
-      // Haal voortgang op uit DB als memory leeg is (bijv. na server restart)
-      const haalVanDb = async (): Promise<FotoVoortgang | null> => {
-        try {
-          const admin = createAdminClient();
-          const { data: sessie } = await admin
-            .from("foto_sessies")
-            .select("status, aantal_fotos")
-            .eq("id", sessieId)
-            .single();
-          if (!sessie) return null;
-
-          const { data: bewerkingen } = await admin
-            .from("foto_bewerkingen")
-            .select("status")
-            .eq("sessie_id", sessieId);
-
-          return {
-            sessieId,
-            totaal: sessie.aantal_fotos || 0,
-            klaar: bewerkingen?.filter(b => b.status === "klaar").length || 0,
-            overgeslagen: bewerkingen?.filter(b => b.status === "overgeslagen").length || 0,
-            fout: bewerkingen?.filter(b => b.status === "fout").length || 0,
-            huidigeFoto: null,
-            status: sessie.status as FotoVoortgang["status"],
-          };
-        } catch {
-          return null;
-        }
-      };
-
       let ticks = 0;
 
       const interval = setInterval(async () => {
         ticks++;
 
-        let voortgang = global.fotoVoortgang?.get(sessieId);
-
-        // DB-fallback elke 5 seconden of als memory leeg is
-        if (!voortgang || ticks % 5 === 0) {
-          const vanDb = await haalVanDb();
-          if (!voortgang && vanDb) voortgang = vanDb;
-          // Sync memory vanuit DB als status klaar/fout
-          if (vanDb && (vanDb.status === "klaar" || vanDb.status === "fout")) {
-            voortgang = vanDb;
-          }
-        }
+        // DB is altijd de bron van waarheid — geen afhankelijkheid van global state
+        const voortgang = await haalVanDb();
 
         if (voortgang) {
           send(voortgang);
@@ -81,7 +67,7 @@ export async function GET(
           clearInterval(interval);
           try { controller.close(); } catch {}
         }
-      }, 1000);
+      }, 2000); // elke 2 seconden DB pollen
 
       request.signal.addEventListener("abort", () => {
         clearInterval(interval);
