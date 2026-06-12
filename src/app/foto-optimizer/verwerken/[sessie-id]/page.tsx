@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
 
@@ -97,7 +98,19 @@ export default function VerwerkingPage({
       <div className="max-w-lg mx-auto w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <BoniAvatar size={90} animate={!isKlaar} className="mx-auto mb-4" />
+          {isKlaar ? (
+            <BoniAvatar size={90} animate className="mx-auto mb-4" />
+          ) : (
+            <div className="mx-auto mb-4 w-24 h-24 relative">
+              <Image
+                src="/boni-schilder-nobg.png"
+                alt="Boni aan het schilderen"
+                fill
+                className="object-contain"
+                style={{ animation: "gentle-bob 2s ease-in-out infinite" }}
+              />
+            </div>
+          )}
           <h1 className="font-display text-3xl text-primary mb-2">
             {isKlaar ? "Klaar! 🎉" : "Boni is aan het werk..."}
           </h1>
