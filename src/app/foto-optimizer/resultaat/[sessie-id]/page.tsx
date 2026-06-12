@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { BoniAvatar } from "@/components/BoniAvatar";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
 interface Bewerking {
   id: string;
@@ -51,7 +52,6 @@ export default function ResultaatPage({
   const [laden, setLaden] = useState(true);
   const [fout, setFout] = useState<string | null>(null);
   // Per foto: true = toon bewerkt (na), false = toon origineel (voor)
-  const [toonNa, setToonNa] = useState<Record<string, boolean>>({});
   const [zipLaden, setZipLaden] = useState(false);
 
   useEffect(() => {
@@ -61,10 +61,6 @@ export default function ResultaatPage({
         if (data.error) { setFout(data.error); return; }
         setSessie(data.sessie);
         setBewerkingen(data.bewerkingen);
-        // Standaard: toon bewerkte versie
-        const initieel: Record<string, boolean> = {};
-        data.bewerkingen.forEach((b: Bewerking) => { initieel[b.id] = true; });
-        setToonNa(initieel);
       })
       .catch(() => setFout("Kon resultaten niet laden."))
       .finally(() => setLaden(false));
@@ -171,75 +167,28 @@ export default function ResultaatPage({
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {fotos.map(foto => {
-                const isNa = toonNa[foto.id] ?? true;
-                const fotoUrl = isNa ? foto.bewerktUrl : foto.origineelUrl;
-
-                return (
-                  <div key={foto.id} className="card overflow-hidden">
-                    {/* Foto */}
-                    <div className="relative aspect-[4/3] bg-border overflow-hidden">
-                      {fotoUrl ? (
-                        <img
-                          src={fotoUrl}
-                          alt={`Foto ${foto.volgnummer}`}
-                          className="w-full h-full object-cover transition-opacity duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-text-secondary text-sm">
-                          Geen afbeelding
-                        </div>
-                      )}
-
-                      {/* Voor/Na badge */}
-                      <div className="absolute top-2 left-2">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                          isNa ? "bg-success text-white" : "bg-primary/80 text-white"
-                        }`}>
-                          {isNa ? "NA" : "VOOR"}
-                        </span>
-                      </div>
-
-                      {/* Fotonummer */}
-                      <div className="absolute top-2 right-2">
-                        <span className="text-xs bg-black/50 text-white px-2 py-1 rounded-full">
-                          #{foto.volgnummer}
-                        </span>
-                      </div>
+              {fotos.map(foto => (
+                <div key={foto.id} className="card overflow-hidden">
+                  {foto.origineelUrl && foto.bewerktUrl ? (
+                    <BeforeAfterSlider
+                      voorUrl={foto.origineelUrl}
+                      naUrl={foto.bewerktUrl}
+                      alt={`Foto ${foto.volgnummer}`}
+                    />
+                  ) : (
+                    <div className="aspect-[3/2] bg-border flex items-center justify-center text-text-secondary text-sm">
+                      Geen afbeelding
                     </div>
-
-                    {/* Toggle + info */}
-                    <div className="p-3 space-y-2">
-                      {/* Voor/Na toggle */}
-                      <div className="flex rounded-lg overflow-hidden border border-border text-sm font-semibold">
-                        <button
-                          onClick={() => setToonNa(p => ({ ...p, [foto.id]: false }))}
-                          className={`flex-1 py-1.5 transition-colors ${
-                            !isNa ? "bg-primary text-white" : "bg-surface text-text-secondary hover:bg-border"
-                          }`}
-                        >
-                          Voor
-                        </button>
-                        <button
-                          onClick={() => setToonNa(p => ({ ...p, [foto.id]: true }))}
-                          className={`flex-1 py-1.5 transition-colors ${
-                            isNa ? "bg-success text-white" : "bg-surface text-text-secondary hover:bg-border"
-                          }`}
-                        >
-                          Na
-                        </button>
-                      </div>
-
-                      {/* Ruimte label */}
-                      {foto.ruimte && (
-                        <p className="text-xs text-text-secondary">
-                          {RUIMTE_LABELS[foto.ruimte] || foto.ruimte}
-                        </p>
-                      )}
+                  )}
+                  {foto.ruimte && (
+                    <div className="px-3 py-2">
+                      <p className="text-xs text-text-secondary">
+                        {RUIMTE_LABELS[foto.ruimte] || foto.ruimte} · #{foto.volgnummer}
+                      </p>
                     </div>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         ))}
