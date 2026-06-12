@@ -83,7 +83,10 @@ export default function FotoOptimizerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ naam: naam.trim(), email: email.trim(), fotos: fotoMeta }),
       });
-      if (!startRes.ok) throw new Error("Sessie aanmaken mislukt");
+      if (!startRes.ok) {
+        const body = await startRes.json().catch(() => ({}));
+        throw new Error(`Stap 1 mislukt (${startRes.status}): ${body?.error || "onbekend"}`);
+      }
       const { sessieId, uploadTokens } = await startRes.json();
 
       // Stap 2: foto's uploaden naar Supabase Storage (3 tegelijk)
@@ -100,7 +103,7 @@ export default function FotoOptimizerPage() {
               .uploadToSignedUrl(t.pad, t.token, foto.bestand, {
                 contentType: foto.bestand.type,
               });
-            if (error) throw new Error(`Upload mislukt: ${error.message}`);
+            if (error) throw new Error(`Stap 2 mislukt (foto ${t.volgnummer}): ${error.message}`);
             klaar++;
             setVoortgang(Math.round((klaar / geldigeFotos.length) * 100));
           })
@@ -113,13 +116,17 @@ export default function FotoOptimizerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessieId }),
       });
-      if (!stripeRes.ok) throw new Error("Stripe sessie aanmaken mislukt");
+      if (!stripeRes.ok) {
+        const body = await stripeRes.json().catch(() => ({}));
+        throw new Error(`Stap 3 mislukt (${stripeRes.status}): ${body?.error || "onbekend"}`);
+      }
       const { stripeUrl } = await stripeRes.json();
 
       window.location.href = stripeUrl;
     } catch (err) {
-      console.error(err);
-      setFout("Er ging iets mis. Probeer het opnieuw.");
+      const msg = err instanceof Error ? err.message : "Onbekende fout";
+      console.error("Foto Optimizer fout:", msg);
+      setFout(`Er ging iets mis: ${msg}`);
       setUploaden(false);
     }
   };
