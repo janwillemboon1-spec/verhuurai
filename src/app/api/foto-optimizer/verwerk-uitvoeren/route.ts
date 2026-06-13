@@ -91,13 +91,18 @@ async function verwerkEenFoto(
     throw new Error(`Upload bewerkt mislukt: ${uploadError.message}`);
   }
 
-  // DB updaten
+  // Eerst bewerkt_pad opslaan (SSE gebruikt dit als completion indicator)
+  // Dan volledige status-update — als deze faalt, detecteert SSE via bewerkt_pad
+  await admin
+    .from("foto_bewerkingen")
+    .update({ bewerkt_pad: bewerktPad })
+    .eq("id", bewerking.id);
+
   await admin
     .from("foto_bewerkingen")
     .update({
       status: "klaar",
       ruimte: analyse.ruimte,
-      bewerkt_pad: bewerktPad,
       analyse_json: {
         ruimte: analyse.ruimte,
         editPrompt: analyse.editPrompt,

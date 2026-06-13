@@ -20,16 +20,19 @@ export async function GET(
 
       const { data: bewerkingen } = await admin
         .from("foto_bewerkingen")
-        .select("status")
+        .select("status, bewerkt_pad")
         .eq("sessie_id", sessieId);
 
-      const klaar = bewerkingen?.filter(b => b.status === "klaar").length || 0;
-      const overgeslagen = bewerkingen?.filter(b => b.status === "overgeslagen").length || 0;
-      const fout = bewerkingen?.filter(b => b.status === "fout").length || 0;
       const totaal = sessie.aantal_fotos || 0;
 
-      // Als alle foto's verwerkt zijn maar sessie nog niet op klaar staat:
-      // fix dit in de DB en stuur klaar terug zodat de client kan doorverwijzen
+      // Een foto telt als klaar als status="klaar" OF bewerkt_pad gevuld is
+      // (bewerkt_pad wordt gezet bij upload, zelfs als de status-update daarna faalt)
+      const klaar = bewerkingen?.filter(b =>
+        b.status === "klaar" || (b.bewerkt_pad !== null && b.bewerkt_pad !== undefined)
+      ).length || 0;
+      const overgeslagen = bewerkingen?.filter(b => b.status === "overgeslagen").length || 0;
+      const fout = bewerkingen?.filter(b => b.status === "fout" && !b.bewerkt_pad).length || 0;
+
       const alleKlaar = totaal > 0 && (klaar + overgeslagen + fout) >= totaal;
       let status = sessie.status as FotoVoortgang["status"];
 
