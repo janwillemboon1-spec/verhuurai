@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
+import { bewerkMetReplicate } from "@/lib/foto-optimizer/replicate-bewerking";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       : basisPrompt;
 
     // OpenAI bewerking
-    const resultBuffer = await bewerkMetOpenAI(sharpBuffer, editPrompt, isLandscape);
+    const resultBuffer = await bewerkMetReplicate(sharpBuffer, editPrompt);
 
     // Nieuw pad (herverwerkt, admin of gebruiker)
     const sessieId = bewerking.sessie_id;

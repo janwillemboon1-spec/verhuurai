@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { analyseMetClaude } from "@/lib/foto-optimizer/claude-analyse";
-import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
+import { bewerkMetReplicate } from "@/lib/foto-optimizer/replicate-bewerking";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
 
 export const maxDuration = 600; // 10 minuten
@@ -70,7 +70,7 @@ async function verwerkEenFoto(
   let openaiGelukt = true;
 
   try {
-    resultBuffer = await bewerkMetOpenAI(sharpBuffer, analyse.editPrompt, isLandscape);
+    resultBuffer = await bewerkMetReplicate(sharpBuffer, analyse.editPrompt);
   } catch (openaiErr) {
     console.error(`OpenAI fout foto ${bewerking.volgnummer}:`, openaiErr);
     // Fallback: Sharp-resultaat gebruiken

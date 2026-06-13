@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
+import { bewerkMetReplicate } from "@/lib/foto-optimizer/replicate-bewerking";
 
 export const maxDuration = 600;
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         const basisPrompt = origineelPrompt || `Transform this vacation rental photo into a 5-star hotel quality photograph: ${REGELS_BLOK}`;
         const editPrompt = `${basisPrompt} ADDITIONAL CORRECTION FOR THIS SPECIFIC PHOTO: "${bewerking.feedback_toelichting}". Apply this correction specifically for this photo.`;
 
-        const resultBuffer = await bewerkMetOpenAI(sharpBuffer, editPrompt, isLandscape);
+        const resultBuffer = await bewerkMetReplicate(sharpBuffer, editPrompt);
 
         // Opslaan op nieuw pad (cache busting via _r suffix)
         const bewerktPad = `${sessieId}/${String(bewerking.volgnummer).padStart(3, "0")}_bewerkt_r.png`;

@@ -21,6 +21,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.54.0",
+    "replicate": "^1.4.0",
     "resend": "^3.5.0",
     "sharp": "^0.35.1",
     "stripe": "^16.0.0",

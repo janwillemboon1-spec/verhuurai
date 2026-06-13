@@ -115,7 +115,7 @@ export async function analyseMetClaude(
 
 Regels:
 - Stel "overgeslagen" in op true ALLEEN als dit geen bruikbare ruimtefoto is (bijv. document, gezicht, volledig wazige foto). Geef overslaanReden in het Nederlands.
-- Schrijf in editPrompt een KORTE Engelstalige instructie (max 2 zinnen) specifiek voor DEZE foto. Begin met "Optimize this vacation rental photo of a [room type]:". Beschrijf alleen wat op DEZE specifieke foto verbeterd kan worden aan licht, kleur, scherpte of perspectief. Geen aanhalingstekens in de tekst gebruiken.`,
+- Schrijf in editPrompt een BESCHRIJVENDE Engelstalige prompt (1-2 zinnen) voor een AI diffusion model. Beschrijf hoe de IDEALE versie van deze foto eruitziet. Begin altijd met "Professional luxury real estate photograph of a [room type],". Voeg toe wat specifiek beter kan op DEZE foto: bijv. "bright and airy", "perfect white balance", "crisp sharp details", "warm natural lighting". Gebruik nooit instructiezinnen zoals "fix" of "improve" — alleen beschrijvingen. Geen aanhalingstekens in de tekst gebruiken.`,
           },
         ],
       },
