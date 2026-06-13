@@ -64,10 +64,22 @@ async function verwerkEenFoto(
     return null;
   }
 
-  // Stap 3: Sharp-resultaat opslaan (geen AI-bewerking bij automatische verwerking)
-  const resultBuffer = sharpBuffer;
-  const bewerktPad = `${sessieId}/${String(bewerking.volgnummer).padStart(3, "0")}_bewerkt.jpg`;
-  const contentType = "image/jpeg";
+  // Stap 3: gpt-image-1 foto-correctie
+  let resultBuffer: Buffer;
+  let aiGelukt = true;
+
+  try {
+    const { bewerkMetOpenAI } = await import("@/lib/foto-optimizer/openai-bewerking");
+    resultBuffer = await bewerkMetOpenAI(sharpBuffer, analyse.editPrompt, isLandscape);
+  } catch (aiErr) {
+    console.error(`gpt-image-1 fout foto ${bewerking.volgnummer}:`, aiErr);
+    resultBuffer = sharpBuffer;
+    aiGelukt = false;
+  }
+
+  const ext = aiGelukt ? "png" : "jpg";
+  const bewerktPad = `${sessieId}/${String(bewerking.volgnummer).padStart(3, "0")}_bewerkt.${ext}`;
+  const contentType = aiGelukt ? "image/png" : "image/jpeg";
 
   const { error: uploadError } = await admin.storage
     .from("foto-bewerkt")
@@ -91,6 +103,8 @@ async function verwerkEenFoto(
       ruimte: analyse.ruimte,
       analyse_json: {
         ruimte: analyse.ruimte,
+        editPrompt: analyse.editPrompt,
+        aiGelukt,
       },
       klaar_op: new Date().toISOString(),
     })
