@@ -14,6 +14,9 @@ export interface AnalyseResultaat {
 export const FOTO_CORRECTIE_PROMPT = `REAL ESTATE PHOTO CORRECTION — professional post-processing only, not image generation.
 
 Apply ONLY these technical corrections a professional photographer applies in Lightroom or Capture One:
+- Orientation: straighten any tilt or rotation so the horizon is perfectly level
+- Angle & perspective: correct keystone distortion so vertical lines are straight and walls do not converge
+- Composition: if framing is awkward, apply a subtle crop to improve balance while keeping the room fully visible
 - Exposure: correct if too dark or overexposed
 - White balance: neutralize color casts (yellow, blue, green tints)
 - Clarity and sharpness: slight increase for professional crispness

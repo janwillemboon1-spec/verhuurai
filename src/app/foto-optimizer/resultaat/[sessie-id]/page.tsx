@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { HerverwerkModal } from "@/components/HerverwerkModal";
 
 interface Bewerking {
   id: string;
@@ -59,7 +60,6 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
 
   // Herverwerk state (per foto)
   const [herverwerkModal, setHerverwerkModal] = useState<string | null>(null);
-  const [herverwerkInstructie, setHerverwerkInstructie] = useState("");
   const [herverwerkBezig, setHerverwerkBezig] = useState<string | null>(null); // bewerkingId
   const [bewerktUrls, setBewerktUrls] = useState<Record<string, string>>({});
 
@@ -163,7 +163,7 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     });
   };
 
-  const startHerverwerk = async () => {
+  const startHerverwerk = async (prompt: string) => {
     if (!herverwerkModal) return;
     const id = herverwerkModal;
     setHerverwerkModal(null);
@@ -172,7 +172,7 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
       const res = await fetch("/api/foto-optimizer/herverwerk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bewerkingId: id, instructie: herverwerkInstructie }),
+        body: JSON.stringify({ bewerkingId: id, instructie: prompt }),
       });
       const data = await res.json();
       if (res.ok && data.nieuweUrl) {
@@ -187,7 +187,6 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
       alert("Verbinding mislukt.");
     }
     setHerverwerkBezig(null);
-    setHerverwerkInstructie("");
   };
 
   const startRegeneratie = async () => {
@@ -336,7 +335,7 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
                         </button>
                         {/* Herverwerk knop */}
                         <button
-                          onClick={() => { setHerverwerkModal(foto.id); setHerverwerkInstructie(""); }}
+                          onClick={() => setHerverwerkModal(foto.id)}
                           disabled={alHerverwerkt || bezig}
                           title={alHerverwerkt ? "Al herverwerkt" : "Herverwerken"}
                           className={`text-xs px-2 py-1 rounded-lg transition-colors ${
@@ -460,36 +459,10 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
 
       {/* Herverwerk modal */}
       {herverwerkModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setHerverwerkModal(null)}>
-          <div className="card p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="font-display text-xl text-primary">Foto herverwerken 🔄</h3>
-            <p className="text-sm text-text-secondary">
-              Boni verwerkt deze foto opnieuw met hetzelfde basisproces.
-              Voeg optioneel een instructie toe om het resultaat bij te sturen.
-            </p>
-            <div>
-              <label className="block text-sm font-semibold text-primary mb-1.5">
-                Instructie <span className="text-text-secondary font-normal">(optioneel)</span>
-              </label>
-              <textarea
-                value={herverwerkInstructie}
-                onChange={e => setHerverwerkInstructie(e.target.value)}
-                placeholder="Bijv. 'maak de foto helderder' of 'verwijder de rommel op de tafel'..."
-                className="textarea h-20 w-full"
-                autoFocus
-              />
-            </div>
-            <p className="text-xs text-warning bg-warning/10 rounded-lg p-3">
-              ⚠ Dit kan niet ongedaan worden gemaakt. Je kunt deze foto daarna niet meer zelf herverwerken.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setHerverwerkModal(null)} className="btn-secondary flex-1">Annuleren</button>
-              <button onClick={startHerverwerk} className="btn-primary flex-1">
-                Herverwerken (~45s)
-              </button>
-            </div>
-          </div>
-        </div>
+        <HerverwerkModal
+          onBevestig={(prompt) => startHerverwerk(prompt)}
+          onAnnuleer={() => setHerverwerkModal(null)}
+        />
       )}
 
       {/* Feedback modal */}
