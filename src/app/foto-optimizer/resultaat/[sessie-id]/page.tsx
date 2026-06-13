@@ -155,7 +155,7 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
   };
 
   const geefPositiefOordeel = async (bewerkingId: string) => {
-    setPositief(prev => new Set([...prev, bewerkingId]));
+    setPositief(prev => new Set(Array.from(prev).concat(bewerkingId)));
     await fetch("/api/foto-optimizer/positief", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
