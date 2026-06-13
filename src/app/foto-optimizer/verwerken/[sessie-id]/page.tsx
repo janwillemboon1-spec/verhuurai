@@ -34,7 +34,8 @@ export default function VerwerkingPage({
   }, []);
 
   // Gesimuleerde voortgangsbalk op basis van geschatte verwerkingstijd
-  const SECONDEN_PER_FOTO = 55;
+  // Sharp-only verwerking: ~5 seconden per foto + 20% marge = 6 seconden
+  const SECONDEN_PER_FOTO = 6;
   useEffect(() => {
     if (!voortgang || voortgang.status === "klaar" || voortgang.status === "fout") return;
     const totaalSeconden = Math.max(voortgang.totaal, 1) * SECONDEN_PER_FOTO;
@@ -88,7 +89,7 @@ export default function VerwerkingPage({
 
         if (update.status === "klaar") {
           es?.close();
-          setTimeout(() => router.push(`/foto-optimizer/resultaat/${sessieId}`), 1200);
+          setTimeout(() => router.push(`/foto-optimizer/resultaat/${sessieId}`), 500);
         } else if (update.status === "fout") {
           es?.close();
           setFout("Er ging iets mis tijdens de verwerking. Neem contact op via info@hostboni.com.");
