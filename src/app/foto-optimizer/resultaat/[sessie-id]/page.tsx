@@ -17,6 +17,7 @@ interface Bewerking {
   feedback_toelichting: string | null;
   is_geregenereerd: boolean;
   gebruiker_herverwerkt_op: string | null;
+  positief_beoordeeld: boolean;
 }
 
 interface Sessie {
@@ -53,6 +54,9 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
   const [feedbackOpslaan, setFeedbackOpslaan] = useState(false);
   const [lokaalFeedback, setLokaalFeedback] = useState<Record<string, { type: string; toelichting: string }>>({});
 
+  // Positieve beoordelingen (lokaal bijhouden voor directe UI-feedback)
+  const [positief, setPositief] = useState<Set<string>>(new Set());
+
   // Herverwerk state (per foto)
   const [herverwerkModal, setHerverwerkModal] = useState<string | null>(null);
   const [herverwerkInstructie, setHerverwerkInstructie] = useState("");
@@ -71,6 +75,11 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
         if (data.error) { setFout(data.error); return; }
         setSessie(data.sessie);
         setBewerkingen(data.bewerkingen);
+        // Bestaande positieve beoordelingen inladen
+        const positiefSet = new Set<string>(
+          data.bewerkingen.filter((b: Bewerking) => b.positief_beoordeeld).map((b: Bewerking) => b.id)
+        );
+        setPositief(positiefSet);
         // Bestaande feedback inladen
         const bestaand: Record<string, { type: string; toelichting: string }> = {};
         data.bewerkingen.forEach((b: Bewerking) => {
@@ -143,6 +152,15 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     } finally {
       setFeedbackOpslaan(false);
     }
+  };
+
+  const geefPositiefOordeel = async (bewerkingId: string) => {
+    setPositief(prev => new Set([...prev, bewerkingId]));
+    await fetch("/api/foto-optimizer/positief", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bewerkingId }),
+    });
   };
 
   const startHerverwerk = async () => {
@@ -303,6 +321,19 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
                         {alHerverwerkt && <span className="ml-1 text-primary font-semibold">· Herverwerkt</span>}
                       </p>
                       <div className="flex items-center gap-1 shrink-0">
+                        {/* Positief oordeel knop */}
+                        <button
+                          onClick={() => geefPositiefOordeel(foto.id)}
+                          disabled={positief.has(foto.id)}
+                          title={positief.has(foto.id) ? "Goed bewerkt ✓" : "Goed bewerkt"}
+                          className={`text-xs px-2 py-1 rounded-lg transition-colors ${
+                            positief.has(foto.id)
+                              ? "bg-success/15 text-success cursor-default"
+                              : "text-text-secondary hover:text-success hover:bg-success/10"
+                          }`}
+                        >
+                          👍
+                        </button>
                         {/* Herverwerk knop */}
                         <button
                           onClick={() => { setHerverwerkModal(foto.id); setHerverwerkInstructie(""); }}

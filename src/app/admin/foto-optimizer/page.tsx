@@ -12,7 +12,7 @@ export default async function AdminFotoOptimizerPage() {
 
   const admin = createAdminClient();
 
-  const [{ data: sessies }, { data: feedbackLijst }] = await Promise.all([
+  const [{ data: sessies }, { data: feedbackLijst }, { data: trainingData }] = await Promise.all([
     admin
       .from("foto_sessies")
       .select("id, naam, email, status, aantal_fotos, totaal_prijs, aangemaakt_op, klaar_op")
@@ -24,6 +24,12 @@ export default async function AdminFotoOptimizerPage() {
       .eq("feedback_type", "fout_van_boni")
       .not("feedback_toelichting", "is", null)
       .order("feedback_op", { ascending: false })
+      .limit(50),
+    admin
+      .from("foto_bewerkingen")
+      .select("id, sessie_id, volgnummer, ruimte, origineel_pad, bewerkt_pad")
+      .eq("positief_beoordeeld", true)
+      .order("id", { ascending: false })
       .limit(50),
   ]);
 
@@ -47,6 +53,7 @@ export default async function AdminFotoOptimizerPage() {
             { label: "Klaar", aantal: sessies?.filter(s => s.status === "klaar").length ?? 0, kleur: "text-success" },
             { label: "Bezig", aantal: sessies?.filter(s => s.status === "verwerking").length ?? 0, kleur: "text-warning" },
             { label: "Fout van Boni", aantal: feedbackLijst?.length ?? 0, kleur: "text-danger" },
+            { label: "Goed bewerkt 👍", aantal: trainingData?.length ?? 0, kleur: "text-success" },
           ].map(({ label, aantal, kleur }) => (
             <div key={label} className="card p-4 text-center">
               <p className={`text-3xl font-bold ${kleur}`}>{aantal}</p>
@@ -92,6 +99,37 @@ export default async function AdminFotoOptimizerPage() {
                   >
                     Bekijk sessie →
                   </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trainingdata — positief beoordeeld */}
+        {trainingData && trainingData.length > 0 && (
+          <div className="card overflow-hidden">
+            <div className="p-5 border-b border-border">
+              <h2 className="font-display text-xl text-primary">Trainingdata — goed bewerkt ({trainingData.length})</h2>
+              <p className="text-sm text-text-secondary mt-1">Foto's die door gebruikers als goed bewerkt zijn gemarkeerd.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4">
+              {trainingData.map(foto => (
+                <div key={foto.id} className="space-y-1">
+                  {foto.origineel_pad && (
+                    <img
+                      src={`${supabaseUrl}/storage/v1/object/public/foto-originelen/${foto.origineel_pad}`}
+                      alt="voor"
+                      className="w-full aspect-[3/2] object-cover rounded-lg"
+                    />
+                  )}
+                  {foto.bewerkt_pad && (
+                    <img
+                      src={`${supabaseUrl}/storage/v1/object/public/foto-bewerkt/${foto.bewerkt_pad}`}
+                      alt="na"
+                      className="w-full aspect-[3/2] object-cover rounded-lg ring-2 ring-success/50"
+                    />
+                  )}
+                  <p className="text-xs text-text-secondary text-center">{foto.ruimte || "overig"}</p>
                 </div>
               ))}
             </div>
