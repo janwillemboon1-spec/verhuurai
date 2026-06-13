@@ -34,8 +34,7 @@ export default function VerwerkingPage({
   }, []);
 
   // Gesimuleerde voortgangsbalk op basis van geschatte verwerkingstijd
-  // 50 seconden per foto + 30% marge = 65 seconden per foto
-  const SECONDEN_PER_FOTO = 65;
+  const SECONDEN_PER_FOTO = 55;
   useEffect(() => {
     if (!voortgang || voortgang.status === "klaar" || voortgang.status === "fout") return;
     const totaalSeconden = Math.max(voortgang.totaal, 1) * SECONDEN_PER_FOTO;
