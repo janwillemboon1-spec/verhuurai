@@ -7,28 +7,92 @@ export interface AnalyseResultaat {
   editPrompt: string;
   overgeslagen: boolean;
   overslaanReden?: string;
-  gebruikteUitzondering: string | null; // "A" | "B" | "C" | "D" | "E" | null
+  gebruikteUitzondering: string | null;
 }
 
-// gebruikteUitzonderingen: set van letters die al gebruikt zijn in eerder verwerkte foto's
+const OPENAI_REGELS = `
+ROLE: World-class real estate photographer, image editor and hospitality marketer specialized in luxury vacation rentals, Airbnb Plus, Airbnb Luxe, boutique hotels and premium accommodations.
+
+GOAL: Optimize this photo for maximum appeal to potential guests, more trust and higher booking conversion.
+
+CRITICAL RULES — NEVER VIOLATE:
+- Never add furniture, decoration, plants, lighting, artwork, appliances, accessories, architectural elements, windows, doors or views
+- Never remove existing objects
+- Never move existing objects
+- Never change the room layout or architecture
+- Never change the actual size of spaces
+- Never apply virtual staging
+- Never generate elements not present in the original photo
+- If an improvement is only possible by violating these rules, do NOT make that improvement
+- It is more important to represent the property realistically than to make the photo look better
+
+QUALITY OPTIMIZATION — bring to professional real estate photography level:
+- Increase detail rendering
+- Improve textures of wood, stone, glass, metal and textile
+- Correct white balance
+- Improve dynamic range
+- Reduce noise
+- Remove compression artifacts
+- Improve sharpness naturally
+- Maintain photorealistic appearance
+- Avoid over-processing and HDR exaggeration
+
+LIGHT AND COLORS:
+- Use bright, natural light
+- Make dark spaces inviting and light
+- Maintain natural shadows
+- Avoid blown-out highlights
+- Correct color casts
+- Use fresh, neutral colors
+- Avoid oversaturation
+- Make whites look clean and bright
+- Make wood, stone and fabrics look natural
+- Target: fresh, luxurious and well-maintained appearance
+
+PERSPECTIVE AND SPATIALITY:
+- Correct lens distortion
+- Correct perspective
+- Ensure vertical lines are straight
+- Ensure walls look natural
+- Improve spatial experience without changing dimensions
+- Make the space look open and professional
+- Maintain realistic proportions
+
+COMPOSITION AND FORMAT:
+- Horizontal (landscape) presentation, 3:2 ratio preferred
+- Keep the space central in frame
+- Avoid aggressive crops
+- Show as much of the space as possible
+- Maintain natural wide-angle appearance
+
+HOSPITALITY STANDARD — the photo must radiate:
+Clean • Luxurious • Professional • Well-maintained • Welcoming • Premium • Trustworthy
+
+Comparable to: Airbnb Plus, Airbnb Luxe, boutique hotels, luxury vacation properties.
+
+AVOID: extra furniture, virtual staging, fake plants, fake lighting, CGI appearance, artificial objects, fantasy elements, doubled objects, changed layout, changed architecture, unrealistic luxury additions, excessive HDR, oversaturation, cartoon effects, AI artifacts, plastic textures, unnatural colors.
+
+QUALITY CHECK before generating — ensure NO to all:
+1. Were objects added?
+2. Were objects removed?
+3. Were objects moved?
+4. Was architecture changed?
+5. Was layout changed?
+6. Were dimensions changed?
+7. Is the photo still a realistic representation?
+
+FINAL GOAL: Transform to professional 5-star real estate photography that generates more clicks, more trust and more bookings — while representing the accommodation fully honestly and realistically.
+`.trim();
+
 export async function analyseMetClaude(
   imageBuffer: Buffer,
   gebruikteUitzonderingen: Set<string> = new Set()
 ): Promise<AnalyseResultaat> {
   const base64 = imageBuffer.toString("base64");
 
-  const gebruikteLijst = ["A", "B", "C", "D", "E"]
-    .filter(l => gebruikteUitzonderingen.has(l))
-    .map(l => `[${l}]`)
-    .join(", ");
-
-  const uitzonderingStatus = gebruikteLijst
-    ? `ALREADY USED IN THIS SESSION (do NOT apply again): ${gebruikteLijst}.`
-    : "None used yet.";
-
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1500,
+    max_tokens: 1024,
     messages: [
       {
         role: "user",
@@ -39,9 +103,7 @@ export async function analyseMetClaude(
           },
           {
             type: "text",
-            text: `You are analyzing a vacation rental photo.
-
-Respond with ONLY valid JSON (no markdown, no code blocks):
+            text: `Analyseer deze vakantieverhuur foto en geef een JSON-antwoord terug (GEEN markdown, GEEN code blocks):
 
 {
   "ruimte": "woonkamer|keuken|eetgedeelte|slaapkamer|badkamer|buitenruimte|exterieur|overig",
@@ -51,11 +113,13 @@ Respond with ONLY valid JSON (no markdown, no code blocks):
   "editPrompt": ""
 }
 
-Rules:
-- Set "overgeslagen": true ONLY if this is not a room photo (e.g. a document, close-up of a face, blurry unusable image). Set overslaanReden in Dutch.
-- Set "gebruikteUitzondering" to the letter (A/B/C/D/E) of the conditional addition you apply, or null if none.
-- For editPrompt: write one clear English instruction. Start with "Transform this vacation rental photo of a [room type] into a 5-star hotel quality photograph:". End with the RULES block below.
-- RULES block to append verbatim: "Goal: 5-star hotel photo quality — the lighting, sharpness, and polish of Four Seasons or Marriott photography. ALWAYS ALLOWED: (1) Correct camera perspective to natural standing eye-level. (2) Smooth wrinkled pillows, cushions, and bedding to look hotel-crisp. (3) Remove everyday clutter (cups, bags, clothing, cables, shoes) to make the space look guest-ready. (4) Outdoor and view photos only: replace grey/overcast sky with blue sunny sky. Never alter sky for indoor photos. CONDITIONAL ADDITIONS — each exception may only be used ONCE across the entire photo session. ${uitzonderingStatus} Only apply an exception if its required surface/furniture is already visible in the photo. Items may NEVER be placed on the floor — only on existing furniture or surfaces. [A] Kitchen counter visible AND [A] not yet used → add a wooden cutting board with a fresh tomato on the counter. [B] Pool sun loungers/outdoor lounge chairs visible AND [B] not yet used → add a brightly colored folded towel and/or a book ON those loungers. [C] Bathroom visible AND [C] not yet used → add neatly folded white towels on an existing surface. [D] Coffee table visible in living room AND [D] not yet used → add max 2 items from: small plant, flower, book, coffee mug, or wine glass — what fits the style best. [E] Balcony/terrace/garden with an existing table visible AND [E] not yet used → add one drink (wine glass, cocktail, or cold drink) on that table. Never add a table. ABSOLUTE RULES: Never add furniture, lamps, or any object not listed. Never place anything on the floor. Never move or change existing furniture, rugs, art, or accessories. Never change room layout. Never invent scenery. Never hide structural damage or stains. The result must show the exact same room — perfectly prepared. Photorealistic, not CGI."`,
+Regels:
+- Stel "overgeslagen" in op true ALLEEN als dit geen bruikbare ruimtefoto is (bijv. document, gezicht, volledig wazige foto). Geef overslaanReden in het Nederlands.
+- Genereer in editPrompt een Engelstalige instructie voor de AI-fotobewerker. Begin met "Optimize this vacation rental photo of a [room type]:". Sluit altijd af met het onderstaande REGELS-blok.
+- Schrijf in editPrompt alleen instructies voor verbeteringen die GEEN objecten toevoegen, verwijderen of verplaatsen — puur technische fotokwaliteit.
+- REGELS-blok om letterlijk toe te voegen aan het einde van editPrompt:
+
+"${OPENAI_REGELS}"`,
           },
         ],
       },

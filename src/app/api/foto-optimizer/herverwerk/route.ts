@@ -5,7 +5,7 @@ import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
-const REGELS_BLOK = `Goal: 5-star hotel photo quality — the lighting, sharpness, and polish of Four Seasons or Marriott photography. ALWAYS ALLOWED: (1) Correct camera perspective to natural standing eye-level. (2) Smooth wrinkled pillows, cushions, and bedding to look hotel-crisp. (3) Remove everyday clutter (cups, bags, clothing, cables, shoes). (4) Outdoor and view photos only: replace grey/overcast sky with blue sunny sky. NEVER: add furniture, lamps, or objects not explicitly instructed. Never place anything on the floor. Never move or change existing furniture, rugs, art, or accessories. Never change room layout. Never invent scenery. Never hide structural damage or stains. Photorealistic, not CGI.`;
+const REGELS_BLOK = `ROLE: World-class real estate photographer and image editor specialized in luxury vacation rentals and premium accommodations. GOAL: Optimize for maximum guest appeal and booking conversion. CRITICAL RULES — NEVER add furniture, decoration, plants, lighting, artwork, appliances, accessories or any objects. Never remove or move existing objects. Never change room layout, architecture or dimensions. Never apply virtual staging. Represent the property realistically. OPTIMIZE: light quality, white balance, sharpness, contrast, perspective correction, lens distortion, noise reduction, dynamic range, texture detail. TARGET: professional 5-star real estate photography — clean, luxurious, welcoming, photorealistic. Comparable to Airbnb Plus/Luxe and boutique hotel photography. Photorealistic result, not CGI.`;
 
 export async function POST(request: Request) {
   try {
