@@ -115,11 +115,7 @@ export async function analyseMetClaude(
 
 Regels:
 - Stel "overgeslagen" in op true ALLEEN als dit geen bruikbare ruimtefoto is (bijv. document, gezicht, volledig wazige foto). Geef overslaanReden in het Nederlands.
-- Genereer in editPrompt een Engelstalige instructie voor de AI-fotobewerker. Begin met "Optimize this vacation rental photo of a [room type]:". Sluit altijd af met het onderstaande REGELS-blok.
-- Schrijf in editPrompt alleen instructies voor verbeteringen die GEEN objecten toevoegen, verwijderen of verplaatsen — puur technische fotokwaliteit.
-- REGELS-blok om letterlijk toe te voegen aan het einde van editPrompt:
-
-"${OPENAI_REGELS}"`,
+- Schrijf in editPrompt een KORTE Engelstalige instructie (max 2 zinnen) specifiek voor DEZE foto. Begin met "Optimize this vacation rental photo of a [room type]:". Beschrijf alleen wat op DEZE specifieke foto verbeterd kan worden aan licht, kleur, scherpte of perspectief. Geen aanhalingstekens in de tekst gebruiken.`,
           },
         ],
       },
@@ -143,9 +139,13 @@ Regels:
       };
     }
 
+    // Voeg de standaard fotografieregels programmatisch toe (niet via Claude, om JSON-breken te voorkomen)
+    const basePrompt = result.editPrompt || `Optimize this vacation rental photo of a ${result.ruimte || "room"}:`;
+    const volledigPrompt = `${basePrompt}\n\n${OPENAI_REGELS}`;
+
     return {
       ruimte: result.ruimte || "overig",
-      editPrompt: result.editPrompt || "",
+      editPrompt: volledigPrompt,
       overgeslagen: false,
       gebruikteUitzondering: result.gebruikteUitzondering || null,
     };
