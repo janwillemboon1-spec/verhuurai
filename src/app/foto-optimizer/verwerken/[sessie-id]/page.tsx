@@ -23,13 +23,33 @@ export default function VerwerkingPage({
   const [voortgang, setVoortgang] = useState<FotoVoortgang | null>(null);
   const [fout, setFout] = useState<string | null>(null);
   const [stapIndex, setStapIndex] = useState(0);
+  const [simulatedPercent, setSimulatedPercent] = useState(0);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const startTijdRef = useRef<number | null>(null);
 
   // Roteer tekststapjes voor animatie-gevoel
   useEffect(() => {
     const t = setInterval(() => setStapIndex(i => (i + 1) % STAPPEN.length), 3000);
     return () => clearInterval(t);
   }, []);
+
+  // Gesimuleerde voortgangsbalk op basis van geschatte verwerkingstijd
+  // 50 seconden per foto + 30% marge = 65 seconden per foto
+  const SECONDEN_PER_FOTO = 65;
+  useEffect(() => {
+    if (!voortgang || voortgang.status === "klaar" || voortgang.status === "fout") return;
+    const totaalSeconden = Math.max(voortgang.totaal, 1) * SECONDEN_PER_FOTO;
+
+    const t = setInterval(() => {
+      if (!startTijdRef.current) return;
+      const verlopen = (Date.now() - startTijdRef.current) / 1000;
+      // Bereikt 90% na de geschatte tijd, zodat echte voltooiing altijd "wint"
+      const sim = Math.min(90, (verlopen / totaalSeconden) * 90);
+      setSimulatedPercent(sim);
+    }, 500);
+
+    return () => clearInterval(t);
+  }, [voortgang]);
 
   useEffect(() => {
     let es: EventSource | null = null;
@@ -55,6 +75,9 @@ export default function VerwerkingPage({
         router.replace(`/foto-optimizer/resultaat/${sessieId}`);
         return;
       }
+
+      // Simulatietimer starten
+      startTijdRef.current = Date.now();
 
       // SSE abonneren voor live voortgang
       es = new EventSource(`/api/foto-optimizer/voortgang/${sessieId}`);
@@ -88,10 +111,12 @@ export default function VerwerkingPage({
   const verwerkt = voortgang
     ? voortgang.klaar + voortgang.overgeslagen + voortgang.fout
     : 0;
-  const progressPercent = voortgang
+  const isKlaar = voortgang?.status === "klaar";
+  const actuelePercent = voortgang
     ? Math.round((verwerkt / Math.max(voortgang.totaal, 1)) * 100)
     : 0;
-  const isKlaar = voortgang?.status === "klaar";
+  // Toon het hoogste van gesimuleerd of actueel — springt naar 100% bij echte voltooiing
+  const progressPercent = isKlaar ? 100 : Math.max(Math.round(simulatedPercent), actuelePercent);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
