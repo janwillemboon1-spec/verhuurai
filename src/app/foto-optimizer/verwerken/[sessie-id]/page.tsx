@@ -154,7 +154,7 @@ export default function VerwerkingPage({
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-medium">
                 <span className="text-primary">
-                  {verwerkt} van {voortgang.totaal} foto&apos;s
+                  {voortgang.totaal} foto&apos;s worden verwerkt
                 </span>
                 <span className="text-text-secondary">{progressPercent}%</span>
               </div>
@@ -163,22 +163,6 @@ export default function VerwerkingPage({
                   className="h-full bg-accent rounded-full transition-all duration-700"
                   style={{ width: `${progressPercent}%` }}
                 />
-              </div>
-            </div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-background rounded-xl p-3">
-                <div className="text-2xl font-bold text-success">{voortgang.klaar}</div>
-                <div className="text-xs text-text-secondary mt-0.5">Bewerkt</div>
-              </div>
-              <div className="bg-background rounded-xl p-3">
-                <div className="text-2xl font-bold text-warning">{voortgang.overgeslagen}</div>
-                <div className="text-xs text-text-secondary mt-0.5">Overgeslagen</div>
-              </div>
-              <div className="bg-background rounded-xl p-3">
-                <div className="text-2xl font-bold text-text-secondary">{voortgang.totaal}</div>
-                <div className="text-xs text-text-secondary mt-0.5">Totaal</div>
               </div>
             </div>
 
