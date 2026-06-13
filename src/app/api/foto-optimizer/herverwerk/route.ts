@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { bewerkMetReplicate } from "@/lib/foto-optimizer/replicate-bewerking";
+import { bewerkMetOpenAI } from "@/lib/foto-optimizer/openai-bewerking";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
@@ -68,13 +68,12 @@ export async function POST(request: Request) {
 
     // Prompt samenstellen: origineel + eventuele instructie
     const origineelPrompt = (bewerking.analyse_json as any)?.editPrompt as string | undefined;
-    const basisPrompt = origineelPrompt || `Transform this vacation rental photo into a 5-star hotel quality photograph: ${REGELS_BLOK}`;
     const editPrompt = instructie?.trim()
-      ? `${basisPrompt} SPECIFIC INSTRUCTION: "${instructie.trim()}". Apply this as a priority correction.`
-      : basisPrompt;
+      ? `Apply ONLY this specific change to this vacation rental photo: "${instructie.trim()}". Do NOT change anything else — keep all furniture, colors, lighting, layout, and architecture exactly as in the original. Photorealistic result. ${REGELS_BLOK}`
+      : `Make minimal technical improvements to this vacation rental photo: slightly improve brightness and sharpness if needed. Keep everything else exactly as is. ${REGELS_BLOK}`;
 
     // OpenAI bewerking
-    const resultBuffer = await bewerkMetReplicate(sharpBuffer, editPrompt);
+    const resultBuffer = await bewerkMetOpenAI(sharpBuffer, editPrompt, isLandscape);
 
     // Nieuw pad (herverwerkt, admin of gebruiker)
     const sessieId = bewerking.sessie_id;

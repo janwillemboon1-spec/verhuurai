@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { analyseMetClaude } from "@/lib/foto-optimizer/claude-analyse";
-import { bewerkMetReplicate } from "@/lib/foto-optimizer/replicate-bewerking";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
 
 export const maxDuration = 600; // 10 minuten
@@ -65,23 +64,10 @@ async function verwerkEenFoto(
     return null;
   }
 
-  // Stap 3: OpenAI gpt-image-1 generatieve bewerking
-  let resultBuffer: Buffer;
-  let openaiGelukt = true;
-
-  try {
-    resultBuffer = await bewerkMetReplicate(sharpBuffer, analyse.editPrompt);
-  } catch (openaiErr) {
-    console.error(`OpenAI fout foto ${bewerking.volgnummer}:`, openaiErr);
-    // Fallback: Sharp-resultaat gebruiken
-    resultBuffer = sharpBuffer;
-    openaiGelukt = false;
-  }
-
-  // Resultaat uploaden naar foto-bewerkt bucket
-  const ext = openaiGelukt ? "png" : "jpg";
-  const bewerktPad = `${sessieId}/${String(bewerking.volgnummer).padStart(3, "0")}_bewerkt.${ext}`;
-  const contentType = openaiGelukt ? "image/png" : "image/jpeg";
+  // Stap 3: Sharp-resultaat opslaan (geen AI-bewerking bij automatische verwerking)
+  const resultBuffer = sharpBuffer;
+  const bewerktPad = `${sessieId}/${String(bewerking.volgnummer).padStart(3, "0")}_bewerkt.jpg`;
+  const contentType = "image/jpeg";
 
   const { error: uploadError } = await admin.storage
     .from("foto-bewerkt")
@@ -105,9 +91,6 @@ async function verwerkEenFoto(
       ruimte: analyse.ruimte,
       analyse_json: {
         ruimte: analyse.ruimte,
-        editPrompt: analyse.editPrompt,
-        openaiGelukt,
-        gebruikteUitzondering: analyse.gebruikteUitzondering,
       },
       klaar_op: new Date().toISOString(),
     })
