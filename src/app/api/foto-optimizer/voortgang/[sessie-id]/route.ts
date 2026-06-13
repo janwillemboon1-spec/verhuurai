@@ -36,9 +36,9 @@ export async function GET(
       const alleKlaar = totaal > 0 && (klaar + overgeslagen + fout) >= totaal;
       let status = sessie.status as FotoVoortgang["status"];
 
-      if (alleKlaar && status === "verwerking") {
+      // Zodra alle foto's een bewerkt_pad hebben: altijd klaar melden en doorverwijzen
+      if (alleKlaar && status !== "klaar" && status !== "fout") {
         status = "klaar";
-        // Fix de sessie-status in de DB
         await admin
           .from("foto_sessies")
           .update({ status: "klaar", klaar_op: new Date().toISOString() })
