@@ -60,6 +60,13 @@ export const HERVERWERK_OPTIES: HerverwerkOptie[] = [
     kans: 82,
     prompt: "Brighten dark corners and shadowed areas in the room to reveal more detail and create a more evenly lit space. Keep the overall color temperature and atmosphere natural.",
   },
+  {
+    id: "aanzicht",
+    label: "Ander aanzicht / ruimere hoek",
+    beschrijving: "Andere kijkhoek of ruimere compositie simuleren",
+    kans: 38,
+    prompt: "Recompose this room photo to show a wider, more spacious perspective. Adjust the camera angle to show more of the room — ideally a wider field of view at natural eye level. Keep all existing furniture, colors, and room elements identical, just show more of the space.",
+  },
 ];
 
 interface Props {
