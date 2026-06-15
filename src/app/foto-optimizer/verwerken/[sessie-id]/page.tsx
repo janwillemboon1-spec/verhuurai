@@ -78,6 +78,19 @@ export default function VerwerkingPage({
       // Simulatietimer starten
       startTijdRef.current = Date.now();
 
+      // Fallback polling: elke 5 seconden direct DB checken
+      // Vangt gevallen op waar SSE wegvalt of niet detecteert
+      const fallbackInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`);
+          const statusData = await statusRes.json();
+          if (statusData.sessie?.status === "klaar") {
+            clearInterval(fallbackInterval);
+            router.push(`/foto-optimizer/resultaat/${sessieId}`);
+          }
+        } catch {}
+      }, 5000);
+
       // SSE abonneren voor live voortgang
       es = new EventSource(`/api/foto-optimizer/voortgang/${sessieId}`);
       eventSourceRef.current = es;
