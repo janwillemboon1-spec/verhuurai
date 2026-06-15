@@ -12,16 +12,23 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+    if (!user) {
+      console.error("[HP Audit] Niet ingelogd — geen sessie gevonden");
+      return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+    }
 
-    const { data: abo } = await supabase
+    const { data: abo, error: aboError } = await supabase
       .from("abonnementen")
       .select("*")
       .eq("id", abonnementId)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (!abo) return NextResponse.json({ error: "Abonnement niet gevonden" }, { status: 404 });
+    if (aboError) console.error("[HP Audit] Supabase fout:", aboError.message);
+    if (!abo) {
+      console.error("[HP Audit] Abonnement niet gevonden — id:", abonnementId, "user:", user.id);
+      return NextResponse.json({ error: "Abonnement niet gevonden" }, { status: 404 });
+    }
 
     // Voorkom duplicaten: check of er al een rapport is voor deze periode
     const nu = new Date();

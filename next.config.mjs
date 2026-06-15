@@ -4,8 +4,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["sharp"],
-  experimental: { serverActions: { bodySizeLimit: "25mb" } },
+  experimental: {
+    serverActions: { bodySizeLimit: "25mb" },
+    serverComponentsExternalPackages: ["sharp"],
+  },
   async redirects() {
     return [
       {
