@@ -154,12 +154,31 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     }
   };
 
-  const geefPositiefOordeel = async (bewerkingId: string) => {
-    setPositief(prev => new Set(Array.from(prev).concat(bewerkingId)));
+  const togglePositief = async (bewerkingId: string) => {
+    const wasPositief = positief.has(bewerkingId);
+    // Optimistisch updaten
+    setPositief(prev => {
+      const nieuw = new Set(Array.from(prev));
+      wasPositief ? nieuw.delete(bewerkingId) : nieuw.add(bewerkingId);
+      return nieuw;
+    });
     await fetch("/api/foto-optimizer/positief", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bewerkingId }),
+    });
+  };
+
+  const verwijderFeedback = async (bewerkingId: string) => {
+    setLokaalFeedback(prev => {
+      const nieuw = { ...prev };
+      delete nieuw[bewerkingId];
+      return nieuw;
+    });
+    await fetch("/api/foto-optimizer/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bewerkingId, verwijder: true }),
     });
   };
 
@@ -324,14 +343,13 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
                         {alHerverwerkt && <span className="ml-1 text-primary font-semibold">· Herverwerkt</span>}
                       </p>
                       <div className="flex items-center gap-1 shrink-0">
-                        {/* Positief oordeel knop */}
+                        {/* Positief oordeel knop — toggle */}
                         <button
-                          onClick={() => geefPositiefOordeel(foto.id)}
-                          disabled={positief.has(foto.id)}
-                          title={positief.has(foto.id) ? "Goed bewerkt ✓" : "Goed bewerkt"}
+                          onClick={() => togglePositief(foto.id)}
+                          title={positief.has(foto.id) ? "Like verwijderen" : "Goed bewerkt"}
                           className={`text-xs px-2 py-1 rounded-lg transition-colors ${
                             positief.has(foto.id)
-                              ? "bg-success/15 text-success cursor-default"
+                              ? "bg-success/15 text-success hover:bg-danger/10 hover:text-danger"
                               : "text-text-secondary hover:text-success hover:bg-success/10"
                           }`}
                         >
@@ -350,21 +368,32 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
                         >
                           🔄
                         </button>
-                        {/* Feedback knop */}
+                        {/* Feedback knop + verwijder */}
                         {!sessie?.regeneratie_gedaan && (
-                          <button
-                            onClick={() => openFeedbackModal(foto.id)}
-                            title="Fout melden"
-                            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                              fb
-                                ? fb.type === "fout_van_boni"
-                                  ? "bg-danger/10 text-danger"
-                                  : "bg-warning/10 text-warning"
-                                : "text-text-secondary hover:text-danger hover:bg-danger/5"
-                            }`}
-                          >
-                            👎 {fb ? (fb.type === "fout_van_boni" ? "Fout" : "Smaak") : "Melden"}
-                          </button>
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              onClick={() => openFeedbackModal(foto.id)}
+                              title={fb ? "Feedback bewerken" : "Fout melden"}
+                              className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
+                                fb
+                                  ? fb.type === "fout_van_boni"
+                                    ? "bg-danger/10 text-danger"
+                                    : "bg-warning/10 text-warning"
+                                  : "text-text-secondary hover:text-danger hover:bg-danger/5"
+                              }`}
+                            >
+                              👎 {fb ? (fb.type === "fout_van_boni" ? "Fout" : "Smaak") : "Melden"}
+                            </button>
+                            {fb && (
+                              <button
+                                onClick={() => verwijderFeedback(foto.id)}
+                                title="Feedback verwijderen"
+                                className="text-xs px-1 py-1 text-text-secondary hover:text-danger transition-colors"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
