@@ -61,7 +61,8 @@ function AanmeldenForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setFout("Er ging iets mis. Probeer het opnieuw.");
+        const errData = await res.json().catch(() => ({}));
+        setFout(errData.error || "Er ging iets mis. Probeer het opnieuw.");
         setLaden(false);
         return;
       }

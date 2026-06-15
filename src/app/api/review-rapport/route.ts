@@ -6,7 +6,10 @@ import { buildReviewRapportEmail } from "@/lib/review-rapport-email";
 import { filterReviews, formateerGefilterd } from "@/lib/filter-reviews";
 import { NextResponse } from "next/server";
 
+console.log("[HP Audit] route module geladen");
+
 export async function POST(request: Request) {
+  console.log("[HP Audit] POST ontvangen");
   try {
     const { abonnementId } = await request.json();
     const supabase = await createClient();
