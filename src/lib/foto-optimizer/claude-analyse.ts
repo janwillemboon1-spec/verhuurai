@@ -1,6 +1,37 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// Module-level prompt cache (5 minuten TTL)
+let promptCache: { prompt: string; geldigTot: number } | null = null;
+
+export function leegPromptCache() {
+  promptCache = null;
+}
+
+async function laadActiefPrompt(): Promise<string> {
+  if (promptCache && Date.now() < promptCache.geldigTot) {
+    return promptCache.prompt;
+  }
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("foto_optimizer_config")
+      .select("prompt")
+      .eq("actief", true)
+      .order("aangemaakt_op", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.prompt) {
+      promptCache = { prompt: data.prompt, geldigTot: Date.now() + 5 * 60 * 1000 };
+      return data.prompt;
+    }
+  } catch (err) {
+    console.error("Prompt laden uit DB mislukt, gebruik standaard:", err);
+  }
+  return FOTO_CORRECTIE_PROMPT;
+}
 
 export interface AnalyseResultaat {
   ruimte: string;
@@ -38,6 +69,7 @@ export async function analyseMetClaude(
   _gebruikteUitzonderingen: Set<string> = new Set()
 ): Promise<AnalyseResultaat> {
   const base64 = imageBuffer.toString("base64");
+  const actiefPrompt = await laadActiefPrompt();
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
@@ -89,8 +121,8 @@ Regels:
     // Bouw editPrompt op: correctieprompt + foto-specifieke observatie
     const observatie = result.technischeObservatie?.trim() || "";
     const editPrompt = observatie
-      ? `Correct this real estate photograph of a ${result.ruimte || "room"} — ${observatie}. ${FOTO_CORRECTIE_PROMPT}`
-      : `Correct this real estate photograph of a ${result.ruimte || "room"}. ${FOTO_CORRECTIE_PROMPT}`;
+      ? `Correct this real estate photograph of a ${result.ruimte || "room"} — ${observatie}. ${actiefPrompt}`
+      : `Correct this real estate photograph of a ${result.ruimte || "room"}. ${actiefPrompt}`;
 
     return {
       ruimte: result.ruimte || "overig",

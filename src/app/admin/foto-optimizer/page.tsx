@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { TrainButton } from "./TrainButton";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
@@ -12,7 +13,7 @@ export default async function AdminFotoOptimizerPage() {
 
   const admin = createAdminClient();
 
-  const [{ data: sessies }, { data: feedbackLijst }, { data: trainingData }] = await Promise.all([
+  const [{ data: sessies }, { data: feedbackLijst }, { data: trainingData }, { data: promptVersions }] = await Promise.all([
     admin
       .from("foto_sessies")
       .select("id, naam, email, status, aantal_fotos, totaal_prijs, aangemaakt_op, klaar_op")
@@ -31,6 +32,11 @@ export default async function AdminFotoOptimizerPage() {
       .eq("positief_beoordeeld", true)
       .order("id", { ascending: false })
       .limit(50),
+    admin
+      .from("foto_optimizer_config")
+      .select("id, versie, actief, aangemaakt_op, aangemaakt_door, analyse_samenvatting, verbeteringen, prompt")
+      .order("versie", { ascending: false })
+      .limit(10),
   ]);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,6 +50,47 @@ export default async function AdminFotoOptimizerPage() {
           <div className="flex gap-3">
             <Link href="/admin" className="btn-secondary text-sm">← Admin</Link>
           </div>
+        </div>
+
+        {/* Training sectie */}
+        <div className="card p-5 space-y-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-display text-xl text-primary">Prompt Training</h2>
+              <p className="text-sm text-text-secondary mt-1">
+                Actieve versie: <strong>v{promptVersions?.find(p => p.actief)?.versie ?? "standaard"}</strong>
+                {" · "}{feedbackLijst?.length ?? 0} fouten · {trainingData?.length ?? 0} positief
+              </p>
+            </div>
+            <TrainButton />
+          </div>
+
+          {/* Versiegeschiedenis */}
+          {promptVersions && promptVersions.length > 0 && (
+            <div className="border-t border-border pt-4 space-y-3">
+              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Versiegeschiedenis</p>
+              {promptVersions.map(v => (
+                <div key={v.id} className={`rounded-xl p-3 text-sm ${v.actief ? "bg-success/10 border border-success/20" : "bg-surface border border-border"}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-primary">
+                      v{v.versie} {v.actief && <span className="text-success text-xs ml-1">● actief</span>}
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                      {v.aangemaakt_door} · {new Date(v.aangemaakt_op).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                  {v.analyse_samenvatting && (
+                    <p className="text-xs text-text-secondary mt-1">{v.analyse_samenvatting}</p>
+                  )}
+                  {Array.isArray(v.verbeteringen) && v.verbeteringen.length > 0 && (
+                    <ul className="text-xs text-text-secondary mt-1 space-y-0.5">
+                      {(v.verbeteringen as string[]).map((verb, i) => <li key={i}>• {verb}</li>)}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Statistieken */}

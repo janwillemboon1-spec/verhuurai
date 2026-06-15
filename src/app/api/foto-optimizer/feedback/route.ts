@@ -35,6 +35,24 @@ export async function POST(request: Request) {
       .eq("id", bewerkingId);
 
     if (error) throw error;
+
+    // Auto-train triggeren als er genoeg "Fout van Boni" feedback is
+    if (type === "fout_van_boni" && toelichting?.trim()) {
+      const { count } = await admin
+        .from("foto_bewerkingen")
+        .select("id", { count: "exact", head: true })
+        .eq("feedback_type", "fout_van_boni")
+        .not("feedback_toelichting", "is", null);
+      if ((count ?? 0) % 5 === 0 && (count ?? 0) > 0) {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
+        fetch(`${baseUrl}/api/foto-optimizer/train`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminModus: false }),
+        }).catch(err => console.error("Auto-train mislukt:", err));
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Feedback opslaan fout:", err);
