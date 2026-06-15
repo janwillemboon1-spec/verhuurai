@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { BoniAvatar } from "@/components/BoniAvatar";
-import type { FotoVoortgang } from "@/types/foto-optimizer";
 
 const STAPPEN = [
   "Belichting & kleuren optimaliseren...",
   "Ruimte analyseren...",
-  "Staging & compositie verbeteren...",
+  "Compositie & perspectief corrigeren...",
   "Kwaliteit verhogen...",
 ];
+
+const SECONDEN_PER_FOTO = 55;
 
 export default function VerwerkingPage({
   params,
@@ -20,41 +21,68 @@ export default function VerwerkingPage({
 }) {
   const sessieId = params["sessie-id"];
   const router = useRouter();
-  const [voortgang, setVoortgang] = useState<FotoVoortgang | null>(null);
+
+  const [totaal, setTotaal] = useState(0);
+  const [klaarCount, setKlaarCount] = useState(0);
+  const [gestart, setGestart] = useState(false);
+  const [isKlaar, setIsKlaar] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [stapIndex, setStapIndex] = useState(0);
   const [simulatedPercent, setSimulatedPercent] = useState(0);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const [toonHandmatig, setToonHandmatig] = useState(false);
+
   const startTijdRef = useRef<number | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stapIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const simIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const handmatigTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const redirectedRef = useRef(false);
 
-  // Roteer tekststapjes voor animatie-gevoel
+  const redirect = useCallback(() => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+    // Opruimen
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    if (simIntervalRef.current) clearInterval(simIntervalRef.current);
+    if (handmatigTimerRef.current) clearTimeout(handmatigTimerRef.current);
+    setIsKlaar(true);
+    setSimulatedPercent(100);
+    setTimeout(() => router.push(`/foto-optimizer/resultaat/${sessieId}`), 600);
+  }, [sessieId, router]);
+
+  // Check of alle foto's klaar zijn — puur op foto-niveau, ongeacht sessie.status
+  const checkKlaar = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.bewerkingen) return;
+
+      const all = data.bewerkingen as any[];
+      const n = all.length;
+      if (n === 0) return;
+
+      const gedaan = all.filter((b: any) =>
+        b.status === "klaar" ||
+        b.bewerkt_pad !== null ||
+        b.status === "overgeslagen" ||
+        b.status === "fout"
+      ).length;
+
+      setKlaarCount(gedaan);
+      setTotaal(n);
+
+      if (gedaan >= n) {
+        redirect();
+      }
+    } catch {}
+  }, [sessieId, redirect]);
+
   useEffect(() => {
-    const t = setInterval(() => setStapIndex(i => (i + 1) % STAPPEN.length), 3000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Gesimuleerde voortgangsbalk op basis van geschatte verwerkingstijd
-  const SECONDEN_PER_FOTO = 55;
-  useEffect(() => {
-    if (!voortgang || voortgang.status === "klaar" || voortgang.status === "fout") return;
-    const totaalSeconden = Math.max(voortgang.totaal, 1) * SECONDEN_PER_FOTO;
-
-    const t = setInterval(() => {
-      if (!startTijdRef.current) return;
-      const verlopen = (Date.now() - startTijdRef.current) / 1000;
-      // Bereikt 90% na de geschatte tijd, zodat echte voltooiing altijd "wint"
-      const sim = Math.min(90, (verlopen / totaalSeconden) * 90);
-      setSimulatedPercent(sim);
-    }, 500);
-
-    return () => clearInterval(t);
-  }, [voortgang]);
-
-  useEffect(() => {
-    let es: EventSource | null = null;
+    // Tekststapjes roteren
+    stapIntervalRef.current = setInterval(() => setStapIndex(i => (i + 1) % STAPPEN.length), 3000);
 
     const start = async () => {
-      // Verwerking starten (of hervatten bij refresh)
       const res = await fetch("/api/foto-optimizer/verwerk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,77 +90,58 @@ export default function VerwerkingPage({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setFout(data.error || "Verwerking kon niet worden gestart.");
+        const d = await res.json().catch(() => ({}));
+        setFout(d.error || "Verwerking kon niet worden gestart.");
         return;
       }
 
-      const data = await res.json();
-
-      // Direct doorsturen als al klaar
-      if (data.klaar) {
-        router.replace(`/foto-optimizer/resultaat/${sessieId}`);
+      const d = await res.json();
+      if (d.klaar) {
+        redirect();
         return;
       }
 
-      // Simulatietimer starten
+      setGestart(true);
       startTijdRef.current = Date.now();
 
-      // Fallback polling: elke 5 seconden direct DB checken
-      // Vangt gevallen op waar SSE wegvalt of niet detecteert
-      const fallbackInterval = setInterval(async () => {
-        try {
-          const statusRes = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`);
-          const statusData = await statusRes.json();
-          if (statusData.sessie?.status === "klaar") {
-            clearInterval(fallbackInterval);
-            router.push(`/foto-optimizer/resultaat/${sessieId}`);
-          }
-        } catch {}
-      }, 5000);
+      // Eerste check meteen
+      await checkKlaar();
 
-      // SSE abonneren voor live voortgang
-      es = new EventSource(`/api/foto-optimizer/voortgang/${sessieId}`);
-      eventSourceRef.current = es;
+      // Poll elke 2 seconden
+      pollIntervalRef.current = setInterval(checkKlaar, 2000);
 
-      es.onmessage = (e) => {
-        const update: FotoVoortgang = JSON.parse(e.data);
-        setVoortgang(update);
+      // Simulatiebalk
+      simIntervalRef.current = setInterval(() => {
+        if (!startTijdRef.current || !totaal) return;
+        const totaalSec = Math.max(totaal || 3, 1) * SECONDEN_PER_FOTO;
+        const verlopen = (Date.now() - startTijdRef.current) / 1000;
+        setSimulatedPercent(prev => {
+          const sim = Math.min(90, (verlopen / totaalSec) * 90);
+          return Math.max(prev, sim);
+        });
+      }, 500);
 
-        if (update.status === "klaar") {
-          es?.close();
-          setTimeout(() => router.push(`/foto-optimizer/resultaat/${sessieId}`), 500);
-        } else if (update.status === "fout") {
-          es?.close();
-          setFout("Er ging iets mis tijdens de verwerking. Neem contact op via info@hostboni.com.");
-        }
-      };
-
-      es.onerror = () => {
-        // Herverbinden na fout — EventSource doet dit automatisch
-      };
+      // Handmatige knop na 3 minuten
+      handmatigTimerRef.current = setTimeout(() => setToonHandmatig(true), 3 * 60 * 1000);
     };
 
     start().catch(() => setFout("Verbinding mislukt. Ververs de pagina."));
 
     return () => {
-      eventSourceRef.current?.close();
+      if (stapIntervalRef.current) clearInterval(stapIntervalRef.current);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (simIntervalRef.current) clearInterval(simIntervalRef.current);
+      if (handmatigTimerRef.current) clearTimeout(handmatigTimerRef.current);
     };
-  }, [sessieId, router]);
+  }, [sessieId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const verwerkt = voortgang
-    ? voortgang.klaar + voortgang.overgeslagen + voortgang.fout
-    : 0;
-  const isKlaar = voortgang?.status === "klaar";
-  const actuelePercent = voortgang
-    ? Math.round((verwerkt / Math.max(voortgang.totaal, 1)) * 100)
-    : 0;
-  // Toon het hoogste van gesimuleerd of actueel — springt naar 100% bij echte voltooiing
+  const actuelePercent = totaal > 0 ? Math.round((klaarCount / totaal) * 100) : 0;
   const progressPercent = isKlaar ? 100 : Math.max(Math.round(simulatedPercent), actuelePercent);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
       <div className="max-w-lg mx-auto w-full">
+
         {/* Header */}
         <div className="text-center mb-8">
           {isKlaar ? (
@@ -153,21 +162,20 @@ export default function VerwerkingPage({
           </h1>
           <p className="text-text-secondary">
             {isKlaar
-              ? "Alle foto's zijn bewerkt. Je wordt doorgestuurd..."
-              : voortgang
+              ? "Je wordt doorgestuurd naar de resultaten..."
+              : gestart
               ? STAPPEN[stapIndex % STAPPEN.length]
               : "Verwerking wordt gestart..."}
           </p>
         </div>
 
         {/* Voortgangskaart */}
-        {voortgang && (
+        {gestart && (
           <div className="card p-6 space-y-5">
-            {/* Progressbar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-medium">
                 <span className="text-primary">
-                  {voortgang.totaal} foto&apos;s worden verwerkt
+                  {totaal > 0 ? `${totaal} foto's worden verwerkt` : "Foto's worden geladen..."}
                 </span>
                 <span className="text-text-secondary">{progressPercent}%</span>
               </div>
@@ -179,18 +187,13 @@ export default function VerwerkingPage({
               </div>
             </div>
 
-            {/* Animatie indicator tijdens verwerking */}
             {!isKlaar && (
               <div className="flex items-center gap-3 bg-primary/5 rounded-xl p-3">
                 <svg className="animate-spin w-4 h-4 shrink-0 text-accent" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                 </svg>
-                <span className="text-sm text-text-secondary">
-                  {voortgang.huidigeFoto
-                    ? `Foto ${voortgang.huidigeFoto} wordt verwerkt...`
-                    : "Verwerking bezig..."}
-                </span>
+                <span className="text-sm text-text-secondary">Verwerking bezig...</span>
               </div>
             )}
           </div>
@@ -203,13 +206,23 @@ export default function VerwerkingPage({
           </div>
         )}
 
-        {/* Wachttekst */}
-        {!fout && !isKlaar && (
-          <p className="text-xs text-text-secondary text-center mt-6">
-            Dit kan enkele minuten duren afhankelijk van het aantal foto&apos;s.
-            <br />Sluit dit venster niet — je krijgt ook een e-mail als alles klaar is.
-          </p>
+        {/* Wachttekst + handmatige knop */}
+        {!fout && !isKlaar && gestart && (
+          <div className="text-center mt-6 space-y-3">
+            <p className="text-xs text-text-secondary">
+              Dit kan enkele minuten duren. Sluit dit venster niet.
+            </p>
+            {toonHandmatig && (
+              <button
+                onClick={() => router.push(`/foto-optimizer/resultaat/${sessieId}`)}
+                className="btn-secondary text-sm"
+              >
+                Ga naar resultaten →
+              </button>
+            )}
+          </div>
         )}
+
       </div>
     </div>
   );
