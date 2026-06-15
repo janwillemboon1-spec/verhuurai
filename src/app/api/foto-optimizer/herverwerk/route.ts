@@ -80,11 +80,16 @@ export async function POST(request: Request) {
     const suffix = isAdmin ? `_ah${Date.now()}` : "_h";
     const bewerktPad = `${sessieId}/${String(bewerking.volgnummer).padStart(3, "0")}_bewerkt${suffix}.png`;
 
-    await admin.storage
+    const { error: uploadError } = await admin.storage
       .from("foto-bewerkt")
       .upload(bewerktPad, resultBuffer, { contentType: "image/png", upsert: true });
 
-    // DB updaten
+    if (uploadError) {
+      console.error("Upload herverwerk mislukt:", uploadError.message);
+      return NextResponse.json({ error: "Upload mislukt: " + uploadError.message }, { status: 500 });
+    }
+
+    // DB updaten — alleen na succesvolle upload
     const updates: Record<string, any> = { bewerkt_pad: bewerktPad };
     if (!isAdmin) updates.gebruiker_herverwerkt_op = new Date().toISOString();
 
