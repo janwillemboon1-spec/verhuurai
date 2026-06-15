@@ -60,6 +60,9 @@ export default function AdminSessieDetailPage() {
       const data = await res.json();
       if (res.ok && data.nieuweUrl) {
         setBewerktUrls(prev => ({ ...prev, [id]: `${data.nieuweUrl}?t=${Date.now()}` }));
+        // Herlaad vanuit DB zodat de nieuwste bewerkt_pad behouden blijft na refresh
+        const refreshed = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`).then(r => r.json());
+        if (refreshed.bewerkingen) setBewerkingen(refreshed.bewerkingen);
       } else {
         alert(data.error || "Mislukt.");
       }

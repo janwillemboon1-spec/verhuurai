@@ -176,10 +176,10 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
       });
       const data = await res.json();
       if (res.ok && data.nieuweUrl) {
-        setBewerktUrls(prev => ({ ...prev, [id]: data.nieuweUrl }));
-        setBewerkingen(prev => prev.map(b =>
-          b.id === id ? { ...b, gebruiker_herverwerkt_op: new Date().toISOString() } : b
-        ));
+        // Cache-buster zodat browser niet de oude versie toont
+        setBewerktUrls(prev => ({ ...prev, [id]: `${data.nieuweUrl}?t=${Date.now()}` }));
+        // Herlaad vanuit DB zodat de nieuwste bewerkt_pad altijd leidend is
+        laadData();
       } else {
         alert(data.error || "Herverwerking mislukt.");
       }
@@ -284,7 +284,11 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {fotos.map(foto => {
                 const fb = lokaalFeedback[foto.id];
-                const bewerktUrl = bewerktUrls[foto.id] || foto.bewerktUrl;
+                // Lokale cache-busted URL heeft voorrang; anders DB-URL met cache-buster als de foto herverwerkt is
+                const bewerktUrl = bewerktUrls[foto.id]
+                  || (foto.gebruiker_herverwerkt_op && foto.bewerktUrl
+                      ? `${foto.bewerktUrl}?t=${new Date(foto.gebruiker_herverwerkt_op).getTime()}`
+                      : foto.bewerktUrl);
                 const bezig = herverwerkBezig === foto.id;
                 const alHerverwerkt = !!foto.gebruiker_herverwerkt_op;
                 return (
