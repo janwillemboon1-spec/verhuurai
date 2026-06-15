@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     // Bewerking ophalen
     const { data: bewerking, error } = await admin
       .from("foto_bewerkingen")
-      .select("id, sessie_id, volgnummer, origineel_pad, analyse_json, gebruiker_herverwerkt_op")
+      .select("id, sessie_id, volgnummer, origineel_pad, bewerkt_pad, analyse_json, gebruiker_herverwerkt_op")
       .eq("id", bewerkingId)
       .single();
 
@@ -43,13 +43,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Al herverwerkt" }, { status: 409 });
     }
 
-    // Origineel downloaden
-    const { data: blob } = await admin.storage
-      .from("foto-originelen")
-      .download(bewerking.origineel_pad);
+    // Download de MEEST RECENTE versie: bewerkt_pad heeft voorrang op origineel
+    let blob: Blob | null = null;
+    if (bewerking.bewerkt_pad) {
+      const { data } = await admin.storage.from("foto-bewerkt").download(bewerking.bewerkt_pad);
+      blob = data;
+    }
+    if (!blob && bewerking.origineel_pad) {
+      const { data } = await admin.storage.from("foto-originelen").download(bewerking.origineel_pad);
+      blob = data;
+    }
 
     if (!blob) {
-      return NextResponse.json({ error: "Origineel niet gevonden" }, { status: 404 });
+      return NextResponse.json({ error: "Foto niet gevonden in storage" }, { status: 404 });
     }
 
     const origineelBuffer = Buffer.from(await blob.arrayBuffer());
