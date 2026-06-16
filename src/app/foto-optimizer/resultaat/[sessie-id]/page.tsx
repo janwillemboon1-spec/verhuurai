@@ -111,8 +111,13 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     return () => clearInterval(interval);
   }, [regenereerBezig, sessieId, laadData]);
 
-  const klaare = bewerkingen.filter(b => b.status === "klaar");
-  const overgeslagen = bewerkingen.filter(b => b.status === "overgeslagen" || b.status === "fout");
+  // Toon foto's als status "klaar" is OF als bewerkt_pad gevuld is (upload gelukt, status-update soms afgebroken)
+  const klaare = bewerkingen.filter(b =>
+    b.status === "klaar" || (b.bewerkt_pad !== null && b.status !== "overgeslagen")
+  );
+  const overgeslagen = bewerkingen.filter(b =>
+    (b.status === "overgeslagen" || b.status === "fout") && !b.bewerkt_pad
+  );
   const perRuimte = RUIMTE_VOLGORDE.reduce<Record<string, Bewerking[]>>((acc, r) => {
     const fotos = klaare.filter(b => (b.ruimte || "overig") === r);
     if (fotos.length > 0) acc[r] = fotos;

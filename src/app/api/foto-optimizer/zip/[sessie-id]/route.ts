@@ -24,7 +24,7 @@ export async function GET(
     .from("foto_bewerkingen")
     .select("volgnummer, ruimte, bewerkt_pad")
     .eq("sessie_id", sessieId)
-    .eq("status", "klaar")
+    .not("bewerkt_pad", "is", null)
     .order("volgnummer", { ascending: true });
 
   if (!bewerkingen || bewerkingen.length === 0) {
