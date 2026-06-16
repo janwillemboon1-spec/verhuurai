@@ -108,6 +108,27 @@ export default function ListingOptimizerPage() {
         </div>
       </section>
 
+      {/* Review */}
+      <section className="section bg-background">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="card p-8 border-l-4 border-accent space-y-4">
+            <p className="text-lg text-primary leading-relaxed italic">
+              &ldquo;Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !&rdquo;
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-lg">S</div>
+              <div>
+                <p className="font-semibold text-primary text-sm">Sjoukje</p>
+                <p className="text-text-secondary text-xs">Oosterwolde · Listing Optimizer gebruiker</p>
+              </div>
+              <div className="ml-auto flex gap-0.5">
+                {[1,2,3,4,5].map(i => <span key={i} className="text-accent text-lg">★</span>)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Prijzen */}
       <section id="prijzen" className="section bg-background">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">

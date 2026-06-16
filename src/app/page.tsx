@@ -78,6 +78,16 @@ export default function HomePage() {
                 <Link href="/rapport/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
+                {/* Review */}
+                <div className="bg-accent/5 rounded-xl p-4 mt-2 space-y-2">
+                  <p className="text-sm text-primary italic leading-snug">
+                    &ldquo;Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !&rdquo;
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-text-secondary font-semibold">Sjoukje · Oosterwolde</p>
+                    <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <span key={i} className="text-accent text-xs">★</span>)}</div>
+                  </div>
+                </div>
               </div>
             </div>
 
