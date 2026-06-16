@@ -12,6 +12,7 @@ interface Testimonial {
 const TESTIMONIALS: Testimonial[] = [
   { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee", tool: "Listing Optimizer" },
   { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde", tool: "Listing Optimizer" },
+  { quote: "Wow! Superblij met de uitgebreide analyses van mijn 2 advertenties. Als je als host al wat langer verhuurt, kun je een blinde vlek krijgen. Met deze analyses hoop ik wat blinde vlekken te verbeteren wat hopelijk tot mooie resultaten zal leiden, bedankt!!!", naam: "Marleen", locatie: "Herkingen", tool: "Listing Optimizer" },
   { quote: "Ik deed nooit iets met mijn prijzen, omdat ik geen idee had hoe ik die moest bepalen. Het rapport dat ik kreeg van Boni was ontzettend waardevol voor mij. Hij vond zelfs feestdagen waar ik het bestaan niet van wist.", naam: "Sophie", locatie: "Estepona", tool: "Prijscalculator" },
   { quote: "De Host Performance Audit werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude", tool: "Host Performance Audit" },
 ];

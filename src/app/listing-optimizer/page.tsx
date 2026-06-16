@@ -111,6 +111,7 @@ export default function ListingOptimizerPage() {
             {[
               { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde" },
               { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
+              { quote: "Wow! Superblij met de uitgebreide analyses van mijn 2 advertenties. Als je als host al wat langer verhuurt, kun je een blinde vlek krijgen. Met deze analyses hoop ik wat blinde vlekken te verbeteren wat hopelijk tot mooie resultaten zal leiden, bedankt!!!", naam: "Marleen", locatie: "Herkingen" },
             ].map(({ quote, naam, locatie }) => (
               <div key={naam} className="card p-6 flex flex-col">
                 <div className="flex gap-0.5 mb-4">{[1,2,3,4,5].map(i => <span key={i} className="text-accent">★</span>)}</div>
