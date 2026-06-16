@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     }));
 
     // foto_bewerkingen aanmaken inclusief origineel_pad
-    await admin.from("foto_bewerkingen").insert(
+    const { error: bewerkingError } = await admin.from("foto_bewerkingen").insert(
       fotoPaden.map(f => ({
         sessie_id: sessieId,
         volgnummer: f.volgnummer,
@@ -60,6 +60,13 @@ export async function POST(request: Request) {
         status: "wachtrij",
       }))
     );
+
+    if (bewerkingError) {
+      console.error("foto_bewerkingen insert mislukt:", bewerkingError.message);
+      throw new Error("Foto registratie mislukt: " + bewerkingError.message);
+    }
+
+    console.log(`[start] ${fotoPaden.length} bewerkingen aangemaakt voor sessie ${sessieId}`);
 
     // Signed upload URLs genereren per foto
     const uploadTokens = await Promise.all(
