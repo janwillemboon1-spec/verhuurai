@@ -108,23 +108,29 @@ export default function ListingOptimizerPage() {
         </div>
       </section>
 
-      {/* Review */}
+      {/* Reviews */}
       <section className="section bg-background">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="card p-8 border-l-4 border-accent space-y-4">
-            <p className="text-lg text-primary leading-relaxed italic">
-              &ldquo;Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !&rdquo;
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-lg">S</div>
-              <div>
-                <p className="font-semibold text-primary text-sm">Sjoukje</p>
-                <p className="text-text-secondary text-xs">Oosterwolde · Listing Optimizer gebruiker</p>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-primary">Wat verhuurders zeggen</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde" },
+              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
+            ].map(({ quote, naam, locatie }) => (
+              <div key={naam} className="card p-6 space-y-4">
+                <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <span key={i} className="text-accent">★</span>)}</div>
+                <p className="text-text-secondary leading-relaxed italic">&ldquo;{quote}&rdquo;</p>
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold">{naam[0]}</div>
+                  <div>
+                    <p className="font-semibold text-primary text-sm">{naam}</p>
+                    <p className="text-text-secondary text-xs">{locatie}</p>
+                  </div>
+                </div>
               </div>
-              <div className="ml-auto flex gap-0.5">
-                {[1,2,3,4,5].map(i => <span key={i} className="text-accent text-lg">★</span>)}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

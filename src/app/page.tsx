@@ -78,16 +78,6 @@ export default function HomePage() {
                 <Link href="/rapport/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center">
                   👁️ Bekijk voorbeeldrapport
                 </Link>
-                {/* Review */}
-                <div className="bg-accent/5 rounded-xl p-4 mt-2 space-y-2">
-                  <p className="text-sm text-primary italic leading-snug">
-                    &ldquo;Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !&rdquo;
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-text-secondary font-semibold">Sjoukje · Oosterwolde</p>
-                    <div className="flex gap-0.5">{[1,2,3,4,5].map(i => <span key={i} className="text-accent text-xs">★</span>)}</div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -158,15 +148,17 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Wat verhuurders zeggen</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
-              { quote: "Ik deed nooit iets met mijn prijzen, omdat ik geen idee had hoe ik die moest bepalen. Het rapport dat ik kreeg van Boni was ontzettend waardevol voor mij. Hij vond zelfs feestdagen waar ik het bestaan niet van wist.", naam: "Sophie", locatie: "Estepona" },
-              { quote: "De Host Performance Audit werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude" },
-            ].map(({ quote, naam, locatie }) => (
+              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee", tool: "Listing Optimizer" },
+              { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde", tool: "Listing Optimizer" },
+              { quote: "Ik deed nooit iets met mijn prijzen, omdat ik geen idee had hoe ik die moest bepalen. Het rapport dat ik kreeg van Boni was ontzettend waardevol voor mij. Hij vond zelfs feestdagen waar ik het bestaan niet van wist.", naam: "Sophie", locatie: "Estepona", tool: "Prijscalculator" },
+              { quote: "De Host Performance Audit werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude", tool: "Host Performance Audit" },
+            ].map(({ quote, naam, locatie, tool }) => (
               <div key={naam} className="card p-6 flex flex-col gap-4">
-                <p className="text-text-secondary leading-relaxed italic">"{quote}"</p>
-                <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border">
+                <span className="text-xs font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full self-start">{tool}</span>
+                <p className="text-text-secondary leading-relaxed italic flex-1">&ldquo;{quote}&rdquo;</p>
+                <div className="flex items-center gap-2 pt-2 border-t border-border">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
                     {naam[0]}
                   </div>
