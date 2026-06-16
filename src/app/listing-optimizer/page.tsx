@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BoniAvatar } from "@/components/BoniAvatar";
+import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 
 export default function ListingOptimizerPage() {
   return (
@@ -106,26 +107,12 @@ export default function ListingOptimizerPage() {
             </Link>
           </div>
 
-          {/* Reviews */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde" },
-              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee" },
-              { quote: "Wow! Superblij met de uitgebreide analyses van mijn 2 advertenties. Als je als host al wat langer verhuurt, kun je een blinde vlek krijgen. Met deze analyses hoop ik wat blinde vlekken te verbeteren wat hopelijk tot mooie resultaten zal leiden, bedankt!!!", naam: "Marleen", locatie: "Herkingen" },
-            ].map(({ quote, naam, locatie }) => (
-              <div key={naam} className="card p-6 flex flex-col">
-                <div className="flex gap-0.5 mb-4">{[1,2,3,4,5].map(i => <span key={i} className="text-accent">★</span>)}</div>
-                <p className="text-text-secondary leading-relaxed italic flex-1">&ldquo;{quote}&rdquo;</p>
-                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
-                  <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold shrink-0">{naam[0]}</div>
-                  <div>
-                    <p className="font-semibold text-primary text-sm">{naam}</p>
-                    <p className="text-text-secondary text-xs">{locatie}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Reviews carousel */}
+          <TestimonialCarousel items={[
+            { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde", tool: "Listing Optimizer" },
+            { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee", tool: "Listing Optimizer" },
+            { quote: "Wow! Superblij met de uitgebreide analyses van mijn 2 advertenties. Als je als host al wat langer verhuurt, kun je een blinde vlek krijgen. Met deze analyses hoop ik wat blinde vlekken te verbeteren wat hopelijk tot mooie resultaten zal leiden, bedankt!!!", naam: "Marleen", locatie: "Herkingen", tool: "Listing Optimizer" },
+          ]} />
         </div>
       </section>
 

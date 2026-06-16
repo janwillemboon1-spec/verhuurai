@@ -19,7 +19,12 @@ const TESTIMONIALS: Testimonial[] = [
 
 const DESKTOP = 3;
 
-export function TestimonialCarousel() {
+interface Props {
+  items?: Testimonial[];
+}
+
+export function TestimonialCarousel({ items }: Props = {}) {
+  const lijst = items ?? TESTIMONIALS;
   const [index, setIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -30,7 +35,7 @@ export function TestimonialCarousel() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const maxIndex = isMobile ? TESTIMONIALS.length - 1 : TESTIMONIALS.length - DESKTOP;
+  const maxIndex = isMobile ? lijst.length - 1 : Math.max(0, lijst.length - DESKTOP);
   // Zorg dat index nooit buiten bereik valt bij resize
   const effectiveIndex = Math.min(index, maxIndex);
 
@@ -39,8 +44,8 @@ export function TestimonialCarousel() {
   const naarIndex = (i: number) => setIndex(i);
 
   const zichtbaar = isMobile
-    ? [TESTIMONIALS[effectiveIndex]]
-    : TESTIMONIALS.slice(effectiveIndex, effectiveIndex + DESKTOP);
+    ? [lijst[effectiveIndex]]
+    : lijst.slice(effectiveIndex, effectiveIndex + DESKTOP);
 
   return (
     <div className="space-y-6">
