@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BoniAvatar } from "@/components/BoniAvatar";
+import { TestimonialCarousel } from "@/components/TestimonialCarousel";
 
 export default function HomePage() {
   return (
@@ -142,34 +143,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials carousel */}
       <section className="section bg-background">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Wat verhuurders zeggen</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { quote: "Ik heb 5 advertenties gecheckt met de Listing Optimizer. Ik had 1 score van 4/10 en 4 van 3/10 — dus genoeg te doen! Handige tool, ik weet nu gelijk wat ik moet gaan aanpassen.", naam: "Marloes", locatie: "Bergen aan Zee", tool: "Listing Optimizer" },
-              { quote: "Wat een uitgebreide feedback heb ik mogen ontvangen. Heel uitgebreid en praktisch toepasbaar. Echt heel erg bedankt !", naam: "Sjoukje", locatie: "Oosterwolde", tool: "Listing Optimizer" },
-              { quote: "Ik deed nooit iets met mijn prijzen, omdat ik geen idee had hoe ik die moest bepalen. Het rapport dat ik kreeg van Boni was ontzettend waardevol voor mij. Hij vond zelfs feestdagen waar ik het bestaan niet van wist.", naam: "Sophie", locatie: "Estepona", tool: "Prijscalculator" },
-              { quote: "De Host Performance Audit werkt echt fantastisch. Bizar wat een goede actiepunten ik meekreeg. De adviezen heb ik opgevolgd en worden goed ontvangen door gasten! Ik sta echt versteld. Boni is mijn nieuwe vriend haha.", naam: "Peter", locatie: "Abcoude", tool: "Host Performance Audit" },
-            ].map(({ quote, naam, locatie, tool }) => (
-              <div key={naam} className="card p-6 flex flex-col gap-4">
-                <span className="text-xs font-semibold text-accent bg-accent/10 px-2.5 py-1 rounded-full self-start">{tool}</span>
-                <p className="text-text-secondary leading-relaxed italic flex-1">&ldquo;{quote}&rdquo;</p>
-                <div className="flex items-center gap-2 pt-2 border-t border-border">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
-                    {naam[0]}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-primary text-sm">{naam}</p>
-                    <p className="text-text-secondary text-xs">{locatie}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TestimonialCarousel />
         </div>
       </section>
 
