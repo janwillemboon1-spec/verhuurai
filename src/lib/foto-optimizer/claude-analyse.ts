@@ -131,12 +131,12 @@ Regels:
       gebruikteUitzondering: null,
     };
   } catch (err) {
-    console.error("Claude analyse fout:", err);
+    console.error("Claude analyse fout — standaard prompt gebruiken:", err);
+    // Niet overslaan bij analysefout: gebruik standaard correctieprompt zodat de foto toch verwerkt wordt
     return {
       ruimte: "overig",
-      editPrompt: "",
-      overgeslagen: true,
-      overslaanReden: "Analyse mislukt — foto overgeslagen",
+      editPrompt: `Correct this real estate photograph. ${actiefPrompt}`,
+      overgeslagen: false,
       gebruikteUitzondering: null,
     };
   }
