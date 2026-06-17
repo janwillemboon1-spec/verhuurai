@@ -189,21 +189,18 @@ export default async function AdminPage() {
         <UpdateAdminVisit />
 
         {/* Recente activiteit */}
-        <div className="card overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg text-primary">Recente activiteit</h2>
-              {lastVisit ? (
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {aantalNieuw > 0
-                    ? `${aantalNieuw} nieuw sinds ${lastVisit.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} ${lastVisit.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`
-                    : `Niets nieuws sinds ${lastVisit.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} ${lastVisit.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`
-                  }
-                </p>
-              ) : (
-                <p className="text-xs text-text-secondary mt-0.5">Meest recente activiteiten — vorige inlog onbekend</p>
-              )}
-            </div>
+        <CollapsibleSection title="Recente activiteit" count={alleActiviteiten.length} defaultOpen={true}>
+          <div className="px-5 py-3 flex items-center justify-between gap-3 bg-surface/50">
+            {lastVisit ? (
+              <p className="text-xs text-text-secondary">
+                {aantalNieuw > 0
+                  ? `${aantalNieuw} nieuw sinds ${lastVisit.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} ${lastVisit.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`
+                  : `Niets nieuws sinds ${lastVisit.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} ${lastVisit.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`
+                }
+              </p>
+            ) : (
+              <p className="text-xs text-text-secondary">Meest recente activiteiten — vorige inlog onbekend</p>
+            )}
             {aantalNieuw > 0 && (
               <span className="bg-accent text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">{aantalNieuw} nieuw</span>
             )}
@@ -234,7 +231,7 @@ export default async function AdminPage() {
               </div>
             ))}
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Host Performance */}
         <CollapsibleSection title="Host Performance" count={abonnementen?.length ?? 0}>
