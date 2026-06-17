@@ -2,7 +2,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { UpdateAdminVisit } from "./UpdateAdminVisit";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
@@ -41,6 +43,98 @@ export default async function AdminPage() {
   // Map van user_id → email
   const userEmailMap: Record<string, string> = {};
   (usersData?.users ?? []).forEach(u => { if (u.id && u.email) userEmailMap[u.id] = u.email; });
+
+  // Recente activiteit — cookie bijhouden
+  const cookieStore = cookies();
+  const lastVisitRaw = (cookieStore as any).get("last_admin_visit")?.value as string | undefined;
+  const lastVisit = lastVisitRaw ? new Date(lastVisitRaw) : null;
+
+  function relatieveTijd(datum: Date): string {
+    const ms = Date.now() - datum.getTime();
+    const min = Math.floor(ms / 60000);
+    if (min < 2) return "zojuist";
+    if (min < 60) return `${min} min geleden`;
+    const uur = Math.floor(min / 60);
+    if (uur < 24) return `${uur}u geleden`;
+    const dag = Math.floor(uur / 24);
+    if (dag === 1) return "gisteren";
+    if (dag < 7) return `${dag} dagen geleden`;
+    return datum.toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+  }
+
+  type Activiteit = {
+    id: string;
+    type: string;
+    icoon: string;
+    naam: string;
+    detail: string;
+    datum: Date;
+    url?: string;
+    isNieuw: boolean;
+  };
+
+  const alleActiviteiten: Activiteit[] = [
+    ...(listingRapporten ?? []).map((r: any) => ({
+      id: `lo-${r.id}`,
+      type: "Listing Optimizer",
+      icoon: "📊",
+      naam: r.host_naam || r.email || "Onbekend",
+      detail: r.totaalscore ? `Score: ${r.totaalscore}/100` : "Nieuw rapport",
+      datum: new Date(r.aangemaakt_op),
+      url: `${BASE_URL}/dashboard/listing-rapporten/${r.id}`,
+      isNieuw: lastVisit ? new Date(r.aangemaakt_op) > lastVisit : false,
+    })),
+    ...(reviewRapporten ?? []).map((r: any) => ({
+      id: `hp-${r.id}`,
+      type: "HP Audit",
+      icoon: "⭐",
+      naam: userEmailMap[r.user_id] || "Onbekend",
+      detail: r.periode_omschrijving || "Rapport gegenereerd",
+      datum: new Date(r.aangemaakt_op),
+      url: `${BASE_URL}/dashboard/rapporten/${r.id}`,
+      isNieuw: lastVisit ? new Date(r.aangemaakt_op) > lastVisit : false,
+    })),
+    ...(abonnementen ?? []).map((a: any) => ({
+      id: `abo-${a.id}`,
+      type: "HP Aanmelding",
+      icoon: "👤",
+      naam: a.voornaam || a.listing_naam || "Onbekend",
+      detail: a.listing_naam ? `Woning: ${a.listing_naam}` : "Nieuw abonnement",
+      datum: new Date(a.aangemaakt_op),
+      isNieuw: lastVisit ? new Date(a.aangemaakt_op) > lastVisit : false,
+    })),
+    ...(gratisRapporten ?? []).map((r: any) => ({
+      id: `gratis-${r.id}`,
+      type: "Gratis analyse",
+      icoon: "🎁",
+      naam: r.naam || r.email || "Onbekend",
+      detail: r.titel ? `"${r.titel.length > 45 ? r.titel.slice(0, 45) + "…" : r.titel}"` : "Titelanalyse",
+      datum: new Date(r.aangemaakt_op),
+      isNieuw: lastVisit ? new Date(r.aangemaakt_op) > lastVisit : false,
+    })),
+    ...(calculatorRapporten ?? []).map((r: any) => ({
+      id: `calc-${r.id}`,
+      type: "Prijscalculator",
+      icoon: "💰",
+      naam: r.voornaam || r.email || "Onbekend",
+      detail: `${r.locatie}, ${r.land}`,
+      datum: new Date(r.aangemaakt_op),
+      url: `${BASE_URL}/prijscalculator/resultaat/${r.id}`,
+      isNieuw: lastVisit ? new Date(r.aangemaakt_op) > lastVisit : false,
+    })),
+    ...(fotoSessies ?? []).map((s: any) => ({
+      id: `foto-${s.id}`,
+      type: "Foto Optimizer",
+      icoon: "📷",
+      naam: s.naam || s.email || "Onbekend",
+      detail: `${s.aantal_fotos} foto's · €${Number(s.totaal_prijs).toFixed(2).replace(".", ",")}`,
+      datum: new Date(s.aangemaakt_op),
+      url: `/admin/foto-optimizer/${s.id}`,
+      isNieuw: lastVisit ? new Date(s.aangemaakt_op) > lastVisit : false,
+    })),
+  ].sort((a, b) => b.datum.getTime() - a.datum.getTime()).slice(0, 30);
+
+  const aantalNieuw = alleActiviteiten.filter(a => a.isNieuw).length;
 
   const statusKleur: Record<string, string> = {
     active: "bg-success/10 text-success",
@@ -90,6 +184,56 @@ export default async function AdminPage() {
               <p className="text-xs text-text-secondary mt-0.5">{label}</p>
             </div>
           ))}
+        </div>
+
+        <UpdateAdminVisit />
+
+        {/* Recente activiteit */}
+        <div className="card overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-border flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg text-primary">Recente activiteit</h2>
+              {lastVisit ? (
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {aantalNieuw > 0
+                    ? `${aantalNieuw} nieuw sinds ${lastVisit.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} ${lastVisit.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`
+                    : `Niets nieuws sinds ${lastVisit.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" })} ${lastVisit.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}`
+                  }
+                </p>
+              ) : (
+                <p className="text-xs text-text-secondary mt-0.5">Meest recente activiteiten — vorige inlog onbekend</p>
+              )}
+            </div>
+            {aantalNieuw > 0 && (
+              <span className="bg-accent text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">{aantalNieuw} nieuw</span>
+            )}
+          </div>
+          <div className="divide-y divide-border">
+            {alleActiviteiten.length === 0 && (
+              <p className="px-5 py-6 text-sm text-text-secondary text-center">Nog geen activiteiten.</p>
+            )}
+            {alleActiviteiten.map(act => (
+              <div key={act.id} className={`flex items-center gap-3 px-4 sm:px-5 py-3 ${act.isNieuw ? "bg-accent/5" : ""}`}>
+                <span className="text-xl shrink-0">{act.icoon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-text-secondary">{act.type}</span>
+                    {act.isNieuw && (
+                      <span className="text-xs bg-accent/15 text-accent font-semibold px-1.5 py-0.5 rounded">Nieuw</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-primary font-medium truncate">{act.naam}</p>
+                  <p className="text-xs text-text-secondary truncate">{act.detail}</p>
+                </div>
+                <div className="shrink-0 text-right space-y-0.5">
+                  <p className="text-xs text-text-secondary whitespace-nowrap">{relatieveTijd(act.datum)}</p>
+                  {act.url && (
+                    <a href={act.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline block">Bekijk →</a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Host Performance */}
