@@ -40,7 +40,7 @@ export default function ListingOptimizerPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { stap: "1", icoon: "📝", titel: "Vul je advertentie in", tekst: "Plak je tekst in of upload screenshots. Boni vraagt je stap voor stap door alle 14 onderdelen heen." },
-              { stap: "2", icoon: "🤖", titel: "Boni analyseert alles", tekst: "Binnen 60 seconden beoordeelt Boni alle onderdelen van jouw advertentie op basis van duizenden succesvolle listings." },
+              { stap: "2", icoon: "🤖", titel: "Boni analyseert alles", tekst: "Binnen 3-4 minuten beoordeelt Boni alle onderdelen van jouw advertentie op basis van duizenden succesvolle listings." },
               { stap: "3", icoon: "📊", titel: "Ontvang je rapport", tekst: "Je krijgt een score per onderdeel, concrete verbeterpunten en kant-en-klare herschreven teksten met kopieerknop." },
             ].map(({ stap, icoon, titel, tekst }) => (
               <div key={stap} className="card p-8 text-center">
