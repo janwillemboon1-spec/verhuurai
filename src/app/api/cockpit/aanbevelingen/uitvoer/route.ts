@@ -1,6 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCalendar, upsertOverride, updateListing, pushPrices } from "@/lib/pricelabs";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getCalendar, upsertOverride, updateListing, pushPrices, getListingNaamPL } from "@/lib/pricelabs";
+import { logPrijsWijziging } from "@/lib/prijs-log";
 import { NextRequest, NextResponse } from "next/server";
+
+async function getListingNaam(listingId: string): Promise<string> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("cockpit_listing_settings")
+    .select("interne_naam")
+    .eq("listing_id", listingId)
+    .single();
+  return data?.interne_naam ?? await getListingNaamPL(listingId);
+}
 
 const COCKPIT_EMAIL = "info@bnbassistant.com";
 
@@ -20,10 +32,26 @@ export async function POST(req: NextRequest) {
     if (actie_type === "basisprijs") {
       await updateListing(listing_id, { base: nieuwe_waarde });
       await pushPrices(listing_id);
+      await logPrijsWijziging({
+        listing_id,
+        listing_naam: await getListingNaam(listing_id),
+        wijziging_type: "handmatig",
+        veld: "base",
+        nieuwe_waarde: String(nieuwe_waarde),
+        regel_naam: trigger_type ?? null,
+      });
 
     } else if (actie_type === "minimumprijs") {
       await updateListing(listing_id, { min: nieuwe_waarde });
       await pushPrices(listing_id);
+      await logPrijsWijziging({
+        listing_id,
+        listing_naam: await getListingNaam(listing_id),
+        wijziging_type: "handmatig",
+        veld: "min",
+        nieuwe_waarde: String(nieuwe_waarde),
+        regel_naam: trigger_type ?? null,
+      });
 
     } else if (actie_type === "dso_percent" || actie_type === "dso_fixed") {
       if (!periode) {
@@ -59,6 +87,16 @@ export async function POST(req: NextRequest) {
         count++;
       }
       await pushPrices(listing_id);
+      await logPrijsWijziging({
+        listing_id,
+        listing_naam: await getListingNaam(listing_id),
+        wijziging_type: "handmatig",
+        veld: actie_type === "dso_fixed" ? "dso override (vast)" : "dso override (%)",
+        nieuwe_waarde: actie_type === "dso_fixed"
+          ? `€${aanpassing_pct} (${count} datums, ${periode}d)`
+          : `${aanpassing_pct}% (${count} datums, ${periode}d)`,
+        regel_naam: trigger_type ?? null,
+      });
       return NextResponse.json({ ok: true, dso_count: count, periode, datums: vrijeDatums.length });
     }
 
