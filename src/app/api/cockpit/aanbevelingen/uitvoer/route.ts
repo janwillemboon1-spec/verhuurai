@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       for (const dag of vrijeDatums) {
         await upsertOverride(listing_id, {
           date: dag.date,
-          price: String(Math.abs(aanpassing_pct)),
+          price: String(aanpassing_pct),
           price_type: actie_type === "dso_fixed" ? "fixed" : "percent",
           min_stay: dag.min_stay,   // Gebruik de bestaande min_stay per datum — nooit overschrijven
           reason: `Trigger: ${trigger_type}`,
