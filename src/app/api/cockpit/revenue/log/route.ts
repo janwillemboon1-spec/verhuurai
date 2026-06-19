@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getListings } from "@/lib/pricelabs";
 import { NextRequest, NextResponse } from "next/server";
 
 const COCKPIT_EMAIL = "info@bnbassistant.com";
@@ -29,16 +30,24 @@ export async function GET(req: NextRequest) {
   const { data } = await query;
   const entries = data ?? [];
 
-  // Verrijk listing_naam met interne_naam uit cockpit_listing_settings
+  // Verrijk listing_naam: interne_naam (gebruikersinstelling) → PriceLabs naam → opgeslagen naam
   const listingIds = Array.from(new Set(entries.map((e: any) => e.listing_id as string)));
   if (listingIds.length > 0) {
-    const { data: settings } = await admin
-      .from("cockpit_listing_settings")
-      .select("listing_id, interne_naam")
-      .in("listing_id", listingIds);
-    const naamMap: Record<string, string> = {};
-    (settings ?? []).forEach((s: any) => { if (s.interne_naam) naamMap[s.listing_id] = s.interne_naam; });
-    return NextResponse.json(entries.map((e: any) => ({ ...e, listing_naam: naamMap[e.listing_id] ?? e.listing_naam })));
+    const [{ data: settings }, plListings] = await Promise.all([
+      admin.from("cockpit_listing_settings").select("listing_id, interne_naam").in("listing_id", listingIds),
+      getListings().catch(() => []),
+    ]);
+
+    const interneNaamMap: Record<string, string> = {};
+    (settings ?? []).forEach((s: any) => { if (s.interne_naam) interneNaamMap[String(s.listing_id)] = s.interne_naam; });
+
+    const plNaamMap: Record<string, string> = {};
+    plListings.forEach((l) => { if (l.name) plNaamMap[l.id] = l.name.split("--")[0].trim(); });
+
+    return NextResponse.json(entries.map((e: any) => ({
+      ...e,
+      listing_naam: interneNaamMap[e.listing_id] ?? plNaamMap[e.listing_id] ?? e.listing_naam,
+    })));
   }
 
   return NextResponse.json(entries);
