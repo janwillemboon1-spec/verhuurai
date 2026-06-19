@@ -27,5 +27,16 @@ export async function GET(req: NextRequest, { params }: { params: { listingId: s
   if (tot) query = query.lte("aangemaakt_op", tot + "T23:59:59Z");
 
   const { data } = await query;
+
+  // Verrijk listing_naam met interne_naam uit cockpit_listing_settings
+  const { data: setting } = await admin
+    .from("cockpit_listing_settings")
+    .select("interne_naam")
+    .eq("listing_id", params.listingId)
+    .single();
+  if (setting?.interne_naam) {
+    return NextResponse.json((data ?? []).map((e: any) => ({ ...e, listing_naam: setting.interne_naam })));
+  }
+
   return NextResponse.json(data ?? []);
 }

@@ -20,6 +20,12 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
   const rapport = opgeslagenRapport.rapport_json as BoniRapport & { hostNaam?: string; datum?: string };
   const velden = rapport.velden;
 
+  const GESCOORDE_VELDEN = [
+    "titel", "beschrijving", "accommodatie", "toegang", "interactie",
+    "andereInfo", "voorzieningen", "buurt", "vervoer", "recensies",
+    "hostProfiel", "huisregels",
+  ] as const;
+
   const VELD_ICONEN: Record<string, string> = {
     titel: "📌", beschrijving: "📝", accommodatie: "🏠", toegang: "🔑",
     interactie: "💬", andereInfo: "ℹ️", voorzieningen: "⚡", buurt: "📍",
@@ -99,7 +105,8 @@ export default async function ListingRapportPagina({ params }: { params: { id: s
 
         <div className="space-y-4">
           <h2 className="font-display text-2xl text-primary">{isEn ? "Analysis per section" : "Analyse per onderdeel"}</h2>
-          {Object.entries(velden || {}).map(([key, veld]: [string, any]) => {
+          {GESCOORDE_VELDEN.map((key) => {
+            const veld = (velden as any)?.[key];
             if (!veld || !veld.score) return null;
             const bgKleur = scoreBgKleur(veld.score);
             return (

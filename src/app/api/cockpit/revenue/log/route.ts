@@ -27,5 +27,19 @@ export async function GET(req: NextRequest) {
   if (tot) query = query.lte("aangemaakt_op", tot + "T23:59:59Z");
 
   const { data } = await query;
-  return NextResponse.json(data ?? []);
+  const entries = data ?? [];
+
+  // Verrijk listing_naam met interne_naam uit cockpit_listing_settings
+  const listingIds = Array.from(new Set(entries.map((e: any) => e.listing_id as string)));
+  if (listingIds.length > 0) {
+    const { data: settings } = await admin
+      .from("cockpit_listing_settings")
+      .select("listing_id, interne_naam")
+      .in("listing_id", listingIds);
+    const naamMap: Record<string, string> = {};
+    (settings ?? []).forEach((s: any) => { if (s.interne_naam) naamMap[s.listing_id] = s.interne_naam; });
+    return NextResponse.json(entries.map((e: any) => ({ ...e, listing_naam: naamMap[e.listing_id] ?? e.listing_naam })));
+  }
+
+  return NextResponse.json(entries);
 }
