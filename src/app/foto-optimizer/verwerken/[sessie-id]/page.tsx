@@ -12,7 +12,7 @@ const STAPPEN = [
   "Kwaliteit verhogen...",
 ];
 
-const SECONDEN_PER_FOTO = 55;
+const SECONDEN_PER_FOTO = 10;
 
 export default function VerwerkingPage({
   params,
@@ -32,6 +32,7 @@ export default function VerwerkingPage({
   const [toonHandmatig, setToonHandmatig] = useState(false);
 
   const startTijdRef = useRef<number | null>(null);
+  const totaalRef = useRef(0); // ref zodat simulatie-interval altijd actuele waarde leest
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stapIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const simIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -50,17 +51,28 @@ export default function VerwerkingPage({
     setTimeout(() => router.push(`/foto-optimizer/resultaat/${sessieId}`), 600);
   }, [sessieId, router]);
 
-  // Check of alle foto's klaar zijn — puur op foto-niveau, ongeacht sessie.status
+  // Check of alle foto's klaar zijn — sessie.status is leidend, individuele statussen als backup
   const checkKlaar = useCallback(async () => {
     try {
       const res = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`);
       if (!res.ok) return;
       const data = await res.json();
+
+      // Sessie klaar → meteen redirect, ongeacht individuele bewerking-statussen
+      if (data.sessie?.status === "klaar") {
+        redirect();
+        return;
+      }
+
       if (!data.bewerkingen) return;
 
       const all = data.bewerkingen as any[];
-      const n = all.length;
+      // Gebruik sessie.aantal_fotos als bron voor totaal (beschikbaar voor de simulatie-interval)
+      const n = data.sessie?.aantal_fotos || all.length;
       if (n === 0) return;
+
+      totaalRef.current = n;
+      setTotaal(n);
 
       const gedaan = all.filter((b: any) =>
         b.status === "klaar" ||
@@ -70,7 +82,6 @@ export default function VerwerkingPage({
       ).length;
 
       setKlaarCount(gedaan);
-      setTotaal(n);
 
       if (gedaan >= n) {
         redirect();
@@ -110,10 +121,11 @@ export default function VerwerkingPage({
       // Poll elke 2 seconden
       pollIntervalRef.current = setInterval(checkKlaar, 2000);
 
-      // Simulatiebalk
+      // Simulatiebalk — gebruikt totaalRef (ref, niet state) om stale closure te vermijden
       simIntervalRef.current = setInterval(() => {
-        if (!startTijdRef.current || !totaal) return;
-        const totaalSec = Math.max(totaal || 3, 1) * SECONDEN_PER_FOTO;
+        if (!startTijdRef.current) return;
+        const n = totaalRef.current || 1;
+        const totaalSec = n * SECONDEN_PER_FOTO;
         const verlopen = (Date.now() - startTijdRef.current) / 1000;
         setSimulatedPercent(prev => {
           const sim = Math.min(90, (verlopen / totaalSec) * 90);
@@ -121,8 +133,8 @@ export default function VerwerkingPage({
         });
       }, 500);
 
-      // Handmatige knop na 3 minuten
-      handmatigTimerRef.current = setTimeout(() => setToonHandmatig(true), 3 * 60 * 1000);
+      // Handmatige knop na 2 minuten
+      handmatigTimerRef.current = setTimeout(() => setToonHandmatig(true), 2 * 60 * 1000);
     };
 
     start().catch(() => setFout("Verbinding mislukt. Ververs de pagina."));

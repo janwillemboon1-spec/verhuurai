@@ -89,14 +89,18 @@ async function verwerkEenFoto(
     throw new Error(`Upload bewerkt mislukt: ${uploadError.message}`);
   }
 
-  // Eerst bewerkt_pad opslaan (SSE gebruikt dit als completion indicator)
-  // Dan volledige status-update — als deze faalt, detecteert SSE via bewerkt_pad
-  await admin
+  // Eerst bewerkt_pad opslaan zodat de poll dit als completion indicator kan gebruiken
+  const { error: bewerktPadError } = await admin
     .from("foto_bewerkingen")
     .update({ bewerkt_pad: bewerktPad })
     .eq("id", bewerking.id);
 
-  await admin
+  if (bewerktPadError) {
+    console.error(`[verwerk] bewerkt_pad update mislukt foto ${bewerking.volgnummer}:`, bewerktPadError.message);
+    throw new Error(`bewerkt_pad update mislukt: ${bewerktPadError.message}`);
+  }
+
+  const { error: statusError } = await admin
     .from("foto_bewerkingen")
     .update({
       status: "klaar",
@@ -109,6 +113,10 @@ async function verwerkEenFoto(
       klaar_op: new Date().toISOString(),
     })
     .eq("id", bewerking.id);
+
+  if (statusError) {
+    console.error(`[verwerk] status update mislukt foto ${bewerking.volgnummer}:`, statusError.message);
+  }
 
   return analyse.gebruikteUitzondering;
 }

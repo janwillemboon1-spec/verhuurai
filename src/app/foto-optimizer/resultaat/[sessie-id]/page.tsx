@@ -95,6 +95,14 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
 
   useEffect(() => { laadData(); }, [laadData]);
 
+  // Poll elke 3 seconden zolang de sessie nog niet klaar is (bv. bij handmatige navigatie)
+  useEffect(() => {
+    if (laden) return;
+    if (sessie?.status === "klaar") return;
+    const interval = setInterval(laadData, 3000);
+    return () => clearInterval(interval);
+  }, [laden, sessie?.status, laadData]);
+
   // Polling tijdens regeneratie
   useEffect(() => {
     if (!regenereerBezig) return;
