@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verwerkSessie } from "@/lib/foto-optimizer/foto-verwerker";
 import type { FotoVoortgang } from "@/types/foto-optimizer";
 
 declare global {
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       .update({ status: "verwerking" })
       .eq("id", sessieId);
 
-    // In-memory voortgang initialiseren voor SSE
+    // In-memory voortgang initialiseren
     global.fotoVoortgang.set(sessieId, {
       sessieId,
       totaal: sessie.aantal_fotos,
@@ -53,14 +54,9 @@ export async function POST(request: Request) {
       status: "verwerking",
     });
 
-    // Achtergrondverwerking starten — NIET awaiten
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
-    fetch(`${baseUrl}/api/foto-optimizer/verwerk-uitvoeren`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessieId }),
-    }).catch((err) => {
-      console.error("Achtergrond verwerking mislukt:", err);
+    // Verwerking direct in hetzelfde process starten (geen HTTP-call, geen Railway proxy timeout)
+    verwerkSessie(sessieId).catch((err) => {
+      console.error("[verwerk] Achtergrond verwerking mislukt:", err);
       const huidig = global.fotoVoortgang.get(sessieId);
       if (huidig) global.fotoVoortgang.set(sessieId, { ...huidig, status: "fout" });
     });
