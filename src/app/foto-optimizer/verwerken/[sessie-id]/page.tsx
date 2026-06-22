@@ -90,38 +90,18 @@ export default function VerwerkingPage({
   }, [sessieId, redirect]);
 
   useEffect(() => {
-    // Tekststapjes roteren
     stapIntervalRef.current = setInterval(() => setStapIndex(i => (i + 1) % STAPPEN.length), 3000);
 
-    const start = async () => {
-      const res = await fetch("/api/foto-optimizer/verwerk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessieId }),
-      });
-
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setFout(d.error || "Verwerking kon niet worden gestart.");
-        return;
-      }
-
-      const d = await res.json();
-      if (d.klaar) {
-        redirect();
-        return;
-      }
-
+    // Animatie en polling starten DIRECT — onafhankelijk van de verwerk-response
+    const startAnimatieEnPoll = async () => {
       setGestart(true);
       startTijdRef.current = Date.now();
 
-      // Eerste check meteen
+      // Haal totaal op zodat de simulatie meteen de goede duur weet
       await checkKlaar();
 
-      // Poll elke 2 seconden
       pollIntervalRef.current = setInterval(checkKlaar, 2000);
 
-      // Simulatiebalk — gebruikt totaalRef (ref, niet state) om stale closure te vermijden
       simIntervalRef.current = setInterval(() => {
         if (!startTijdRef.current) return;
         const n = totaalRef.current || 1;
@@ -133,11 +113,41 @@ export default function VerwerkingPage({
         });
       }, 500);
 
-      // Handmatige knop na 2 minuten
       handmatigTimerRef.current = setTimeout(() => setToonHandmatig(true), 2 * 60 * 1000);
     };
 
-    start().catch(() => setFout("Verbinding mislukt. Ververs de pagina."));
+    // Verwerk POST — response kan lang uitblijven (Railway kapt verbinding na 100s)
+    // Bij connection error valt de client terug op de poll hierboven
+    const roepVerwerkAan = async () => {
+      try {
+        const res = await fetch("/api/foto-optimizer/verwerk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessieId }),
+        });
+
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          // Sessie niet betaald of niet gevonden — echte fout tonen
+          if (res.status === 403 || res.status === 404) {
+            setFout(d.error || "Verwerking kon niet worden gestart.");
+          }
+          // Anders: 500 kan ook door timeout — poll blijft draaien
+          return;
+        }
+
+        const d = await res.json();
+        if (d.klaar) {
+          redirect();
+        }
+      } catch {
+        // Connection cut door Railway proxy — Node.js process blijft doorlopen
+        // De poll detecteert klaar zodra sessie.status === "klaar" is
+      }
+    };
+
+    startAnimatieEnPoll();
+    roepVerwerkAan();
 
     return () => {
       if (stapIntervalRef.current) clearInterval(stapIntervalRef.current);

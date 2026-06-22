@@ -111,11 +111,12 @@ async function verwerkEenFoto(
 export async function verwerkSessie(sessieId: string): Promise<void> {
   const admin = createAdminClient();
 
+  // Haal alle nog te verwerken foto's op (wachtrij óf vastgelopen in verwerking)
   const { data: bewerkingen, error } = await admin
     .from("foto_bewerkingen")
     .select("id, volgnummer, origineel_pad")
     .eq("sessie_id", sessieId)
-    .eq("status", "wachtrij")
+    .in("status", ["wachtrij", "verwerking"])
     .order("volgnummer", { ascending: true });
 
   if (error || !bewerkingen) {

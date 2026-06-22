@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verwerkSessie } from "@/lib/foto-optimizer/foto-verwerker";
-import type { FotoVoortgang } from "@/types/foto-optimizer";
 
-declare global {
-  var fotoVoortgang: Map<string, FotoVoortgang>;
-}
-if (!global.fotoVoortgang) global.fotoVoortgang = new Map();
+// Lang timeout zodat Railway de verbinding niet vroegtijdig kapt
+export const maxDuration = 600;
 
 export async function POST(request: Request) {
   try {
@@ -26,44 +23,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sessie niet gevonden" }, { status: 404 });
     }
 
-    // Al klaar of al bezig: geen nieuwe verwerking starten
     if (sessie.status === "klaar") {
       return NextResponse.json({ ok: true, klaar: true });
     }
     if (sessie.status === "verwerking") {
-      return NextResponse.json({ ok: true, alBezig: true });
+      // Al bezig — wacht tot klaar en geef resultaat terug
+      await verwerkSessie(sessieId);
+      return NextResponse.json({ ok: true, klaar: true });
     }
     if (sessie.status !== "betaald") {
       return NextResponse.json({ error: "Sessie niet betaald" }, { status: 403 });
     }
 
-    // Status bijwerken naar verwerking
     await admin
       .from("foto_sessies")
       .update({ status: "verwerking" })
       .eq("id", sessieId);
 
-    // In-memory voortgang initialiseren
-    global.fotoVoortgang.set(sessieId, {
-      sessieId,
-      totaal: sessie.aantal_fotos,
-      klaar: 0,
-      overgeslagen: 0,
-      fout: 0,
-      huidigeFoto: null,
-      status: "verwerking",
-    });
+    // Synchrone verwerking: await zodat Next.js de promise nooit kanceleert
+    // Als Railway de HTTP-verbinding kapt na 100s, blijft de Node.js code doorlopen
+    // en worden DB-updates alsnog afgemaakt. De client vangt de connection error op
+    // en start polling als fallback.
+    await verwerkSessie(sessieId);
 
-    // Verwerking direct in hetzelfde process starten (geen HTTP-call, geen Railway proxy timeout)
-    verwerkSessie(sessieId).catch((err) => {
-      console.error("[verwerk] Achtergrond verwerking mislukt:", err);
-      const huidig = global.fotoVoortgang.get(sessieId);
-      if (huidig) global.fotoVoortgang.set(sessieId, { ...huidig, status: "fout" });
-    });
-
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, klaar: true });
   } catch (error) {
-    console.error("Verwerk route fout:", error);
+    console.error("[verwerk] Fout:", error);
     return NextResponse.json({ error: "Er ging iets mis" }, { status: 500 });
   }
 }
