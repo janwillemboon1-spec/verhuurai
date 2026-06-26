@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       type: "magiclink",
       email: user.user.email,
       options: {
-        redirectTo: `${baseUrl}/host-performance/rapport-genereren/${abonnementId}`,
+        redirectTo: `${baseUrl}/auth/callback?next=/host-performance/rapport-genereren/${abonnementId}`,
       },
     });
 

@@ -43,6 +43,12 @@ function CallbackHandler() {
 
       setStatus("Gelukt! Doorsturen...");
 
+      const next = searchParams.get("next");
+      if (next && next.startsWith("/")) {
+        router.replace(next);
+        return;
+      }
+
       if (airbnb_url) {
         setStatus("Woning koppelen...");
         const res = await fetch("/api/abonnement-aanmaken", {

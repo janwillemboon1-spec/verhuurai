@@ -36,37 +36,35 @@ export default function RapportGenereerenPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const genereer = async () => {
+    try {
+      const res = await fetch("/api/review-rapport", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ abonnementId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error);
+
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { data: rData } = await supabase
+        .from("rapporten")
+        .select("*")
+        .eq("id", data.rapportId)
+        .single();
+
+      setRapport(rData?.rapport_json);
+      setRapportId(data.rapportId);
+      setFase("klaar");
+    } catch {
+      setFase("fout");
+    }
+  };
+
   useEffect(() => {
     if (bezig.current) return;
     bezig.current = true;
-
-    const genereer = async () => {
-      try {
-        const res = await fetch("/api/review-rapport", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ abonnementId }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error);
-
-        // Rapport ophalen
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const { data: rData } = await supabase
-          .from("rapporten")
-          .select("*")
-          .eq("id", data.rapportId)
-          .single();
-
-        setRapport(rData?.rapport_json);
-        setRapportId(data.rapportId);
-        setFase("klaar");
-      } catch {
-        setFase("fout");
-      }
-    };
-
     genereer();
   }, [abonnementId]);
 
@@ -96,7 +94,7 @@ export default function RapportGenereerenPage() {
           <BoniAvatar size={80} className="mx-auto" />
           <h2 className="font-display text-2xl text-primary">Oeps, iets ging mis</h2>
           <p className="text-text-secondary">Boni kon het rapport niet genereren. Probeer het opnieuw.</p>
-          <button onClick={() => { setFase("genereren"); }} className="btn-primary">
+          <button onClick={() => { bezig.current = false; setFase("genereren"); genereer(); }} className="btn-primary">
             Opnieuw proberen
           </button>
         </div>
