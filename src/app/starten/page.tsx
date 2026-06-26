@@ -30,7 +30,7 @@ export default function StartenPage() {
     setLaden(true);
     setFout(null);
     try {
-      const res = await fetch("/api/test-sessie", {
+      const res = await fetch("/api/stripe/checkout-lo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -39,8 +39,8 @@ export default function StartenPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      const { sessieId } = await res.json();
-      router.push(`/analyseer/${sessieId}`);
+      const { url } = await res.json();
+      window.location.href = url;
     } catch {
       setFout("Er ging iets mis. Probeer het opnieuw.");
       setLaden(false);

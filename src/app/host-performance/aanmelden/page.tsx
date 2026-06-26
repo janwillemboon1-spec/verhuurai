@@ -37,6 +37,26 @@ function AanmeldenForm() {
   const geldigeUrl = airbnbUrl.trim().includes("airbnb.");
   const geldigEmail = email.trim().includes("@");
 
+  const naarStripeHP = async () => {
+    const res = await fetch("/api/stripe/checkout-hp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        airbnb_url: airbnbUrl.trim(),
+        listing_naam: listingNaam.trim() || null,
+        voornaam: voornaam.trim() || null,
+        taal,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setFout(data.error || "Er ging iets mis. Probeer het opnieuw.");
+      setLaden(false);
+      return;
+    }
+    window.location.href = data.url;
+  };
+
   const verstuurAanmelding = async () => {
     if (!geldigeUrl) return;
     setLaden(true);
@@ -46,27 +66,8 @@ function AanmeldenForm() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      // Al ingelogd — abonnement direct aanmaken
-      const res = await fetch("/api/abonnement-aanmaken", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          airbnb_url: airbnbUrl.trim(),
-          naam: listingNaam.trim(),
-          voornaam: voornaam.trim() || null,
-          frequentie,
-          interval,
-          taal,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        setFout(errData.error || "Er ging iets mis. Probeer het opnieuw.");
-        setLaden(false);
-        return;
-      }
-      window.location.href = `/host-performance/rapport-genereren/${data.abonnementId}`;
+      // Al ingelogd — direct naar Stripe
+      await naarStripeHP();
       return;
     }
 
@@ -115,26 +116,8 @@ function AanmeldenForm() {
       try { await fetch(verData.loginUrl, { redirect: "manual" }); } catch {}
     }
 
-    const res = await fetch("/api/abonnement-aanmaken", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        airbnb_url: airbnbUrl.trim(),
-        naam: listingNaam.trim(),
-        voornaam: voornaam.trim() || null,
-        frequentie,
-        interval,
-        taal,
-      }),
-    });
-    const data = await res.json();
-
-    if (res.ok && data.abonnementId) {
-      window.location.href = `/host-performance/rapport-genereren/${data.abonnementId}`;
-    } else {
-      setFout("Account aangemaakt maar woning toevoegen mislukt. Probeer opnieuw.");
-      setLaden(false);
-    }
+    // Na OTP login direct naar Stripe
+    await naarStripeHP();
   };
 
   // Stap: code invoeren
@@ -166,7 +149,7 @@ function AanmeldenForm() {
             disabled={code.length < 4 || laden}
             className={`btn-primary w-full ${code.length < 6 || laden ? "opacity-40 cursor-not-allowed" : ""}`}
           >
-            {laden ? "Bezig..." : "Bevestigen en rapport genereren →"}
+            {laden ? "Bezig..." : "Bevestigen en naar betaling →"}
           </button>
           <p className="text-xs text-text-secondary">
             Check ook je spammap. Code is 10 minuten geldig.
@@ -293,7 +276,7 @@ function AanmeldenForm() {
                 </svg>
                 Bezig...
               </>
-            ) : "Host Performance Audit aanvragen — €7,99 →"}
+            ) : "Betalen en rapport genereren — €7,99 →"}
           </button>
         </div>
       </div>
