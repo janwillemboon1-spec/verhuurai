@@ -22,15 +22,7 @@ function HPSuccesInhoud() {
         const data = await res.json();
 
         if (data.abonnementId) {
-          // Abonnement gevonden — magic link ophalen
-          const linkRes = await fetch(`/api/hp-audit/login-link?abonnement_id=${data.abonnementId}`);
-          const linkData = await linkRes.json();
-
-          if (linkData.loginUrl) {
-            window.location.href = linkData.loginUrl;
-          } else {
-            setFout(true);
-          }
+          window.location.href = `/host-performance/rapport-genereren/${data.abonnementId}?stripe_sid=${encodeURIComponent(sessionId)}`;
           return;
         }
       } catch {}

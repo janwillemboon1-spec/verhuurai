@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
 import { DeelModal } from "@/components/DeelModal";
@@ -14,10 +14,12 @@ const BERICHTEN = [
   "Rapport wordt samengesteld...",
 ];
 
-export default function RapportGenereerenPage() {
+function RapportGenereerenInhoud() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const abonnementId = params.id as string;
+  const stripeSid = searchParams.get("stripe_sid") || "";
 
   const [fase, setFase] = useState<"genereren" | "klaar" | "fout">("genereren");
   const [berichtIndex, setBerichtIndex] = useState(0);
@@ -41,11 +43,20 @@ export default function RapportGenereerenPage() {
       const res = await fetch("/api/review-rapport", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ abonnementId }),
+        body: JSON.stringify({ abonnementId, stripe_session_id: stripeSid || undefined }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error);
 
+      // rapport_json komt direct mee uit de API — geen aparte Supabase fetch nodig
+      if (data.rapport_json) {
+        setRapport(data.rapport_json);
+        setRapportId(data.rapportId);
+        setFase("klaar");
+        return;
+      }
+
+      // Fallback: ophalen via Supabase client (ingelogde gebruikers)
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       const { data: rData } = await supabase
@@ -273,5 +284,17 @@ export default function RapportGenereerenPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function RapportGenereerenPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <RapportGenereerenInhoud />
+    </Suspense>
   );
 }
