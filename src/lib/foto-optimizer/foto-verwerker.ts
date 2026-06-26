@@ -77,19 +77,11 @@ async function verwerkEenFoto(
 
   console.log(`[verwerker] Upload OK foto ${bewerking.volgnummer}: ${bewerktPad}`);
 
-  const { error: bewerktPadError } = await admin
-    .from("foto_bewerkingen")
-    .update({ bewerkt_pad: bewerktPad })
-    .eq("id", bewerking.id);
-
-  if (bewerktPadError) {
-    console.error(`[verwerker] bewerkt_pad update mislukt foto ${bewerking.volgnummer}:`, bewerktPadError.message);
-    throw new Error(`bewerkt_pad update mislukt: ${bewerktPadError.message}`);
-  }
-
-  const { error: statusError } = await admin
+  // Één gecombineerde update — minder kans op gedeeltelijk succes
+  const { error: updateError } = await admin
     .from("foto_bewerkingen")
     .update({
+      bewerkt_pad: bewerktPad,
       status: "klaar",
       ruimte: analyse.ruimte,
       analyse_json: {
@@ -101,11 +93,13 @@ async function verwerkEenFoto(
     })
     .eq("id", bewerking.id);
 
-  if (statusError) {
-    console.error(`[verwerker] status update mislukt foto ${bewerking.volgnummer}:`, statusError.message);
+  if (updateError) {
+    // Niet gooien: de foto staat al in storage en de resultaatpagina kan het pad
+    // reconstrueren op basis van sessieId + volgnummer. Wel loggen voor diagnose.
+    console.error(`[verwerker] DB update mislukt foto ${bewerking.volgnummer}:`, updateError.message, updateError);
+  } else {
+    console.log(`[verwerker] Foto ${bewerking.volgnummer} klaar`);
   }
-
-  console.log(`[verwerker] Foto ${bewerking.volgnummer} klaar`);
 }
 
 export async function verwerkSessie(sessieId: string): Promise<void> {

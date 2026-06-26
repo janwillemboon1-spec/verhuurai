@@ -26,15 +26,26 @@ export async function GET(
 
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const bewerkingenMetUrls = (bewerkingen || []).map(b => ({
-    ...b,
-    origineelUrl: b.origineel_pad
-      ? `${base}/storage/v1/object/public/foto-originelen/${b.origineel_pad}`
-      : null,
-    bewerktUrl: b.bewerkt_pad
-      ? `${base}/storage/v1/object/public/foto-bewerkt/${b.bewerkt_pad}`
-      : null,
-  }));
+  const bewerkingenMetUrls = (bewerkingen || []).map(b => {
+    // Als bewerkt_pad in DB ontbreekt maar upload wél gelukt is (status "verwerking" of
+    // "wachtrij" = DB-update faalde na upload), reconstrueer het verwachte pad.
+    // "fout" en "overgeslagen" krijgen geen fallback — bij die statussen is er geen bestand.
+    const kanFallback = !b.bewerkt_pad && b.status !== "fout" && b.status !== "overgeslagen";
+    const bewerktPad = b.bewerkt_pad
+      ?? (kanFallback
+        ? `${sessieId}/${String(b.volgnummer).padStart(3, "0")}_bewerkt.png`
+        : null);
+
+    return {
+      ...b,
+      origineelUrl: b.origineel_pad
+        ? `${base}/storage/v1/object/public/foto-originelen/${b.origineel_pad}`
+        : null,
+      bewerktUrl: bewerktPad
+        ? `${base}/storage/v1/object/public/foto-bewerkt/${bewerktPad}`
+        : null,
+    };
+  });
 
   return NextResponse.json({ sessie, bewerkingen: bewerkingenMetUrls });
 }
