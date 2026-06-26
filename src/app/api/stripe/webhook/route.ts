@@ -1,6 +1,5 @@
 import { stripe } from "@/lib/stripe";
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -50,19 +49,27 @@ export async function POST(request: Request) {
 
       // --- Listing Optimizer ---
       if (metadata.tool === "listing-optimizer") {
-        const sessieId = uuidv4();
+        const sessieId = metadata.sessieId;
         const email = metadata.email || session.customer_email || "";
         const naam = metadata.naam || "";
 
-        global.sessies.set(sessieId, {
-          id: sessieId,
-          email,
-          naam,
-          pakket: "listing-optimizer",
-          credits: 1,
-          gebruiktCredits: 0,
-          aangemaakt: new Date().toISOString(),
-        });
+        // Sessie als betaald markeren (was al aangemaakt bij checkout)
+        if (sessieId && global.sessies.has(sessieId)) {
+          const bestaand = global.sessies.get(sessieId);
+          global.sessies.set(sessieId, { ...bestaand, betaald: true });
+        } else if (sessieId) {
+          // Fallback: server herstart gehad tussen checkout en betaling
+          global.sessies.set(sessieId, {
+            id: sessieId,
+            email,
+            naam,
+            pakket: "listing-optimizer",
+            credits: 1,
+            gebruiktCredits: 0,
+            aangemaakt: new Date().toISOString(),
+            betaald: true,
+          });
+        }
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
@@ -75,14 +82,13 @@ export async function POST(request: Request) {
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
                 <h1 style="color: #2b3885;">Hey ${naam}!</h1>
-                <p>Betaling ontvangen — jouw Listing Optimizer sessie staat klaar.</p>
+                <p>Betaling ontvangen — jouw analyselink staat klaar. Gebruik hem als je de sessie opnieuw wilt starten.</p>
                 <p style="margin: 24px 0;">
                   <a href="${baseUrl}/analyseer/${sessieId}" style="background: #2b3885; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                    Start mijn analyse →
+                    Naar mijn analyse →
                   </a>
                 </p>
                 <p style="color: #666; font-size: 14px;">Of kopieer deze link: ${baseUrl}/analyseer/${sessieId}</p>
-                <p style="color: #666; font-size: 12px; margin-top: 32px;">Bewaar deze link — je hebt hem nodig om je analyse te starten.</p>
                 <p>Veel succes,<br><strong>Boni van Host Boni</strong></p>
               </div>
             `,
