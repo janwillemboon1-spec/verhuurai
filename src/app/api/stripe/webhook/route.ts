@@ -104,24 +104,52 @@ export async function POST(request: Request) {
       if (metadata.tool === "hp-audit") {
         try {
           const admin = createAdminClient();
-          const { data: abo, error } = await admin
-            .from("abonnementen")
-            .insert({
-              user_id: metadata.user_id,
-              airbnb_url: metadata.airbnb_url,
-              listing_naam: metadata.listing_naam || null,
-              voornaam: metadata.voornaam || null,
-              frequentie: "eenmalig",
-              billing_interval: "eenmalig",
-              taal: metadata.taal || "nl",
-              status: "trial",
-              stripe_session_id: session.id,
-            })
-            .select()
-            .single();
+          const email = metadata.email || session.customer_email || "";
 
-          if (error) {
-            console.error("HP Audit abonnement aanmaken mislukt:", error);
+          // Gebruiker zoeken of aanmaken
+          let userId: string | null = null;
+          const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+            email,
+            email_confirm: true,
+          });
+
+          if (!createError && newUser?.user) {
+            userId = newUser.user.id;
+          } else {
+            // Gebruiker bestaat al — opzoeken via listUsers
+            const { data: { users } } = await admin.auth.admin.listUsers({ perPage: 1000 });
+            const bestaand = users.find((u) => u.email === email);
+            if (bestaand) userId = bestaand.id;
+          }
+
+          if (!userId) {
+            console.error("HP Audit: gebruiker niet gevonden of aangemaakt voor", email);
+            return NextResponse.json({ received: true }, { status: 200 });
+          }
+
+          // Voorkom dubbel abonnement voor dezelfde Stripe sessie
+          const { data: bestaandAbo } = await admin
+            .from("abonnementen")
+            .select("id")
+            .eq("stripe_session_id", session.id)
+            .maybeSingle();
+
+          if (!bestaandAbo) {
+            const { error: aboError } = await admin
+              .from("abonnementen")
+              .insert({
+                user_id: userId,
+                airbnb_url: metadata.airbnb_url,
+                listing_naam: metadata.listing_naam || null,
+                voornaam: metadata.voornaam || null,
+                frequentie: "eenmalig",
+                billing_interval: "eenmalig",
+                taal: metadata.taal || "nl",
+                status: "trial",
+                stripe_session_id: session.id,
+              });
+
+            if (aboError) console.error("HP Audit abonnement aanmaken mislukt:", aboError);
           }
         } catch (err) {
           console.error("HP Audit webhook fout:", err);

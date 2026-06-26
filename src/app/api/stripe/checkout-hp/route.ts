@@ -1,26 +1,19 @@
 import { stripe } from "@/lib/stripe";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { airbnb_url, listing_naam, voornaam, taal } = await request.json();
+    const { airbnb_url, listing_naam, voornaam, email, taal } = await request.json();
 
-    if (!airbnb_url) {
-      return NextResponse.json({ error: "airbnb_url is verplicht" }, { status: 400 });
-    }
-
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+    if (!airbnb_url || !email) {
+      return NextResponse.json({ error: "airbnb_url en email zijn verplicht" }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card", "ideal"],
-      customer_email: user.email,
+      customer_email: email,
       line_items: [
         {
           price_data: {
@@ -39,7 +32,7 @@ export async function POST(request: Request) {
       cancel_url: `${baseUrl}/host-performance/aanmelden`,
       metadata: {
         tool: "hp-audit",
-        user_id: user.id,
+        email,
         airbnb_url,
         listing_naam: listing_naam || "",
         voornaam: voornaam || "",

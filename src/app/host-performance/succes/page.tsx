@@ -1,53 +1,48 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 
 function HPSuccesInhoud() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const sessionId = searchParams.get("session_id") || "";
-  const [pogingen, setPogingen] = useState(0);
   const [fout, setFout] = useState(false);
 
   useEffect(() => {
-    if (!sessionId) {
-      setFout(true);
-      return;
-    }
+    if (!sessionId) { setFout(true); return; }
 
-    let stopPolling = false;
+    let gestopt = false;
+    let pogingen = 0;
 
     const poll = async () => {
-      if (stopPolling) return;
-
+      if (gestopt) return;
       try {
-        const res = await fetch(
-          `/api/hp-audit/abonnement-voor-checkout?session_id=${encodeURIComponent(sessionId)}`
-        );
+        const res = await fetch(`/api/hp-audit/abonnement-voor-checkout?session_id=${encodeURIComponent(sessionId)}`);
         const data = await res.json();
 
         if (data.abonnementId) {
-          router.push(`/host-performance/rapport-genereren/${data.abonnementId}`);
+          // Abonnement gevonden — magic link ophalen
+          const linkRes = await fetch(`/api/hp-audit/login-link?abonnement_id=${data.abonnementId}`);
+          const linkData = await linkRes.json();
+
+          if (linkData.loginUrl) {
+            window.location.href = linkData.loginUrl;
+          } else {
+            setFout(true);
+          }
           return;
         }
       } catch {}
 
-      setPogingen((p) => {
-        const nieuw = p + 1;
-        if (nieuw >= 15) {
-          setFout(true);
-          return nieuw;
-        }
-        setTimeout(poll, 2000);
-        return nieuw;
-      });
+      pogingen++;
+      if (pogingen >= 15) { setFout(true); return; }
+      setTimeout(poll, 2000);
     };
 
     setTimeout(poll, 1500);
-    return () => { stopPolling = true; };
-  }, [sessionId, router]);
+    return () => { gestopt = true; };
+  }, [sessionId]);
 
   if (fout) {
     return (
@@ -57,9 +52,7 @@ function HPSuccesInhoud() {
           <h2 className="font-display text-2xl text-primary">Iets ging mis</h2>
           <p className="text-text-secondary text-sm">
             Jouw betaling is ontvangen maar de verwerking duurde te lang. Stuur een mailtje naar{" "}
-            <a href="mailto:boni@verhuurai.nl" className="text-accent underline">
-              boni@verhuurai.nl
-            </a>{" "}
+            <a href="mailto:boni@verhuurai.nl" className="text-accent underline">boni@verhuurai.nl</a>{" "}
             en we lossen het direct op.
           </p>
         </div>
@@ -72,9 +65,7 @@ function HPSuccesInhoud() {
       <div className="max-w-md w-full text-center space-y-6">
         <BoniAvatar size={100} animate={true} className="mx-auto" />
         <h1 className="font-display text-3xl text-primary">Betaling geslaagd!</h1>
-        <p className="text-text-secondary">
-          Boni maakt jouw rapport klaar…
-        </p>
+        <p className="text-text-secondary">Boni maakt jouw rapport klaar…</p>
         <div className="flex justify-center gap-1.5 mt-4">
           {[0, 1, 2].map((i) => (
             <div

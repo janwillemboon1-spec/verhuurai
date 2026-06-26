@@ -1,178 +1,58 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useState, Suspense } from "react";
 import { BoniAvatar } from "@/components/BoniAvatar";
 
-const MAAND_DAGEN = [
-  { waarde: "1",  label: "1e dag van de maand" },
-  { waarde: "15", label: "15e dag van de maand" },
-  { waarde: "28", label: "28e dag van de maand" },
-];
-
 function AanmeldenForm() {
-  const searchParams = useSearchParams();
-
   const [voornaam, setVoornaam] = useState("");
   const [airbnbUrl, setAirbnbUrl] = useState("");
   const [listingNaam, setListingNaam] = useState("");
   const [email, setEmail] = useState("");
-  const isEenmalig = true;
-  const frequentie = "eenmalig";
-  const interval = "eenmalig";
   const [taal, setTaal] = useState("nl");
-  const [stap, setStap] = useState<"formulier" | "code">("formulier");
-  const [code, setCode] = useState("");
   const [laden, setLaden] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
-  const [isIngelogd, setIsIngelogd] = useState(false);
-
-  useEffect(() => {
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      if (user) setIsIngelogd(true);
-    });
-  }, []);
 
   const geldigeUrl = airbnbUrl.trim().includes("airbnb.");
   const geldigEmail = email.trim().includes("@");
+  const geldig = geldigeUrl && geldigEmail;
 
-  const naarStripeHP = async () => {
-    const res = await fetch("/api/stripe/checkout-hp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        airbnb_url: airbnbUrl.trim(),
-        listing_naam: listingNaam.trim() || null,
-        voornaam: voornaam.trim() || null,
-        taal,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setFout(data.error || "Er ging iets mis. Probeer het opnieuw.");
-      setLaden(false);
-      return;
-    }
-    window.location.href = data.url;
-  };
-
-  const verstuurAanmelding = async () => {
-    if (!geldigeUrl) return;
+  const naarBetaling = async () => {
+    if (!geldig) return;
     setLaden(true);
     setFout(null);
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      // Al ingelogd — direct naar Stripe
-      await naarStripeHP();
-      return;
-    }
-
-    // Niet ingelogd — OTP sturen
-    if (!geldigEmail) {
-      setFout("Vul een geldig e-mailadres in.");
+    try {
+      const res = await fetch("/api/stripe/checkout-hp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          airbnb_url: airbnbUrl.trim(),
+          listing_naam: listingNaam.trim() || null,
+          voornaam: voornaam.trim() || null,
+          email: email.trim(),
+          taal,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFout(data.error || "Er ging iets mis. Probeer het opnieuw.");
+        setLaden(false);
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setFout("Er ging iets mis. Probeer het opnieuw.");
       setLaden(false);
-      return;
     }
-
-    const res = await fetch("/api/otp-sturen", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      setFout(data.error || "Er ging iets mis. Probeer het opnieuw.");
-    } else {
-      setStap("code");
-    }
-    setLaden(false);
   };
 
-  const verifieerEnMaakAbo = async () => {
-    if (code.length < 4) return;
-    setLaden(true);
-    setFout(null);
-
-    const verRes = await fetch("/api/otp-verifieer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), code: code.trim() }),
-    });
-    const verData = await verRes.json();
-
-    if (!verRes.ok) {
-      setFout(verData.error || "Ongeldige of verlopen code.");
-      setLaden(false);
-      return;
-    }
-
-    // Sessie starten via de login URL
-    if (verData.loginUrl) {
-      try { await fetch(verData.loginUrl, { redirect: "manual" }); } catch {}
-    }
-
-    // Na OTP login direct naar Stripe
-    await naarStripeHP();
-  };
-
-  // Stap: code invoeren
-  if (stap === "code") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="max-w-md w-full card p-8 text-center space-y-5">
-          <div className="text-5xl">📬</div>
-          <h2 className="font-display text-2xl text-primary">Vul je inlogcode in</h2>
-          <p className="text-text-secondary">
-            We stuurden een inlogcode naar <strong>{email}</strong>.
-          </p>
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value.trim())}
-            onKeyDown={(e) => e.key === "Enter" && verifieerEnMaakAbo()}
-            placeholder="Vul je code in"
-            className="input text-center font-mono text-2xl tracking-widest"
-            autoFocus
-          />
-          {fout && (
-            <div className="bg-danger/10 border border-danger/20 rounded-xl p-3 text-danger text-sm">
-              {fout}
-            </div>
-          )}
-          <button
-            onClick={verifieerEnMaakAbo}
-            disabled={code.length < 4 || laden}
-            className={`btn-primary w-full ${code.length < 6 || laden ? "opacity-40 cursor-not-allowed" : ""}`}
-          >
-            {laden ? "Bezig..." : "Bevestigen en naar betaling →"}
-          </button>
-          <p className="text-xs text-text-secondary">
-            Check ook je spammap. Code is 10 minuten geldig.
-          </p>
-          <button
-            onClick={() => { setStap("formulier"); setCode(""); setFout(null); }}
-            className="text-sm text-accent underline"
-          >
-            ← Terug
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Stap: formulier invullen
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <BoniAvatar size={70} className="mx-auto mb-4" />
           <h1 className="font-display text-3xl text-primary mb-2">Host Performance Audit</h1>
-          <p className="text-text-secondary">Vul je gegevens in en ontvang je rapport.</p>
+          <p className="text-text-secondary">Vul je gegevens in en betaal — je rapport staat daarna direct klaar.</p>
           <p className="text-accent font-semibold mt-1">€7,99 — eenmalig</p>
         </div>
 
@@ -201,7 +81,7 @@ function AanmeldenForm() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-primary mb-1.5">
-                Naam van de woning <span className="text-text-secondary text-xs font-normal">(voor intern gebruik)</span>
+                Naam van de woning <span className="text-text-secondary text-xs font-normal">(optioneel)</span>
               </label>
               <input
                 type="text"
@@ -215,20 +95,20 @@ function AanmeldenForm() {
 
           <div className="border-t border-border" />
 
-          {/* Stap 2 — Voornaam + Email (alleen als niet ingelogd) */}
-          {!isIngelogd && (
-            <div className="space-y-3">
-              <h2 className="font-semibold text-primary flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">2</span>
-                Jouw gegevens
-              </h2>
-              <input
-                type="text"
-                value={voornaam}
-                onChange={(e) => setVoornaam(e.target.value)}
-                placeholder="Voornaam"
-                className="input"
-              />
+          {/* Stap 2 — Jouw gegevens */}
+          <div className="space-y-3">
+            <h2 className="font-semibold text-primary flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-accent text-white text-xs flex items-center justify-center font-bold">2</span>
+              Jouw gegevens
+            </h2>
+            <input
+              type="text"
+              value={voornaam}
+              onChange={(e) => setVoornaam(e.target.value)}
+              placeholder="Voornaam (optioneel)"
+              className="input"
+            />
+            <div>
               <input
                 type="email"
                 value={email}
@@ -236,11 +116,11 @@ function AanmeldenForm() {
                 placeholder="jij@voorbeeld.nl"
                 className="input"
               />
-              <p className="text-xs text-text-secondary">
-                We sturen je een inlogcode per email. Geen wachtwoord nodig.
+              <p className="text-xs text-text-secondary mt-1">
+                Je rapport en login-link worden naar dit adres gestuurd.
               </p>
             </div>
-          )}
+          </div>
 
           {/* Taal */}
           <div>
@@ -262,11 +142,9 @@ function AanmeldenForm() {
           )}
 
           <button
-            onClick={verstuurAanmelding}
-            disabled={!geldigeUrl || (!isIngelogd && !geldigEmail) || laden}
-            className={`btn-primary w-full flex items-center justify-center gap-2 ${
-              !geldigeUrl || (!isIngelogd && !geldigEmail) || laden ? "opacity-40 cursor-not-allowed" : ""
-            }`}
+            onClick={naarBetaling}
+            disabled={!geldig || laden}
+            className={`btn-primary w-full flex items-center justify-center gap-2 ${!geldig || laden ? "opacity-40 cursor-not-allowed" : ""}`}
           >
             {laden ? (
               <>
