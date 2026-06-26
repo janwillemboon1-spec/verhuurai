@@ -20,16 +20,40 @@ function CallbackHandler() {
       const frequentie = searchParams.get("frequentie");
       const interval = searchParams.get("interval");
 
-      // Geen code — kijk of er al een sessie is (bijv. via hash/implicit flow)
+      // Geen code — sessie komt via hash fragment (implicit flow van admin generateLink)
       if (!code) {
-        setStatus("Sessie controleren...");
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        setStatus("Verbinding maken...");
+        const next = searchParams.get("next");
+        const bestemming = next?.startsWith("/") ? next : (airbnb_url ? "/dashboard" : "/dashboard");
+
+        // Controleer of sessie al beschikbaar is
+        const { data: { session: bestaand } } = await supabase.auth.getSession();
+        if (bestaand) {
           setStatus("Ingelogd! Doorsturen...");
-          router.replace(airbnb_url ? `/host-performance/rapport-genereren` : "/dashboard");
-        } else {
-          setFout(`Geen inlogcode ontvangen. URL params: ${searchParams.toString() || "(leeg)"}`);
+          router.replace(bestemming);
+          return;
         }
+
+        // Wacht op sessie via hash fragment (async verwerking door Supabase client)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_IN" && session) {
+            subscription.unsubscribe();
+            setStatus("Ingelogd! Doorsturen...");
+            router.replace(bestemming);
+          }
+        });
+
+        // Fallback na 8 seconden
+        setTimeout(async () => {
+          subscription.unsubscribe();
+          const { data: { session: lateSessie } } = await supabase.auth.getSession();
+          if (lateSessie) {
+            router.replace(bestemming);
+          } else {
+            setFout("Inloglink verlopen of al gebruikt. Vraag een nieuwe aan.");
+          }
+        }, 8000);
+
         return;
       }
 
