@@ -58,6 +58,127 @@ export interface HostawayReservation {
   listingName: string;
 }
 
+export interface HostawayReserveringFee {
+  name: string;
+  feeType: string;
+  amount: number;
+  percentage: number | null;
+  isIncluded: number;
+}
+
+export interface HostawayFinReservering {
+  id: number;
+  listingMapId: number;
+  listingName: string;
+  channelName: string;
+  arrivalDate: string;
+  departureDate: string;
+  nights: number;
+  numberOfGuests: number;
+  status: string;
+  totalPrice: number;
+  cleaningFee: number;
+  taxAmount: number;
+  channelCommissionAmount: number | null;
+  // Airbnb-specifieke velden
+  airbnbListingBasePrice: number | null;
+  airbnbExpectedPayoutAmount: number | null;
+  airbnbListingHostFee: number | null;
+  airbnbOccupancyTaxAmountPaidToHost: number | null;
+  reservationFees: HostawayReserveringFee[];
+}
+
+const GEANNULEERDE_STATUSSEN = new Set(['cancelled', 'declined', 'expired', 'inquiry']);
+
+function berekenRentFromOTA(r: HostawayFinReservering): number {
+  const kanaal = (r.channelName ?? '').toLowerCase();
+
+  if (kanaal.includes('airbnb')) {
+    return r.airbnbListingBasePrice ?? 0;
+  }
+
+  // Voor VRBO/HomeAway: totalPrice - cleaningFee
+  if (kanaal === 'homeaway' || kanaal === 'vrbo') {
+    return (r.totalPrice ?? 0) - (r.cleaningFee ?? 0);
+  }
+
+  // Voor Booking.com: totalPrice - cleaningFee - belastingen (BTW, toeristenbelasting)
+  if (kanaal === 'bookingcom') {
+    const belastingen = (r.reservationFees ?? [])
+      .filter(f => f.feeType === 'hotel' && (
+        f.name.includes('BTW') ||
+        f.name.toLowerCase().includes('belasting') ||
+        f.name.toLowerCase().includes('tax') ||
+        f.name.toLowerCase().includes('tax')
+      ))
+      .reduce((sum, f) => sum + (f.amount ?? 0), 0);
+    return (r.totalPrice ?? 0) - (r.cleaningFee ?? 0) - belastingen;
+  }
+
+  // Direct/bookingengine en overige: totalPrice - cleaningFee
+  return (r.totalPrice ?? 0) - (r.cleaningFee ?? 0);
+}
+
+function berekenPayoutOTA(r: HostawayFinReservering): number {
+  const kanaal = (r.channelName ?? '').toLowerCase();
+
+  if (kanaal.includes('airbnb')) {
+    return r.airbnbExpectedPayoutAmount ?? 0;
+  }
+
+  // VRBO/HomeAway rekent geen host commission — host ontvangt totalPrice
+  if (kanaal === 'homeaway' || kanaal === 'vrbo') {
+    return r.totalPrice ?? 0;
+  }
+
+  // Booking.com: rent - commission + cleaning
+  const rent = berekenRentFromOTA(r);
+  const commission = r.channelCommissionAmount ?? 0;
+  return rent - commission + (r.cleaningFee ?? 0);
+}
+
+export function berekenFinancials(r: HostawayFinReservering) {
+  return {
+    rent_from_ota: Math.max(0, berekenRentFromOTA(r)),
+    payout_ota: Math.max(0, berekenPayoutOTA(r)),
+  };
+}
+
+export async function getFinReserveringen(
+  startDatum: string,
+  eindDatum: string,
+  onProgress?: (bericht: string) => void
+): Promise<HostawayFinReservering[]> {
+  const LIMIET = 100;
+  const alleRes: HostawayFinReservering[] = [];
+  let offset = 0;
+
+  while (true) {
+    const params = new URLSearchParams({
+      limit: String(LIMIET),
+      offset: String(offset),
+      arrivalStartDate: startDatum,
+      arrivalEndDate: eindDatum,
+    });
+
+    const res = await hostawayFetch(`/reservations?${params}`);
+    const data = await res.json();
+    const batch: HostawayFinReservering[] = data.result ?? [];
+
+    if (batch.length === 0) break;
+
+    const geldig = batch.filter(r => !GEANNULEERDE_STATUSSEN.has((r.status ?? '').toLowerCase()));
+    alleRes.push(...geldig);
+
+    onProgress?.(`${alleRes.length} reserveringen opgehaald...`);
+
+    if (batch.length < LIMIET) break;
+    offset += LIMIET;
+  }
+
+  return alleRes;
+}
+
 export interface HostawayConversation {
   id: number;
   listingMapId: number;

@@ -45,6 +45,15 @@ export default function CockpitPage() {
           <h2 className="font-semibold text-gray-900 mb-1">Instellingen</h2>
           <p className="text-sm text-gray-500">Kies per woning of berichten gesynchroniseerd worden.</p>
         </Link>
+
+        <Link
+          href="/cockpit/financien"
+          className="block p-6 bg-white rounded-xl border border-gray-200 hover:border-[#2b3885] hover:shadow-sm transition-all"
+        >
+          <div className="text-2xl mb-2">💶</div>
+          <h2 className="font-semibold text-gray-900 mb-1">Financiën</h2>
+          <p className="text-sm text-gray-500">Inkomsten, kosten en resultaat van Boon Vakantieverhuur.</p>
+        </Link>
       </div>
     </div>
   );
