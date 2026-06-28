@@ -184,6 +184,7 @@ export async function POST(req: Request) {
           .select("listing_id, check_in, nachten, aantal_gasten, rent_from_ota, payout_ota")
           .eq("jaar", jaar)
           .not("status", "in", `(${GEANNULEERD_ARRAY.join(",")})`)
+          .order("id")
           .range(van, van + PAGE - 1);
         if (!batch || batch.length === 0) break;
         alleRes.push(...batch);
