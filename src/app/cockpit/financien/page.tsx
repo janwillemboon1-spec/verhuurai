@@ -1,13 +1,33 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 const MAANDEN = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+const MAANDEN_LANG = ["Januari","Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"];
 const CATEGORIEEN = ["Software","Telefoon","Bank","Educatie","Administratie","Pensioen","Personeel (variabel)","Overig"];
 const FREQUENTIES = ["maandelijks","jaarlijks","kwartaal","eenmalig"];
 
 function eur(v: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+}
+
+type Periode = "deze_maand" | "vorige_maand" | "dit_jaar" | "eigen";
+
+function getMaandIndices(periode: Periode, eigenVan: number, eigenTot: number, huidigeMaand: number): number[] {
+  switch (periode) {
+    case "deze_maand": return [huidigeMaand];
+    case "vorige_maand": return [(huidigeMaand + 11) % 12];
+    case "dit_jaar": return Array.from({ length: 12 }, (_, i) => i);
+    case "eigen": {
+      const indices: number[] = [];
+      for (let i = eigenVan; i <= eigenTot; i++) indices.push(i);
+      return indices;
+    }
+  }
+}
+
+function sumIndices(arr: number[], indices: number[]): number {
+  return indices.reduce((s, i) => s + (arr[i] ?? 0), 0);
 }
 
 interface Overzicht {
@@ -63,7 +83,13 @@ type TabId = "inkomsten" | "kosten" | "pl";
 
 export default function FinancienPage() {
   const jaar = new Date().getFullYear();
+  const huidigeMaand = new Date().getMonth();
+
   const [actieveTab, setActieveTab] = useState<TabId>("inkomsten");
+  const [periode, setPeriode] = useState<Periode>("dit_jaar");
+  const [eigenVan, setEigenVan] = useState(0);
+  const [eigenTot, setEigenTot] = useState(huidigeMaand);
+
   const [overzicht, setOverzicht] = useState<Overzicht | null>(null);
   const [commissies, setCommissies] = useState<Commissies | null>(null);
   const [kosten, setKosten] = useState<Kostenpost[]>([]);
@@ -76,7 +102,11 @@ export default function FinancienPage() {
   const [nieuwKosten, setNieuwKosten] = useState(false);
   const [bewerkOverig, setBewerkOverig] = useState<OverigInkomsten | null>(null);
   const [nieuwOverig, setNieuwOverig] = useState(false);
-  const huidigeMaand = new Date().getMonth();
+
+  const maandIndices = useMemo(
+    () => getMaandIndices(periode, eigenVan, eigenTot, huidigeMaand),
+    [periode, eigenVan, eigenTot, huidigeMaand]
+  );
 
   const laadData = useCallback(async () => {
     setLaden(true);
@@ -180,15 +210,27 @@ export default function FinancienPage() {
     return <div className="text-gray-400 text-sm py-12 text-center">Laden...</div>;
   }
 
-  const kpi = overzicht?.kpi;
   const syncOp = overzicht?.sync_op
     ? new Date(overzicht.sync_op).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
     : null;
 
+  // KPI berekeningen voor geselecteerde periode
+  const periodeInkomsten = overzicht ? sumIndices(overzicht.inkomsten_per_maand, maandIndices) : 0;
+  const periodeKosten = overzicht ? sumIndices(overzicht.kosten_per_maand, maandIndices) : 0;
+  const periodeResultaat = periodeInkomsten - periodeKosten;
+  const periodeMarge = periodeInkomsten > 0 ? (periodeResultaat / periodeInkomsten) * 100 : 0;
+
+  const kpiLabel = {
+    deze_maand: MAANDEN_LANG[huidigeMaand],
+    vorige_maand: MAANDEN_LANG[(huidigeMaand + 11) % 12],
+    dit_jaar: "Dit jaar",
+    eigen: `${MAANDEN[eigenVan]}–${MAANDEN[eigenTot]}`,
+  }[periode];
+
   return (
     <div>
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
+      <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-[#2b3885]">Financiën {jaar}</h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -197,10 +239,7 @@ export default function FinancienPage() {
         </div>
         <div className="flex gap-2 items-center">
           {toonSyncLog && (
-            <button
-              onClick={() => setToonSyncLog(false)}
-              className="text-xs text-gray-400 hover:text-gray-600"
-            >
+            <button onClick={() => setToonSyncLog(false)} className="text-xs text-gray-400 hover:text-gray-600">
               Log verbergen
             </button>
           )}
@@ -221,20 +260,62 @@ export default function FinancienPage() {
 
       {/* Sync log */}
       {toonSyncLog && syncLog.length > 0 && (
-        <div className="mb-5 bg-gray-900 rounded-lg p-3 max-h-32 overflow-y-auto font-mono text-xs text-green-400">
+        <div className="mb-4 bg-gray-900 rounded-lg p-3 max-h-32 overflow-y-auto font-mono text-xs text-green-400">
           {syncLog.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       )}
 
-      {/* KPI cards */}
-      {kpi && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <KpiCard label="Inkomsten YTD" waarde={kpi.inkomsten_ytd} kleur="text-green-700" />
-          <KpiCard label="Kosten YTD" waarde={kpi.kosten_ytd} kleur="text-red-600" />
-          <KpiCard label="Resultaat YTD" waarde={kpi.resultaat_ytd} kleur={kpi.resultaat_ytd >= 0 ? "text-[#2b3885]" : "text-red-600"} />
-          <KpiCard label="Winstmarge (prognose)" waarde={null} extra={`${kpi.winstmarge.toFixed(1)}%`} kleur="text-gray-700" />
+      {/* Periodekiezer */}
+      <div className="flex items-center gap-4 mb-5 flex-wrap">
+        <div className="flex gap-0 border-b border-gray-200">
+          {([
+            ["deze_maand", "Deze maand"],
+            ["vorige_maand", "Vorige maand"],
+            ["dit_jaar", "Dit jaar"],
+            ["eigen", "Eigen periode"],
+          ] as [Periode, string][]).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setPeriode(id)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap ${
+                periode === id
+                  ? "border-[#2b3885] text-[#2b3885]"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-      )}
+
+        {periode === "eigen" && (
+          <div className="flex items-center gap-2 text-sm">
+            <select
+              value={eigenVan}
+              onChange={e => setEigenVan(Math.min(parseInt(e.target.value), eigenTot))}
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-[#2b3885]"
+            >
+              {MAANDEN_LANG.map((m, i) => <option key={i} value={i}>{m}</option>)}
+            </select>
+            <span className="text-gray-400">t/m</span>
+            <select
+              value={eigenTot}
+              onChange={e => setEigenTot(Math.max(parseInt(e.target.value), eigenVan))}
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-[#2b3885]"
+            >
+              {MAANDEN_LANG.map((m, i) => <option key={i} value={i}>{m}</option>)}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <KpiCard label={`Inkomsten — ${kpiLabel}`} waarde={periodeInkomsten} kleur="text-green-700" />
+        <KpiCard label={`Kosten — ${kpiLabel}`} waarde={periodeKosten} kleur="text-red-600" />
+        <KpiCard label={`Resultaat — ${kpiLabel}`} waarde={periodeResultaat} kleur={periodeResultaat >= 0 ? "text-[#2b3885]" : "text-red-600"} />
+        <KpiCard label="Winstmarge" waarde={null} extra={`${periodeMarge.toFixed(1)}%`} kleur="text-gray-700" />
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-5 border-b border-gray-200">
@@ -262,32 +343,44 @@ export default function FinancienPage() {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="text-left py-2 px-3 font-medium text-gray-600 min-w-[180px]">Woning</th>
-                  {MAANDEN.map(m => (
-                    <th key={m} className={`text-right py-2 px-2 font-medium w-14 ${
-                      MAANDEN.indexOf(m) === huidigeMaand ? "text-[#2b3885]" : "text-gray-500"
-                    }`}>{m}</th>
+                  {maandIndices.map(i => (
+                    <th key={i} className={`text-right py-2 px-2 font-medium w-14 ${i === huidigeMaand ? "text-[#2b3885]" : "text-gray-500"}`}>
+                      {MAANDEN[i]}
+                    </th>
                   ))}
-                  <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
+                  {maandIndices.length > 1 && (
+                    <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
-                {commissies.listings.map(l => (
-                  <tr key={l.listing_id} className="border-t border-gray-100 hover:bg-gray-50">
-                    <td className="py-2 px-3 text-gray-700 truncate max-w-[180px]">{l.listing_naam}</td>
-                    {l.maanden.map((v, i) => (
-                      <td key={i} className={`text-right py-2 px-2 ${v === 0 ? "text-gray-300" : "text-gray-700"}`}>
-                        {v === 0 ? "—" : eur(v)}
-                      </td>
-                    ))}
-                    <td className="text-right py-2 px-3 font-semibold text-gray-800">{eur(l.totaal)}</td>
-                  </tr>
-                ))}
+                {commissies.listings.map(l => {
+                  const totaal = sumIndices(l.maanden, maandIndices);
+                  return (
+                    <tr key={l.listing_id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="py-2 px-3 text-gray-700 truncate max-w-[180px]">{l.listing_naam}</td>
+                      {maandIndices.map(i => (
+                        <td key={i} className={`text-right py-2 px-2 ${l.maanden[i] === 0 ? "text-gray-300" : "text-gray-700"}`}>
+                          {l.maanden[i] === 0 ? "—" : eur(l.maanden[i])}
+                        </td>
+                      ))}
+                      {maandIndices.length > 1 && (
+                        <td className="text-right py-2 px-3 font-semibold text-gray-800">{eur(totaal)}</td>
+                      )}
+                    </tr>
+                  );
+                })}
                 <tr className="border-t-2 border-gray-300 bg-blue-50 font-semibold">
                   <td className="py-2 px-3 text-[#2b3885]">Commissies totaal</td>
-                  {commissies.totaal_per_maand.map((v, i) => (
-                    <td key={i} className="text-right py-2 px-2 text-[#2b3885]">{v === 0 ? "—" : eur(v)}</td>
-                  ))}
-                  <td className="text-right py-2 px-3 text-[#2b3885]">{eur(commissies.totaal_jaar)}</td>
+                  {maandIndices.map(i => {
+                    const v = commissies.totaal_per_maand[i] ?? 0;
+                    return <td key={i} className="text-right py-2 px-2 text-[#2b3885]">{v === 0 ? "—" : eur(v)}</td>;
+                  })}
+                  {maandIndices.length > 1 && (
+                    <td className="text-right py-2 px-3 text-[#2b3885]">
+                      {eur(sumIndices(commissies.totaal_per_maand, maandIndices))}
+                    </td>
+                  )}
                 </tr>
               </tbody>
             </table>
@@ -310,26 +403,30 @@ export default function FinancienPage() {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="text-left py-2 px-3 font-medium text-gray-600 min-w-[180px]">Inkomstenbron</th>
-                      {MAANDEN.map(m => (
-                        <th key={m} className="text-right py-2 px-2 font-medium text-gray-500 w-14">{m}</th>
+                      {maandIndices.map(i => (
+                        <th key={i} className="text-right py-2 px-2 font-medium text-gray-500 w-14">{MAANDEN[i]}</th>
                       ))}
-                      <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
+                      {maandIndices.length > 1 && (
+                        <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
+                      )}
                       <th className="w-16" />
                     </tr>
                   </thead>
                   <tbody>
                     {overig.map(o => {
                       const maanden = [o.jan,o.feb,o.mrt,o.apr,o.mei,o.jun,o.jul,o.aug,o.sep,o.okt,o.nov,o.dec];
-                      const totaal = maanden.reduce((s, v) => s + v, 0);
+                      const totaal = sumIndices(maanden, maandIndices);
                       return (
                         <tr key={o.id} className="border-t border-gray-100 hover:bg-gray-50">
                           <td className="py-2 px-3 text-gray-700">{o.naam}</td>
-                          {maanden.map((v, i) => (
-                            <td key={i} className={`text-right py-2 px-2 ${v === 0 ? "text-gray-300" : "text-gray-700"}`}>
-                              {v === 0 ? "—" : eur(v)}
+                          {maandIndices.map(i => (
+                            <td key={i} className={`text-right py-2 px-2 ${maanden[i] === 0 ? "text-gray-300" : "text-gray-700"}`}>
+                              {maanden[i] === 0 ? "—" : eur(maanden[i])}
                             </td>
                           ))}
-                          <td className="text-right py-2 px-3 font-semibold text-gray-800">{eur(totaal)}</td>
+                          {maandIndices.length > 1 && (
+                            <td className="text-right py-2 px-3 font-semibold text-gray-800">{eur(totaal)}</td>
+                          )}
                           <td className="text-right py-2 px-3">
                             <div className="flex gap-2 justify-end">
                               <button onClick={() => setBewerkOverig(o)} className="text-gray-400 hover:text-[#2b3885]">✏️</button>
@@ -339,18 +436,19 @@ export default function FinancienPage() {
                         </tr>
                       );
                     })}
-                    {overzicht && (
-                      <tr className="border-t-2 border-gray-300 bg-blue-50 font-semibold">
-                        <td className="py-2 px-3 text-[#2b3885]">Totaal inkomsten</td>
-                        {overzicht.inkomsten_per_maand.map((v, i) => (
-                          <td key={i} className="text-right py-2 px-2 text-[#2b3885]">{v === 0 ? "—" : eur(v)}</td>
-                        ))}
+                    <tr className="border-t-2 border-gray-300 bg-blue-50 font-semibold">
+                      <td className="py-2 px-3 text-[#2b3885]">Totaal inkomsten</td>
+                      {maandIndices.map(i => {
+                        const v = overzicht.inkomsten_per_maand[i] ?? 0;
+                        return <td key={i} className="text-right py-2 px-2 text-[#2b3885]">{v === 0 ? "—" : eur(v)}</td>;
+                      })}
+                      {maandIndices.length > 1 && (
                         <td className="text-right py-2 px-3 text-[#2b3885]">
-                          {eur(overzicht.inkomsten_per_maand.reduce((s, v) => s + v, 0))}
+                          {eur(sumIndices(overzicht.inkomsten_per_maand, maandIndices))}
                         </td>
-                        <td />
-                      </tr>
-                    )}
+                      )}
+                      <td />
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -377,27 +475,31 @@ export default function FinancienPage() {
                 <tr className="bg-gray-50">
                   <th className="text-left py-2 px-3 font-medium text-gray-600 min-w-[160px]">Kostenpost</th>
                   <th className="text-left py-2 px-3 font-medium text-gray-600">Categorie</th>
-                  {MAANDEN.map(m => (
-                    <th key={m} className="text-right py-2 px-2 font-medium text-gray-500 w-12">{m}</th>
+                  {maandIndices.map(i => (
+                    <th key={i} className="text-right py-2 px-2 font-medium text-gray-500 w-12">{MAANDEN[i]}</th>
                   ))}
-                  <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
+                  {maandIndices.length > 1 && (
+                    <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
+                  )}
                   <th className="w-16" />
                 </tr>
               </thead>
               <tbody>
                 {kosten.filter(k => k.actief).map(k => {
                   const maandBedragen = berekenKostenMaanden(k);
-                  const totaal = maandBedragen.reduce((s, v) => s + v, 0);
+                  const totaal = sumIndices(maandBedragen, maandIndices);
                   return (
                     <tr key={k.id} className="border-t border-gray-100 hover:bg-gray-50">
                       <td className="py-2 px-3 text-gray-700">{k.naam}</td>
                       <td className="py-2 px-3 text-gray-500">{k.categorie}</td>
-                      {maandBedragen.map((v, i) => (
-                        <td key={i} className={`text-right py-2 px-2 ${v === 0 ? "text-gray-300" : "text-red-600"}`}>
-                          {v === 0 ? "—" : eur(v)}
+                      {maandIndices.map(i => (
+                        <td key={i} className={`text-right py-2 px-2 ${maandBedragen[i] === 0 ? "text-gray-300" : "text-red-600"}`}>
+                          {maandBedragen[i] === 0 ? "—" : eur(maandBedragen[i])}
                         </td>
                       ))}
-                      <td className="text-right py-2 px-3 font-semibold text-red-700">{eur(totaal)}</td>
+                      {maandIndices.length > 1 && (
+                        <td className="text-right py-2 px-3 font-semibold text-red-700">{eur(totaal)}</td>
+                      )}
                       <td className="text-right py-2 px-3">
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setBewerkKosten(k)} className="text-gray-400 hover:text-[#2b3885]">✏️</button>
@@ -409,12 +511,15 @@ export default function FinancienPage() {
                 })}
                 <tr className="border-t-2 border-gray-300 bg-red-50 font-semibold">
                   <td className="py-2 px-3 text-red-700" colSpan={2}>Totaal kosten</td>
-                  {overzicht.kosten_per_maand.map((v, i) => (
-                    <td key={i} className="text-right py-2 px-2 text-red-700">{v === 0 ? "—" : eur(v)}</td>
-                  ))}
-                  <td className="text-right py-2 px-3 text-red-700">
-                    {eur(overzicht.kosten_per_maand.reduce((s, v) => s + v, 0))}
-                  </td>
+                  {maandIndices.map(i => {
+                    const v = overzicht.kosten_per_maand[i] ?? 0;
+                    return <td key={i} className="text-right py-2 px-2 text-red-700">{v === 0 ? "—" : eur(v)}</td>;
+                  })}
+                  {maandIndices.length > 1 && (
+                    <td className="text-right py-2 px-3 text-red-700">
+                      {eur(sumIndices(overzicht.kosten_per_maand, maandIndices))}
+                    </td>
+                  )}
                   <td />
                 </tr>
               </tbody>
@@ -430,57 +535,68 @@ export default function FinancienPage() {
             <thead>
               <tr className="bg-gray-50">
                 <th className="text-left py-2 px-3 font-medium text-gray-600 min-w-[160px]">Rubriek</th>
-                {MAANDEN.map((m, i) => (
-                  <th key={m} className={`text-right py-2 px-2 font-medium w-16 ${i === huidigeMaand ? "text-[#2b3885]" : "text-gray-500"}`}>
-                    {m}
+                {maandIndices.map(i => (
+                  <th key={i} className={`text-right py-2 px-2 font-medium w-16 ${i === huidigeMaand ? "text-[#2b3885]" : "text-gray-500"}`}>
+                    {MAANDEN[i]}
                   </th>
                 ))}
-                <th className="text-right py-2 px-3 font-semibold text-gray-700">Jaar</th>
+                {maandIndices.length > 1 && (
+                  <th className="text-right py-2 px-3 font-semibold text-gray-700">Totaal</th>
+                )}
               </tr>
             </thead>
             <tbody>
               <tr className="border-t border-gray-200 bg-green-50">
                 <td className="py-2 px-3 font-semibold text-green-800">Inkomsten</td>
-                {overzicht.inkomsten_per_maand.map((v, i) => (
-                  <td key={i} className="text-right py-2 px-2 font-semibold text-green-700">{v === 0 ? "—" : eur(v)}</td>
-                ))}
-                <td className="text-right py-2 px-3 font-bold text-green-700">
-                  {eur(overzicht.inkomsten_per_maand.reduce((s, v) => s + v, 0))}
-                </td>
+                {maandIndices.map(i => {
+                  const v = overzicht.inkomsten_per_maand[i] ?? 0;
+                  return <td key={i} className="text-right py-2 px-2 font-semibold text-green-700">{v === 0 ? "—" : eur(v)}</td>;
+                })}
+                {maandIndices.length > 1 && (
+                  <td className="text-right py-2 px-3 font-bold text-green-700">{eur(periodeInkomsten)}</td>
+                )}
               </tr>
               <tr className="border-t border-gray-200 bg-red-50">
                 <td className="py-2 px-3 font-semibold text-red-700">Kosten</td>
-                {overzicht.kosten_per_maand.map((v, i) => (
-                  <td key={i} className="text-right py-2 px-2 font-semibold text-red-600">{v === 0 ? "—" : eur(v)}</td>
-                ))}
-                <td className="text-right py-2 px-3 font-bold text-red-700">
-                  {eur(overzicht.kosten_per_maand.reduce((s, v) => s + v, 0))}
-                </td>
+                {maandIndices.map(i => {
+                  const v = overzicht.kosten_per_maand[i] ?? 0;
+                  return <td key={i} className="text-right py-2 px-2 font-semibold text-red-600">{v === 0 ? "—" : eur(v)}</td>;
+                })}
+                {maandIndices.length > 1 && (
+                  <td className="text-right py-2 px-3 font-bold text-red-700">{eur(periodeKosten)}</td>
+                )}
               </tr>
               <tr className="border-t-2 border-gray-400 bg-blue-50">
                 <td className="py-2 px-3 font-bold text-[#2b3885]">Resultaat</td>
-                {overzicht.resultaat_per_maand.map((v, i) => (
-                  <td key={i} className={`text-right py-2 px-2 font-bold ${v >= 0 ? "text-[#2b3885]" : "text-red-600"}`}>
-                    {eur(v)}
+                {maandIndices.map(i => {
+                  const v = overzicht.resultaat_per_maand[i] ?? 0;
+                  return (
+                    <td key={i} className={`text-right py-2 px-2 font-bold ${v >= 0 ? "text-[#2b3885]" : "text-red-600"}`}>
+                      {eur(v)}
+                    </td>
+                  );
+                })}
+                {maandIndices.length > 1 && (
+                  <td className={`text-right py-2 px-3 font-bold ${periodeResultaat >= 0 ? "text-[#2b3885]" : "text-red-600"}`}>
+                    {eur(periodeResultaat)}
                   </td>
-                ))}
-                <td className={`text-right py-2 px-3 font-bold ${overzicht.kpi.resultaat_jaar >= 0 ? "text-[#2b3885]" : "text-red-600"}`}>
-                  {eur(overzicht.kpi.resultaat_jaar)}
-                </td>
+                )}
               </tr>
               <tr className="border-t border-gray-200">
                 <td className="py-2 px-3 text-gray-500">Marge %</td>
-                {overzicht.inkomsten_per_maand.map((ink, i) => {
-                  const marge = ink > 0 ? (overzicht.resultaat_per_maand[i] / ink) * 100 : 0;
+                {maandIndices.map(i => {
+                  const ink = overzicht.inkomsten_per_maand[i] ?? 0;
+                  const res = overzicht.resultaat_per_maand[i] ?? 0;
+                  const marge = ink > 0 ? (res / ink) * 100 : 0;
                   return (
                     <td key={i} className={`text-right py-2 px-2 ${marge >= 0 ? "text-gray-600" : "text-red-500"}`}>
                       {ink === 0 ? "—" : `${marge.toFixed(0)}%`}
                     </td>
                   );
                 })}
-                <td className="text-right py-2 px-3 text-gray-600">
-                  {overzicht.kpi.winstmarge.toFixed(1)}%
-                </td>
+                {maandIndices.length > 1 && (
+                  <td className="text-right py-2 px-3 text-gray-600">{periodeMarge.toFixed(1)}%</td>
+                )}
               </tr>
             </tbody>
           </table>
