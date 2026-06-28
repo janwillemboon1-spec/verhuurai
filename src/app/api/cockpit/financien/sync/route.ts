@@ -179,7 +179,8 @@ export async function POST(req: Request) {
         .from("cockpit_fin_reserveringen")
         .select("listing_id, check_in, nachten, aantal_gasten, rent_from_ota, payout_ota")
         .eq("jaar", jaar)
-        .not("status", "in", `(${GEANNULEERD_ARRAY.map(s => `"${s}"`).join(",")})`);
+        .not("status", "in", `(${GEANNULEERD_ARRAY.map(s => `"${s}"`).join(",")})`)
+        .limit(10000);
 
       // Aggregeer per listing per maand
       const commissieMap = new Map<string, { commissie: number; omzet_basis: number }>();
