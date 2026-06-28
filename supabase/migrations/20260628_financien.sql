@@ -93,7 +93,7 @@ INSERT INTO cockpit_commissie_config VALUES
 ('240575',                   'BM - Blue Mind',                     'hostaway', 'pct_rent',           0.05,   NULL,  NULL,  NULL,  TRUE,  TRUE, 3),
 ('240576',                   'ATL - Atlanta house boat Vinkeveen', 'hostaway', 'pct_rent',           0.05,   NULL,  NULL,  NULL,  TRUE,  TRUE, 4),
 ('254964',                   'Akoleienstraat 10 - AMS',            'hostaway', 'vast_maand',         350,    NULL,  NULL,  NULL,  FALSE, TRUE, 5),
-('255113',                   'PW49 - Villa Vinkeveen',             'hostaway', 'pct_rent',           0.0833, NULL,  NULL,  NULL,  TRUE,  TRUE, 6),
+('255113',                   'PW49 - Villa Vinkeveen',             'hostaway', 'pct_rent',           0.083,  NULL,  NULL,  NULL,  TRUE,  TRUE, 6),
 ('260017',                   'BB144 - Buitenborgh 144',            'hostaway', 'pct_rent',           0.05,   NULL,  NULL,  NULL,  TRUE,  TRUE, 7),
 ('267930',                   'Amstelkade 53 - AMS',                'hostaway', 'vast_maand',         400,    NULL,  NULL,  NULL,  FALSE, TRUE, 8),
 ('280788',                   'B&B Welgelegen 2. (4p)',             'hostaway', 'pct_rent',           0.10,   NULL,  NULL,  NULL,  TRUE,  TRUE, 9),

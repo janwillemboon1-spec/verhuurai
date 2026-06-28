@@ -98,9 +98,11 @@ function isSchoonmaakFee(naam: string): boolean {
 function berekenRentFromOTA(r: HostawayFinReservering): number {
   const kanaal = (r.channelName ?? '').toLowerCase();
 
-  // Airbnb levert een kant-en-klaar veld
+  // Airbnb: basisprijs minus de Airbnb host service fee (de fee die Airbnb inhoudt op de huurprijs)
   if (kanaal.includes('airbnb')) {
-    return r.airbnbListingBasePrice ?? 0;
+    const base = r.airbnbListingBasePrice ?? 0;
+    const hostFee = r.airbnbListingHostFee ?? 0;
+    return base - hostFee;
   }
 
   // Alle andere kanalen: totalPrice - cleaningFee - extra host-fees (belasting, etc.) - kanaalcommissie
