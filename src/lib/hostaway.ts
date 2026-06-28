@@ -90,33 +90,30 @@ export interface HostawayFinReservering {
 
 const GEANNULEERDE_STATUSSEN = new Set(['cancelled', 'declined', 'expired', 'inquiry']);
 
+function isSchoonmaakFee(naam: string): boolean {
+  const l = naam.toLowerCase();
+  return l.includes('schoonmaak') || l.includes('cleaning') || l.includes('reinig');
+}
+
 function berekenRentFromOTA(r: HostawayFinReservering): number {
   const kanaal = (r.channelName ?? '').toLowerCase();
 
+  // Airbnb levert een kant-en-klaar veld
   if (kanaal.includes('airbnb')) {
     return r.airbnbListingBasePrice ?? 0;
   }
 
-  // Voor VRBO/HomeAway: totalPrice - cleaningFee
-  if (kanaal === 'homeaway' || kanaal === 'vrbo') {
-    return (r.totalPrice ?? 0) - (r.cleaningFee ?? 0);
-  }
+  // Alle andere kanalen: totalPrice - cleaningFee - extra host-fees (belasting, etc.) - kanaalcommissie
+  // De reservationFees met feeType 'hotel' zijn kosten voor de host.
+  // We trekken schoonmaakkosten NIET af via fees (die zitten al in het top-level cleaningFee veld).
+  const extraHostFees = (r.reservationFees ?? [])
+    .filter(f => f.feeType === 'hotel' && !isSchoonmaakFee(f.name ?? ''))
+    .reduce((sum, f) => sum + (f.amount ?? 0), 0);
 
-  // Voor Booking.com: totalPrice - cleaningFee - belastingen (BTW, toeristenbelasting)
-  if (kanaal === 'bookingcom') {
-    const belastingen = (r.reservationFees ?? [])
-      .filter(f => f.feeType === 'hotel' && (
-        f.name.includes('BTW') ||
-        f.name.toLowerCase().includes('belasting') ||
-        f.name.toLowerCase().includes('tax') ||
-        f.name.toLowerCase().includes('tax')
-      ))
-      .reduce((sum, f) => sum + (f.amount ?? 0), 0);
-    return (r.totalPrice ?? 0) - (r.cleaningFee ?? 0) - belastingen;
-  }
-
-  // Direct/bookingengine en overige: totalPrice - cleaningFee
-  return (r.totalPrice ?? 0) - (r.cleaningFee ?? 0);
+  return (r.totalPrice ?? 0)
+    - (r.cleaningFee ?? 0)
+    - extraHostFees
+    - (r.channelCommissionAmount ?? 0);
 }
 
 function berekenPayoutOTA(r: HostawayFinReservering): number {
@@ -126,15 +123,9 @@ function berekenPayoutOTA(r: HostawayFinReservering): number {
     return r.airbnbExpectedPayoutAmount ?? 0;
   }
 
-  // VRBO/HomeAway rekent geen host commission — host ontvangt totalPrice
-  if (kanaal === 'homeaway' || kanaal === 'vrbo') {
-    return r.totalPrice ?? 0;
-  }
-
-  // Booking.com: rent - commission + cleaning
-  const rent = berekenRentFromOTA(r);
-  const commission = r.channelCommissionAmount ?? 0;
-  return rent - commission + (r.cleaningFee ?? 0);
+  // Voor alle andere kanalen: payout = rent_from_OTA + cleaningFee.
+  // De commission zit al verwerkt in berekenRentFromOTA, dus NIET opnieuw aftrekken.
+  return berekenRentFromOTA(r) + (r.cleaningFee ?? 0);
 }
 
 export function berekenFinancials(r: HostawayFinReservering) {
