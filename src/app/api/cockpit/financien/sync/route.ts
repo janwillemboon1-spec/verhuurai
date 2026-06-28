@@ -175,17 +175,25 @@ export async function POST(req: Request) {
       // ── Stap 3: Commissies berekenen per listing per maand ──
       stuur({ type: "progress", bericht: "Commissies berekenen..." });
 
-      const { data: alleRes } = await admin
-        .from("cockpit_fin_reserveringen")
-        .select("listing_id, check_in, nachten, aantal_gasten, rent_from_ota, payout_ota")
-        .eq("jaar", jaar)
-        .not("status", "in", `(${GEANNULEERD_ARRAY.map(s => `"${s}"`).join(",")})`)
-        .limit(10000);
+      // Supabase heeft een server-side rij-limiet van 1000 — pagineer alle reserveringen op
+      const PAGE = 1000;
+      const alleRes: { listing_id: string; check_in: string; nachten: number; aantal_gasten: number; rent_from_ota: number; payout_ota: number }[] = [];
+      for (let van = 0; ; van += PAGE) {
+        const { data: batch } = await admin
+          .from("cockpit_fin_reserveringen")
+          .select("listing_id, check_in, nachten, aantal_gasten, rent_from_ota, payout_ota")
+          .eq("jaar", jaar)
+          .not("status", "in", `(${GEANNULEERD_ARRAY.join(",")})`)
+          .range(van, van + PAGE - 1);
+        if (!batch || batch.length === 0) break;
+        alleRes.push(...batch);
+        if (batch.length < PAGE) break;
+      }
 
       // Aggregeer per listing per maand
       const commissieMap = new Map<string, { commissie: number; omzet_basis: number }>();
 
-      for (const r of alleRes ?? []) {
+      for (const r of alleRes) {
         const config = configMap.get(r.listing_id);
         if (!config) continue;
 
