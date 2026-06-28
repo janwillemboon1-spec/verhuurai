@@ -10,6 +10,8 @@ const AIRBNB_DIRECT_LISTINGS = [
   "1521024137813189296", // Molenkade 2B
   "1584289727457529809", // Ankeveen
 ];
+// Airbnb houdt een host service fee in op de brutohuurprijs (rental_revenue in PriceLabs is bruto)
+const AIRBNB_DIRECT_HOST_FEE_PCT = 0.155;
 const GEANNULEERD_ARRAY = ["cancelled", "declined", "expired", "inquiry"];
 const GEANNULEERD = new Set(GEANNULEERD_ARRAY);
 
@@ -144,6 +146,7 @@ export async function POST(req: Request) {
 
           const geldig = rows.filter(r => !GEANNULEERD.has((r.booking_status ?? "").toLowerCase()));
           for (const r of geldig) {
+            const brutoPrijs = parseFloat(r.rental_revenue ?? "0") || 0;
             plRijen.push({
               hostaway_id: `pl_${listingId}_${r.reservation_id}`,
               listing_id: listingId,
@@ -153,7 +156,7 @@ export async function POST(req: Request) {
               check_out: r.check_out,
               nachten: r.no_of_days,
               aantal_gasten: null,
-              rent_from_ota: parseFloat(r.rental_revenue ?? "0") || 0,
+              rent_from_ota: brutoPrijs * (1 - AIRBNB_DIRECT_HOST_FEE_PCT),
               payout_ota: parseFloat(r.total_cost ?? "0") || 0,
               status: r.booking_status,
               jaar,
