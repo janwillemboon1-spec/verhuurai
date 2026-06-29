@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { createClient } from "@/lib/supabase/client";
 import { berekenPrijs, FOTO_MAX } from "@/lib/foto-optimizer/pricing";
@@ -16,9 +18,13 @@ interface FotoItem {
   fout: string | null;
 }
 
-export default function FotoOptimizerPage() {
+function FotoOptimizerInhoud() {
+  const searchParams = useSearchParams();
+  const communityToken = searchParams.get("community_token") || "";
+  const communityEmail = searchParams.get("email") || "";
+
   const [naam, setNaam] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(communityEmail);
   const [fotos, setFotos] = useState<FotoItem[]>([]);
   const [uploaden, setUploaden] = useState(false);
   const [voortgang, setVoortgang] = useState(0);
@@ -114,7 +120,7 @@ export default function FotoOptimizerPage() {
       const stripeRes = await fetch("/api/foto-optimizer/naar-stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessieId }),
+        body: JSON.stringify({ sessieId, community_token: communityToken || undefined }),
       });
       if (!stripeRes.ok) {
         const body = await stripeRes.json().catch(() => ({}));
@@ -373,10 +379,24 @@ export default function FotoOptimizerPage() {
           </button>
 
           <p className="text-xs text-text-secondary text-center">
-            Eenmalige betaling · Geen abonnement · Veilig betalen via Stripe · iDEAL mogelijk
+            {communityToken
+              ? "Gratis toegang als community lid · iDEAL niet nodig"
+              : "Eenmalige betaling · Geen abonnement · Veilig betalen via Stripe · iDEAL mogelijk"}
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function FotoOptimizerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <FotoOptimizerInhoud />
+    </Suspense>
   );
 }

@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { berekenPrijsInCenten } from "@/lib/foto-optimizer/pricing";
 import { stripe } from "@/lib/stripe";
+import { verifieerCommunityToken } from "@/lib/community-tokens";
 
 export async function POST(request: Request) {
   try {
-    const { sessieId } = await request.json();
+    const { sessieId, community_token } = await request.json();
     if (!sessieId) {
       return NextResponse.json({ error: "sessieId verplicht" }, { status: 400 });
     }
@@ -22,6 +23,17 @@ export async function POST(request: Request) {
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
+
+    // Community bypass: leden gebruiken gratis
+    if (community_token && verifieerCommunityToken(community_token)) {
+      await admin
+        .from("foto_sessies")
+        .update({ status: "betaald" })
+        .eq("id", sessieId);
+      return NextResponse.json({
+        stripeUrl: `${baseUrl}/foto-optimizer/succes?sessie_id=${sessieId}`,
+      });
+    }
 
     // Test-bypass: sla Stripe over en markeer direct als betaald
     if (process.env.FOTO_TEST_MODE === "true") {
