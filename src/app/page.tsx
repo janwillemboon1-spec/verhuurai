@@ -29,6 +29,15 @@ export default function HomePage() {
                   Prijscalculator →
                 </Link>
               </div>
+              <div className="flex justify-center md:justify-start mt-2">
+                <Link
+                  href="/community"
+                  className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors"
+                >
+                  <span className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center text-accent text-xs">🏘️</span>
+                  Al lid van de community? Gratis toegang →
+                </Link>
+              </div>
             </div>
             <div className="flex flex-col items-center flex-shrink-0 gap-3">
               {/* Tekstwolkje */}
