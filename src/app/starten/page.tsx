@@ -64,7 +64,7 @@ function StartenForm() {
             <div className="mt-2 inline-flex items-center gap-2">
               <span className="text-text-secondary line-through text-sm">€14,99</span>
               <span className="text-accent font-bold text-xl">€8,99</span>
-              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">OTO</span>
+              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">Eenmalig aanbod</span>
             </div>
           ) : (
             <p className="text-accent font-semibold mt-2">€14,99 per analyse — eenmalig</p>

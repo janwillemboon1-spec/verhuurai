@@ -62,7 +62,7 @@ function AanmeldenForm() {
             <div className="mt-1 inline-flex items-center gap-2">
               <span className="text-text-secondary line-through text-sm">€7,99</span>
               <span className="text-accent font-bold text-xl">€4,99</span>
-              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">OTO</span>
+              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">Eenmalig aanbod</span>
             </div>
           ) : (
             <p className="text-accent font-semibold mt-1">€7,99 — eenmalig</p>
