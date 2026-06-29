@@ -36,7 +36,9 @@ export default function CommunityPage() {
       if (!res.ok) throw new Error(data.error);
 
       if (!data.ok) {
-        setFout("Dit e-mailadres staat niet geregistreerd als lid. Controleer het adres of neem contact op.");
+        setFout(data.verlopen
+          ? "Jouw toegang is verlopen. Neem contact op voor verlenging."
+          : "Dit e-mailadres staat niet geregistreerd als lid. Controleer het adres of neem contact op.");
         setLaden(false);
         return;
       }

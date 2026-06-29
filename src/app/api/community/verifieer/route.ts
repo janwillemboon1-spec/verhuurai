@@ -12,12 +12,16 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: lid } = await admin
       .from("community_leden")
-      .select("email, tag")
+      .select("email, tag, verloopt_op")
       .eq("email", email.toLowerCase().trim())
       .maybeSingle();
 
     if (!lid) {
       return NextResponse.json({ ok: false });
+    }
+
+    if (lid.verloopt_op && new Date(lid.verloopt_op) < new Date()) {
+      return NextResponse.json({ ok: false, verlopen: true });
     }
 
     const token = maakCommunityToken(email.toLowerCase().trim());
