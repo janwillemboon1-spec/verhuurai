@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildReviewRapportPrompt } from "@/lib/review-rapport-prompt";
 import { buildReviewRapportEmail } from "@/lib/review-rapport-email";
 import { filterReviews, formateerGefilterd } from "@/lib/filter-reviews";
+import { syncCommunityLeden } from "@/lib/sync-community-leden";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
@@ -169,9 +170,20 @@ export async function GET(request: Request) {
     }
   }
 
+  // Dagelijkse sync van community leden uit Mailblue
+  let communitySyncResultaat: string;
+  try {
+    const { gesynchroniseerd } = await syncCommunityLeden();
+    communitySyncResultaat = `ok (${gesynchroniseerd} leden)`;
+  } catch (err) {
+    console.error("Cron: community sync mislukt:", err);
+    communitySyncResultaat = "mislukt";
+  }
+
   return NextResponse.json({
     verwerkt: resultaten.length,
     resultaten,
     tijdstip: nu.toISOString(),
+    community_sync: communitySyncResultaat,
   });
 }
