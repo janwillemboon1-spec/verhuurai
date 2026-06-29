@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 import { createClient } from "@/lib/supabase/client";
 
-export default function StartenPage() {
+function StartenForm() {
+  const searchParams = useSearchParams();
+  const isOto = searchParams.get("oto") === "true";
+
   const router = useRouter();
   const [naam, setNaam] = useState("");
   const [email, setEmail] = useState("");
@@ -30,7 +33,8 @@ export default function StartenPage() {
     setLaden(true);
     setFout(null);
     try {
-      const res = await fetch("/api/stripe/checkout-lo", {
+      const endpoint = isOto ? "/api/stripe/checkout-lo-oto" : "/api/stripe/checkout-lo";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,7 +60,15 @@ export default function StartenPage() {
           <p className="text-text-secondary">
             {ingelogd ? `Ingelogd als ${ingelogdEmail}` : "Vul je naam en e-mailadres in en Boni gaat direct aan de slag."}
           </p>
-          <p className="text-accent font-semibold mt-2">€14,99 per analyse — eenmalig</p>
+          {isOto ? (
+            <div className="mt-2 inline-flex items-center gap-2">
+              <span className="text-text-secondary line-through text-sm">€14,99</span>
+              <span className="text-accent font-bold text-xl">€8,99</span>
+              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">OTO</span>
+            </div>
+          ) : (
+            <p className="text-accent font-semibold mt-2">€14,99 per analyse — eenmalig</p>
+          )}
         </div>
 
         <div className="card p-6 md:p-8 space-y-5">
@@ -131,5 +143,17 @@ export default function StartenPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StartenPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <StartenForm />
+    </Suspense>
   );
 }

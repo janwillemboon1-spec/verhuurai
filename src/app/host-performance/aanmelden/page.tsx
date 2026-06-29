@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { BoniAvatar } from "@/components/BoniAvatar";
 
 function AanmeldenForm() {
+  const searchParams = useSearchParams();
+  const isOto = searchParams.get("oto") === "true";
+
   const [voornaam, setVoornaam] = useState("");
   const [airbnbUrl, setAirbnbUrl] = useState("");
   const [listingNaam, setListingNaam] = useState("");
@@ -22,7 +26,8 @@ function AanmeldenForm() {
     setFout(null);
 
     try {
-      const res = await fetch("/api/stripe/checkout-hp", {
+      const endpoint = isOto ? "/api/stripe/checkout-hp-oto" : "/api/stripe/checkout-hp";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -53,7 +58,15 @@ function AanmeldenForm() {
           <BoniAvatar size={70} className="mx-auto mb-4" />
           <h1 className="font-display text-3xl text-primary mb-2">Host Performance Audit</h1>
           <p className="text-text-secondary">Vul je gegevens in en betaal — je rapport staat daarna direct klaar.</p>
-          <p className="text-accent font-semibold mt-1">€7,99 — eenmalig</p>
+          {isOto ? (
+            <div className="mt-1 inline-flex items-center gap-2">
+              <span className="text-text-secondary line-through text-sm">€7,99</span>
+              <span className="text-accent font-bold text-xl">€4,99</span>
+              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">OTO</span>
+            </div>
+          ) : (
+            <p className="text-accent font-semibold mt-1">€7,99 — eenmalig</p>
+          )}
         </div>
 
         <div className="card p-6 md:p-8 space-y-6">
@@ -154,7 +167,7 @@ function AanmeldenForm() {
                 </svg>
                 Bezig...
               </>
-            ) : "Betalen en rapport genereren — €7,99 →"}
+            ) : isOto ? "Betalen en rapport genereren — €4,99 →" : "Betalen en rapport genereren — €7,99 →"}
           </button>
         </div>
       </div>
