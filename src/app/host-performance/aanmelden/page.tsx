@@ -59,11 +59,16 @@ function AanmeldenForm() {
           <h1 className="font-display text-3xl text-primary mb-2">Host Performance Audit</h1>
           <p className="text-text-secondary">Vul je gegevens in en betaal — je rapport staat daarna direct klaar.</p>
           {isOto ? (
-            <div className="mt-1 inline-flex items-center gap-2">
-              <span className="text-text-secondary line-through text-sm">€7,99</span>
-              <span className="text-accent font-bold text-xl">€4,99</span>
-              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">Eenmalig aanbod</span>
-            </div>
+            <>
+              <div className="mt-1 inline-flex items-center gap-2">
+                <span className="text-text-secondary line-through text-sm">€7,99</span>
+                <span className="text-accent font-bold text-xl">€4,99</span>
+                <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">Eenmalig aanbod</span>
+              </div>
+              <p className="text-xs text-warning mt-2">
+                ⚠️ Dit aanbod vervalt zodra je deze pagina verlaat.
+              </p>
+            </>
           ) : (
             <p className="text-accent font-semibold mt-1">€7,99 — eenmalig</p>
           )}

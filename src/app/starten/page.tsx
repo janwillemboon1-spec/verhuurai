@@ -61,11 +61,16 @@ function StartenForm() {
             {ingelogd ? `Ingelogd als ${ingelogdEmail}` : "Vul je naam en e-mailadres in en Boni gaat direct aan de slag."}
           </p>
           {isOto ? (
-            <div className="mt-2 inline-flex items-center gap-2">
-              <span className="text-text-secondary line-through text-sm">€14,99</span>
-              <span className="text-accent font-bold text-xl">€8,99</span>
-              <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">Eenmalig aanbod</span>
-            </div>
+            <>
+              <div className="mt-2 inline-flex items-center gap-2">
+                <span className="text-text-secondary line-through text-sm">€14,99</span>
+                <span className="text-accent font-bold text-xl">€8,99</span>
+                <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">Eenmalig aanbod</span>
+              </div>
+              <p className="text-xs text-warning mt-2">
+                ⚠️ Dit aanbod vervalt zodra je deze pagina verlaat.
+              </p>
+            </>
           ) : (
             <p className="text-accent font-semibold mt-2">€14,99 per analyse — eenmalig</p>
           )}
