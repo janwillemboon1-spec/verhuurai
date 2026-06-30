@@ -4,9 +4,10 @@ interface BoniAvatarProps {
   size?: number;
   className?: string;
   animate?: boolean;
+  src?: string;
 }
 
-export function BoniAvatar({ size = 120, className = "", animate = false }: BoniAvatarProps) {
+export function BoniAvatar({ size = 120, className = "", animate = false, src = "/boni.png" }: BoniAvatarProps) {
   return (
     <div
       className={`inline-flex items-center justify-center ${animate ? "boni-float" : ""} ${className}`}
@@ -14,7 +15,7 @@ export function BoniAvatar({ size = 120, className = "", animate = false }: Boni
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/boni.png"
+        src={src}
         alt="Boni"
         width={size}
         height={size}
