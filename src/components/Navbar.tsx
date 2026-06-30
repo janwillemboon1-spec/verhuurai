@@ -42,6 +42,9 @@ export function Navbar() {
           <Link href="/prijscalculator" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("prijscalculator")}
           </Link>
+          <Link href="/review-remover" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
+            {t("reviewRemover")}
+          </Link>
           <Link href="/gratis" className="text-accent font-semibold text-sm hover:underline">
             {t("gratisProberen")}
           </Link>
@@ -86,6 +89,9 @@ export function Navbar() {
           </Link>
           <Link href="/prijscalculator" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("prijscalculator")}
+          </Link>
+          <Link href="/review-remover" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
+            {t("reviewRemover")}
           </Link>
           <Link href="/gratis" onClick={() => setOpen(false)} className="text-accent font-semibold">
             {t("gratisProberen")}
