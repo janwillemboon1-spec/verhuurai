@@ -146,13 +146,29 @@ export default function ReviewRemoverPage() {
   const stuurEmail = async () => {
     if (!resultaat) return;
     setEmailVerzendBezig(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
       const res = await fetch("/api/review-remover/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: resultaat.id }),
+        signal: controller.signal,
       });
-      if (res.ok) setEmailVerzonden(true);
+      clearTimeout(timeout);
+      if (res.ok) {
+        setEmailVerzonden(true);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "E-mail versturen mislukt. Probeer het opnieuw.");
+      }
+    } catch (err) {
+      clearTimeout(timeout);
+      if (err instanceof Error && err.name === "AbortError") {
+        alert("Verbinding timed out. Probeer het opnieuw.");
+      } else {
+        alert("E-mail versturen mislukt. Probeer het opnieuw.");
+      }
     } finally {
       setEmailVerzendBezig(false);
     }
