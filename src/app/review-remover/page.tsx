@@ -5,6 +5,17 @@ import { BoniAvatar } from "@/components/BoniAvatar";
 import { CopyButton } from "@/components/CopyButton";
 import { createClient } from "@/lib/supabase/client";
 
+function renderMetLinks(tekst: string) {
+  const delen = tekst.split(/(https?:\/\/[^\s]+)/g);
+  return delen.map((deel, i) =>
+    deel.startsWith("http") ? (
+      <a key={i} href={deel} target="_blank" rel="noopener noreferrer" className="text-accent underline hover:opacity-80 break-all">
+        {deel}
+      </a>
+    ) : deel
+  );
+}
+
 const TOEGESTANE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_MB = 5;
 const MAX_BYTES = MAX_MB * 1024 * 1024;
@@ -351,7 +362,7 @@ export default function ReviewRemoverPage() {
                 {resultaat.stappenplan.map((stap, i) => (
                   <li key={i} className="flex items-start gap-2 text-text-secondary text-sm">
                     <span className="text-accent font-bold mt-0.5 flex-shrink-0">{i + 1}.</span>
-                    {stap}
+                    <span>{renderMetLinks(stap)}</span>
                   </li>
                 ))}
               </ol>
