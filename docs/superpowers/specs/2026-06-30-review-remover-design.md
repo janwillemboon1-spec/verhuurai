@@ -76,15 +76,16 @@ De drie beleidsdocumenten worden samengevoegd tot één statische kennisbank (ma
 - Recensiebeleid: https://www.airbnb.nl/help/article/2673
 - Contentbeleid: https://www.airbnb.nl/help/article/546
 - Anti-discriminatiebeleid: https://www.airbnb.nl/help/article/2867
+- Bezwaar maken tegen een recensie (proces): https://www.airbnb.nl/help/article/3582
+- Bezwaarformulier: https://www.airbnb.nl/resolution/review_dispute/intro
 
-**Verwijdergronden:**
-1. Irrelevant (niet over het aanbod, geen directe ervaring, gast kwam niet/annuleerde)
-2. Nep (geen echte boeking)
-3. Afpersing/manipulatie/dreiging
-4. Concurrentiebenadeling
-5. Vergelding (wraak voor beleidshandhaving)
-6. Contentbeleid-schending (spam, illegaal, expliciet, gewelddadig/beledigend, impersonatie, privacyschending)
-7. Discriminatie (14 beschermde kenmerken: ras, religie, geslacht, leeftijd, beperking, gezinsstatus, etniciteit, herkomst, seksuele geaardheid, genderidentiteit, kaste, zwangerschap, e.a.)
+**Verwijdergronden — exact de 5 categorieën van het officiële Airbnb-bezwaarformulier** (zo sluit de bezwaarbrief 1-op-1 aan op wat de host straks in het formulier selecteert):
+
+1. **Vergelding** — de recensie is geschreven als wraak voor het handhaven van een beleid of regel
+2. **Niet relevant** — geen informatie over de boeking, of de gast is nooit aangekomen/heeft geannuleerd (absorbeert ook "neprecensie")
+3. **Druk of dwang** — de recensie komt van iemand die geïntimideerd, afgeperst of aangemoedigd werd (afpersing/manipulatie)
+4. **Concurrent** — geplaatst door iemand verbonden aan de accommodatie of een concurrent
+5. **Schending van Contentbeleid** — discriminerend, bevat privégegevens, of anderszins in strijd met het Contentbeleid (spam, illegaal, expliciet, gewelddadig/beledigend, impersonatie)
 
 **Expliciete uitzondering** (belangrijk, voorkomt valse hoop bij gebruiker): subjectieve meningen, beoordelingsverschillen en factoren buiten controle van de host worden NIET automatisch verwijderd. De AI moet dit eerlijk meewegen, ook als dat een "laag"-verdict betekent.
 
@@ -94,13 +95,24 @@ De drie beleidsdocumenten worden samengevoegd tot één statische kennisbank (ma
 {
   "verdict": "laag | gemiddeld | hoog",
   "onderbouwing": "...",
-  "toegepaste_regels": ["Irrelevant", "..."],
+  "toegepaste_regels": ["Vergelding", "Niet relevant", "Druk of dwang", "Concurrent", "Schending van Contentbeleid"],
   "bezwaarbrief": "...",
   "stappenplan": ["Stap 1: ...", "Stap 2: ..."]
 }
 ```
 
-Screenshots worden als image-blocks meegegeven aan Claude (vision) zodat bewijs (bv. foto's die een valse klacht weerleggen) meeweegt in de onderbouwing en de brief. De sterrenbeoordeling wordt als extra context meegegeven (bv. een 1-ster review met expliciet beleidsschendende taal weegt anders dan een 3-ster review die puur subjectief is).
+`toegepaste_regels` is een subset van bovenstaande 5 officiële categorieën (kan meerdere bevatten). Screenshots worden als image-blocks meegegeven aan Claude (vision) zodat bewijs (bv. foto's die een valse klacht weerleggen) meeweegt in de onderbouwing en de brief. De sterrenbeoordeling wordt als extra context meegegeven (bv. een 1-ster review met expliciet beleidsschendende taal weegt anders dan een 3-ster review die puur subjectief is).
+
+## Indienen van het bezwaar (officieel proces)
+
+- Bezwaar wordt ingediend via https://www.airbnb.nl/resolution/review_dispute/intro
+- Stappen in dat formulier: recensie selecteren → reden kiezen (één van de 5 hierboven) → toelichting toevoegen ("Informatie toevoegen" — hier plakt de host de gegenereerde bezwaarbrief) → eventueel bewijs uploaden → verzenden
+- **Max. 2 bezwaarpogingen per recensie**
+- **Responstijd: meestal binnen 48 uur** per e-mail
+- **Wie mag indienen:** advertentie-eigenaar, co-hosts met volledige toegang, professionele verhuurders met uitgebreide rechten, teamleden met juiste rechten, of de gast zelf
+- **Let op:** geen gevoelige persoonsgegevens (ID's, gezondheidsdata) uploaden in het formulier
+
+Het gegenereerde `stappenplan` in de tool verwijst expliciet naar dit formulier en instrueert de host om de bezwaarbrief in het veld "Informatie toevoegen" te plakken, en wijst op de limiet van 2 pogingen en de 48-uurs responstijd.
 
 ## E-mail
 
@@ -127,10 +139,12 @@ Screenshots worden als image-blocks meegegeven aan Claude (vision) zodat bewijs 
 ## Testen
 
 Geen geautomatiseerde testsuite in dit project — handmatige test-checklist na implementatie:
-- Duidelijk valse/nep review → hoog verdict
+- Duidelijk valse/nep review (gast nooit aangekomen) → hoog verdict, "Niet relevant"
 - Subjectieve negatieve maar geldige review → laag verdict (uitzondering correct toegepast)
-- Discriminerende taal in review → hoog verdict, juiste regel aangehaald
+- Discriminerende taal of privégegevens in review → hoog verdict, "Schending van Contentbeleid"
+- Review die duidelijk wraak lijkt voor een huisregel-handhaving → "Vergelding"
 - Review + screenshot-bewijs dat klacht weerlegt → AI verwerkt bewijs in onderbouwing
+- Stappenplan verwijst correct naar het bezwaarformulier + vermeldt max. 2 pogingen en 48-uurs responstijd
 - E-mail verzendknop → mail komt aan
 - Admin-pagina toont nieuw rapport correct
 - NL en EN flow beide doorlopen
