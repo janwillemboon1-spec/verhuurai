@@ -8,6 +8,7 @@ import {
 } from "@/lib/review-remover-prompt";
 
 const BUCKET = "review-remover-bewijs";
+const UUID_RE = /^[0-9a-f-]{36}\/[1-5]\.(jpg|png|webp)$/;
 
 function mediaTypeFromPad(
   pad: string
@@ -66,7 +67,9 @@ export async function POST(request: Request) {
       );
     }
     const paden: string[] = Array.isArray(screenshotPaden)
-      ? screenshotPaden.slice(0, 5)
+      ? (screenshotPaden as unknown[])
+          .filter((p): p is string => typeof p === "string" && UUID_RE.test(p))
+          .slice(0, 5)
       : [];
 
     // Rate limiting voor de Claude API call
@@ -120,7 +123,7 @@ export async function POST(request: Request) {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
     // Eerste poging
-    let parsed: Record<string, unknown> | null = null;
+    let parsed: Record<string, unknown>;
     let raw = await callClaude(client, systemPrompt, userContent);
 
     try {
@@ -135,7 +138,7 @@ export async function POST(request: Request) {
       parsed = JSON.parse(raw); // Gooit opnieuw als het nog steeds mislukt → outer catch vangt 500
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const screenshotUrls = paden.map(
       (pad) =>
         `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${pad}`
@@ -151,11 +154,11 @@ export async function POST(request: Request) {
         sterren,
         context: context?.trim() || null,
         screenshot_urls: screenshotUrls,
-        verdict: parsed!.verdict,
-        onderbouwing: parsed!.onderbouwing,
-        toegepaste_regels: parsed!.toegepaste_regels ?? [],
-        bezwaarbrief: parsed!.bezwaarbrief,
-        stappenplan: parsed!.stappenplan ?? [],
+        verdict: parsed.verdict,
+        onderbouwing: parsed.onderbouwing,
+        toegepaste_regels: parsed.toegepaste_regels ?? [],
+        bezwaarbrief: parsed.bezwaarbrief,
+        stappenplan: parsed.stappenplan ?? [],
       })
       .select("id")
       .single();
@@ -166,11 +169,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       id: rapport.id,
-      verdict: parsed!.verdict,
-      onderbouwing: parsed!.onderbouwing,
-      toegepaste_regels: parsed!.toegepaste_regels ?? [],
-      bezwaarbrief: parsed!.bezwaarbrief,
-      stappenplan: parsed!.stappenplan ?? [],
+      verdict: parsed.verdict,
+      onderbouwing: parsed.onderbouwing,
+      toegepaste_regels: parsed.toegepaste_regels ?? [],
+      bezwaarbrief: parsed.bezwaarbrief,
+      stappenplan: parsed.stappenplan ?? [],
     });
   } catch (error) {
     console.error("Review Remover analyseer fout:", error);
