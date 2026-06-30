@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET = "review-remover-bewijs";
 const MAX_SCREENSHOTS = 5;
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 function extFromType(type: string): string {
   if (type === "image/png") return "png";
@@ -26,6 +27,17 @@ export async function POST(request: Request) {
 
     const uploadTokens = await Promise.all(
       screenshots.map(async (s: { volgnummer: number; type: string }) => {
+        if (
+          typeof s.volgnummer !== "number" ||
+          !Number.isInteger(s.volgnummer) ||
+          s.volgnummer < 1 ||
+          s.volgnummer > MAX_SCREENSHOTS
+        ) {
+          throw new Error(`Ongeldig volgnummer: ${s.volgnummer}`);
+        }
+        if (!ALLOWED_TYPES.includes(s.type)) {
+          throw new Error(`Ongeldig bestandstype: ${s.type}`);
+        }
         const pad = `${sessieId}/${s.volgnummer}.${extFromType(s.type)}`;
         const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(pad);
         if (error || !data) throw new Error("Upload URL genereren mislukt");
