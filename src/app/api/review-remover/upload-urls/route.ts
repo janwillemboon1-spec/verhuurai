@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const BUCKET = "review-remover-bewijs";
 const MAX_SCREENSHOTS = 5;
@@ -20,6 +21,11 @@ export async function POST(request: Request) {
     }
     if (screenshots.length > MAX_SCREENSHOTS) {
       return NextResponse.json({ error: `Maximaal ${MAX_SCREENSHOTS} screenshots toegestaan` }, { status: 400 });
+    }
+
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!checkRateLimit(`review-remover-upload:${ip}`, 20)) {
+      return NextResponse.json({ error: "Te veel uploadverzoeken. Probeer het later opnieuw." }, { status: 429 });
     }
 
     const admin = createAdminClient();

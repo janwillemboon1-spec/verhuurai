@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildReviewRemoverEmailHtml } from "@/lib/review-remover-email";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +20,13 @@ export async function POST(request: Request) {
 
     if (error || !rapport) {
       return NextResponse.json({ error: "Rapport niet gevonden" }, { status: 404 });
+    }
+
+    if (!checkRateLimit(`review-remover-email:${rapport.email.trim().toLowerCase()}`, 5)) {
+      return NextResponse.json(
+        { error: "Te veel e-mailverzoeken voor dit adres. Probeer het later opnieuw." },
+        { status: 429 }
+      );
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";

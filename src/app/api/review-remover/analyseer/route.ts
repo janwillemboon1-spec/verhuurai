@@ -41,6 +41,27 @@ async function callClaude(
     .trim();
 }
 
+const VALID_VERDICTS = ["laag", "gemiddeld", "hoog"];
+
+function isValidParsedResult(p: unknown): p is {
+  verdict: string;
+  onderbouwing: string;
+  toegepaste_regels?: unknown;
+  bezwaarbrief: string;
+  stappenplan?: unknown;
+} {
+  if (!p || typeof p !== "object") return false;
+  const obj = p as Record<string, unknown>;
+  return (
+    typeof obj.verdict === "string" &&
+    VALID_VERDICTS.includes(obj.verdict) &&
+    typeof obj.onderbouwing === "string" &&
+    typeof obj.bezwaarbrief === "string" &&
+    (obj.toegepaste_regels === undefined || Array.isArray(obj.toegepaste_regels)) &&
+    (obj.stappenplan === undefined || Array.isArray(obj.stappenplan))
+  );
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -127,15 +148,23 @@ export async function POST(request: Request) {
     let raw = await callClaude(client, systemPrompt, userContent);
 
     try {
-      parsed = JSON.parse(raw);
+      const candidate = JSON.parse(raw);
+      if (!isValidParsedResult(candidate)) {
+        throw new Error("Onverwachte JSON-vorm van Claude");
+      }
+      parsed = candidate;
     } catch {
-      // Eén retry bij JSON parse fout
+      // Eén retry bij JSON parse fout of ongeldige vorm
       console.warn(
-        "Review Remover: eerste JSON parse mislukt, retry...",
+        "Review Remover: eerste JSON parse/validatie mislukt, retry...",
         raw.slice(0, 200)
       );
       raw = await callClaude(client, systemPrompt, userContent);
-      parsed = JSON.parse(raw); // Gooit opnieuw als het nog steeds mislukt → outer catch vangt 500
+      const candidate = JSON.parse(raw); // Gooit als het nog steeds mislukt → outer catch vangt 500
+      if (!isValidParsedResult(candidate)) {
+        throw new Error("Onverwachte JSON-vorm van Claude na retry");
+      }
+      parsed = candidate;
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
