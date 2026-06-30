@@ -185,7 +185,7 @@ export default function ReviewRemoverPage() {
     "text-danger bg-danger/10 border-danger/20";
 
   return (
-    <div className="section">
+    <div className="section" suppressHydrationWarning>
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col items-center text-center mb-8">
           <BoniAvatar size={120} animate={false} src="/Boni-rechter-nobg.png" className="mb-4" />
