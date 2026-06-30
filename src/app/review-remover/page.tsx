@@ -171,16 +171,14 @@ export default function ReviewRemoverPage() {
   return (
     <div className="section">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center gap-4 mb-8">
-          <BoniAvatar size={80} animate={false} src="/Boni-rechter.png" className="flex-shrink-0" />
-          <div>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold text-primary leading-tight">
-              Review Remover — check of je een recensie kunt laten verwijderen
-            </h1>
-            <p className="text-text-secondary mt-1">
-              Plak de recensie, geef context en eventueel bewijs. Gratis, geen account nodig.
-            </p>
-          </div>
+        <div className="flex flex-col items-center text-center mb-8">
+          <BoniAvatar size={120} animate={false} src="/Boni-rechter-nobg.png" className="mb-4" />
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-primary leading-tight">
+            Review Remover — check of je een recensie kunt laten verwijderen
+          </h1>
+          <p className="text-text-secondary mt-2">
+            Plak de recensie, geef context en eventueel bewijs. Gratis, geen account nodig.
+          </p>
         </div>
 
         <div className="card p-6 sm:p-8 mb-6 space-y-5">
@@ -320,7 +318,7 @@ export default function ReviewRemoverPage() {
 
         {fout && (
           <div className="card p-5 border-danger/30 bg-danger/5 flex items-start gap-3 mb-6">
-            <BoniAvatar size={40} src="/Boni-rechter.png" className="flex-shrink-0 mt-0.5" />
+            <BoniAvatar size={40} src="/Boni-rechter-nobg.png" className="flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-danger mb-1">Boni kon de recensie niet beoordelen</p>
               <p className="text-text-secondary text-sm">{fout}</p>
