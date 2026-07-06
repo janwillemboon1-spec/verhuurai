@@ -35,7 +35,7 @@ export default function HomePage() {
                   className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors"
                 >
                   <span className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center text-accent text-xs">🏘️</span>
-                  Al lid van de community? Gratis toegang →
+                  Lid van de Superhost Community? Gratis toegang →
                 </Link>
               </div>
             </div>
