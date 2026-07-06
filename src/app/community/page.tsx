@@ -136,7 +136,7 @@ export default function CommunityPage() {
 
             <p className="text-xs text-text-secondary text-center">
               Geen lid?{" "}
-              <a href="/host-performance/aanmelden" className="text-accent hover:underline">Betaal en gebruik de tools →</a>
+              <a href="/" className="text-accent hover:underline">Betaal en gebruik de tools →</a>
             </p>
           </div>
         </div>
@@ -244,11 +244,11 @@ export default function CommunityPage() {
             {/* Foto Optimizer */}
             <div className="card p-6 flex items-center justify-between gap-4">
               <div>
-                <h2 className="font-display text-xl text-primary">Foto Optimizer</h2>
+                <h2 className="font-display text-xl text-primary">Photo Optimizer</h2>
                 <p className="text-text-secondary text-sm mt-1">AI-bewerking van jouw advertentie foto&apos;s naar 5-sterren kwaliteit.</p>
               </div>
               <a
-                href={`/foto-optimizer?community_token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`}
+                href={`/photo-optimizer?community_token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`}
                 className="btn-primary shrink-0"
               >
                 Starten →
