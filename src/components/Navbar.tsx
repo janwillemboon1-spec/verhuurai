@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslations } from "next-intl";
 
 export function Navbar() {
   const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
+  const [gratisOpen, setGratisOpen] = useState(false);
   const [ingelogd, setIngelogd] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
@@ -20,6 +22,16 @@ export function Navbar() {
       setIngelogd(!!session);
     });
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setGratisOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -39,15 +51,49 @@ export function Navbar() {
           <Link href="/host-performance" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("reviewMonitor")}
           </Link>
-          <Link href="/prijscalculator" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            {t("prijscalculator")}
-          </Link>
-          <Link href="/review-remover" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
-            {t("reviewRemover")}
-          </Link>
-          <Link href="/gratis" className="text-accent font-semibold text-sm hover:underline">
-            {t("gratisProberen")}
-          </Link>
+
+          {/* Gratis tools dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setGratisOpen(!gratisOpen)}
+              className="flex items-center gap-1 text-text-secondary hover:text-primary transition-colors text-sm font-medium"
+            >
+              {t("gratisTools")}
+              <svg
+                width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"
+                viewBox="0 0 24 24"
+                className={`transition-transform duration-200 ${gratisOpen ? "rotate-180" : ""}`}
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {gratisOpen && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-background border border-border rounded-xl shadow-lg py-1 z-50">
+                <Link
+                  href="/prijscalculator"
+                  onClick={() => setGratisOpen(false)}
+                  className="block px-4 py-2.5 text-sm text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors"
+                >
+                  {t("prijscalculator")}
+                </Link>
+                <Link
+                  href="/review-remover"
+                  onClick={() => setGratisOpen(false)}
+                  className="block px-4 py-2.5 text-sm text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors"
+                >
+                  {t("reviewRemover")}
+                </Link>
+                <Link
+                  href="/gratis"
+                  onClick={() => setGratisOpen(false)}
+                  className="block px-4 py-2.5 text-sm text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors"
+                >
+                  {t("titelOptimalisatie")}
+                </Link>
+              </div>
+            )}
+          </div>
+
           {ingelogd ? (
             <Link href="/dashboard" className="btn-secondary text-sm py-2 px-4">
               {t("mijnDashboard")}
@@ -87,15 +133,49 @@ export function Navbar() {
           <Link href="/host-performance" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("reviewMonitor")}
           </Link>
-          <Link href="/prijscalculator" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            {t("prijscalculator")}
-          </Link>
-          <Link href="/review-remover" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
-            {t("reviewRemover")}
-          </Link>
-          <Link href="/gratis" onClick={() => setOpen(false)} className="text-accent font-semibold">
-            {t("gratisProberen")}
-          </Link>
+
+          {/* Gratis tools submenu mobiel */}
+          <div>
+            <button
+              onClick={() => setGratisOpen(!gratisOpen)}
+              className="flex items-center justify-between w-full text-text-secondary font-medium"
+            >
+              {t("gratisTools")}
+              <svg
+                width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"
+                viewBox="0 0 24 24"
+                className={`transition-transform duration-200 ${gratisOpen ? "rotate-180" : ""}`}
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {gratisOpen && (
+              <div className="pl-4 mt-3 flex flex-col gap-3 border-l border-border ml-1">
+                <Link
+                  href="/prijscalculator"
+                  onClick={() => { setOpen(false); setGratisOpen(false); }}
+                  className="text-text-secondary text-sm hover:text-primary transition-colors"
+                >
+                  {t("prijscalculator")}
+                </Link>
+                <Link
+                  href="/review-remover"
+                  onClick={() => { setOpen(false); setGratisOpen(false); }}
+                  className="text-text-secondary text-sm hover:text-primary transition-colors"
+                >
+                  {t("reviewRemover")}
+                </Link>
+                <Link
+                  href="/gratis"
+                  onClick={() => { setOpen(false); setGratisOpen(false); }}
+                  className="text-text-secondary text-sm hover:text-primary transition-colors"
+                >
+                  {t("titelOptimalisatie")}
+                </Link>
+              </div>
+            )}
+          </div>
+
           {ingelogd ? (
             <Link href="/dashboard" onClick={() => setOpen(false)} className="btn-secondary text-center">
               {t("mijnDashboard")}
