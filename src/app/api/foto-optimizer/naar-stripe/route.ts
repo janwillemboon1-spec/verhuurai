@@ -66,8 +66,9 @@ export async function POST(request: Request) {
         },
       ],
       mode: "payment",
+      allow_promotion_codes: true,
       success_url: `${baseUrl}/photo-optimizer/succes?session_id={CHECKOUT_SESSION_ID}&sessie_id=${sessieId}`,
-      cancel_url: `${baseUrl}/foto-optimizer`,
+      cancel_url: `${baseUrl}/photo-optimizer`,
       metadata: {
         tool: "foto-optimizer",
         sessieId,

@@ -47,6 +47,7 @@ export async function POST(request: Request) {
         },
       ],
       mode: "payment",
+      allow_promotion_codes: true,
       success_url: `${baseUrl}/starten/succes?session_id={CHECKOUT_SESSION_ID}&sessie_id=${sessieId}`,
       cancel_url: `${baseUrl}/starten`,
       metadata: {

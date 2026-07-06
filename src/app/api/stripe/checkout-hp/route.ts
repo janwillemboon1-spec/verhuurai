@@ -28,6 +28,7 @@ export async function POST(request: Request) {
         },
       ],
       mode: "payment",
+      allow_promotion_codes: true,
       success_url: `${baseUrl}/host-performance/succes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/host-performance/aanmelden`,
       metadata: {
