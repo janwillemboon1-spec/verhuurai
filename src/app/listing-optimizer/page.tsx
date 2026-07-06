@@ -11,8 +11,7 @@ export default function ListingOptimizerPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
             <div className="flex-1 text-center md:text-left">
-              <span className="badge-intro mb-4 inline-flex">Introductieprijs — 40% korting</span>
-              <h1 className="font-display text-4xl sm:text-5xl font-bold text-primary leading-tight mb-5">
+<h1 className="font-display text-4xl sm:text-5xl font-bold text-primary leading-tight mb-5">
                 Listing Optimizer
               </h1>
               <p className="text-text-secondary text-lg mb-8 max-w-xl mx-auto md:mx-0">
