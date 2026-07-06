@@ -248,7 +248,7 @@ export default function CommunityPage() {
                 <p className="text-text-secondary text-sm mt-1">AI-bewerking van jouw advertentie foto&apos;s naar 5-sterren kwaliteit.</p>
               </div>
               <a
-                href={`/photo-optimizer?community_token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`}
+                href={`/photo-optimizer/starten?community_token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`}
                 className="btn-primary shrink-0"
               >
                 Starten →
