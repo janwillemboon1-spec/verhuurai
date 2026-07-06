@@ -54,6 +54,7 @@ export default function AbonnerenPage() {
   const searchParams = useSearchParams();
 
   const abonnementId = params.id as string;
+  const stripeSid = searchParams.get("stripe_sid") || "";
   const [frequentie, setFrequentie] = useState<"monthly" | "weekly">(
     (searchParams.get("frequentie") as "monthly" | "weekly") || "monthly"
   );
@@ -74,7 +75,7 @@ export default function AbonnerenPage() {
       const res = await fetch("/api/abonnement-activeren", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ abonnementId, frequentie, billingInterval: interval, dag, tijd }),
+        body: JSON.stringify({ abonnementId, frequentie, billingInterval: interval, dag, tijd, stripe_session_id: stripeSid || undefined }),
       });
       if (!res.ok) throw new Error("Activeren mislukt");
       router.push("/dashboard?welkom=1");

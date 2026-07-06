@@ -1,29 +1,43 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { abonnementId, frequentie, billingInterval, dag, tijd } = await request.json();
+    const { abonnementId, frequentie, billingInterval, dag, tijd, stripe_session_id } = await request.json();
     const supabase = await createClient();
+    const admin = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
+
+    // Auth: ingelogd óf verificatie via stripe_session_id
+    if (!user && !stripe_session_id) {
+      return NextResponse.json({ error: "Niet geautoriseerd" }, { status: 401 });
+    }
+
+    if (!user && stripe_session_id) {
+      const { data: abo } = await admin
+        .from("abonnementen")
+        .select("id")
+        .eq("id", abonnementId)
+        .eq("stripe_session_id", stripe_session_id)
+        .maybeSingle();
+      if (!abo) return NextResponse.json({ error: "Niet geautoriseerd" }, { status: 401 });
+    }
 
     const nu = new Date();
     let volgendeDatum: Date;
 
     if (frequentie === "weekly") {
-      // Volgende maandag
-      const dag = nu.getDay();
-      const dagenTotMaandag = dag === 0 ? 1 : 8 - dag;
+      const dagNu = nu.getDay();
+      const dagenTotMaandag = dagNu === 0 ? 1 : 8 - dagNu;
       volgendeDatum = new Date(nu);
       volgendeDatum.setDate(nu.getDate() + dagenTotMaandag);
     } else {
-      // Eerste van volgende maand
       volgendeDatum = new Date(nu.getFullYear(), nu.getMonth() + 1, 1);
     }
 
-    const { error } = await supabase
+    const updateQuery = admin
       .from("abonnementen")
       .update({
         status: "active",
@@ -34,8 +48,11 @@ export async function POST(request: Request) {
         volgende_rapport_datum: volgendeDatum.toISOString(),
         trial_gebruikt: true,
       })
-      .eq("id", abonnementId)
-      .eq("user_id", user.id);
+      .eq("id", abonnementId);
+
+    const { error } = user
+      ? await updateQuery.eq("user_id", user.id)
+      : await updateQuery;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
