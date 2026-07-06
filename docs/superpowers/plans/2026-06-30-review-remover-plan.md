@@ -64,7 +64,7 @@ Verify:
 SELECT column_name, data_type FROM information_schema.columns
 WHERE table_name = 'review_remover_rapporten' ORDER BY ordinal_position;
 ```
-Expected: 13 rows (id, aangemaakt_op, naam, email, taal, review_tekst, sterren, context, screenshot_urls, verdict, onderbouwing, toegepaste_regels, bezwaarbrief, stappenplan, email_verzonden).
+Expected: 15 rows (id, aangemaakt_op, naam, email, taal, review_tekst, sterren, context, screenshot_urls, verdict, onderbouwing, toegepaste_regels, bezwaarbrief, stappenplan, email_verzonden).
 
 - [ ] **Step 3: Create the Storage bucket manually**
 
