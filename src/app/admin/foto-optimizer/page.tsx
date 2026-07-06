@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TrainButton } from "./TrainButton";
+import { VoorbeeldGrid } from "./VoorbeeldGrid";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
@@ -28,7 +29,7 @@ export default async function AdminFotoOptimizerPage() {
       .limit(50),
     admin
       .from("foto_bewerkingen")
-      .select("id, sessie_id, volgnummer, ruimte, origineel_pad, bewerkt_pad")
+      .select("id, sessie_id, volgnummer, ruimte, origineel_pad, bewerkt_pad, toon_als_voorbeeld")
       .eq("positief_beoordeeld", true)
       .order("id", { ascending: false })
       .limit(50),
@@ -152,33 +153,24 @@ export default async function AdminFotoOptimizerPage() {
           </div>
         )}
 
-        {/* Trainingdata — positief beoordeeld */}
+        {/* Trainingdata — positief beoordeeld + voorbeeld-selectie */}
         {trainingData && trainingData.length > 0 && (
           <div className="card overflow-hidden">
             <div className="p-5 border-b border-border">
-              <h2 className="font-display text-xl text-primary">Trainingdata — goed bewerkt ({trainingData.length})</h2>
-              <p className="text-sm text-text-secondary mt-1">Foto's die door gebruikers als goed bewerkt zijn gemarkeerd.</p>
+              <h2 className="font-display text-xl text-primary">Goed bewerkt ({trainingData.length})</h2>
+              <p className="text-sm text-text-secondary mt-1">Vink foto's aan om ze als voor/na voorbeeld op de publieke Photo Optimizer pagina te tonen (max 15).</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4">
-              {trainingData.map(foto => (
-                <div key={foto.id} className="space-y-1">
-                  {foto.origineel_pad && (
-                    <img
-                      src={`${supabaseUrl}/storage/v1/object/public/foto-originelen/${foto.origineel_pad}`}
-                      alt="voor"
-                      className="w-full aspect-[3/2] object-cover rounded-lg"
-                    />
-                  )}
-                  {foto.bewerkt_pad && (
-                    <img
-                      src={`${supabaseUrl}/storage/v1/object/public/foto-bewerkt/${foto.bewerkt_pad}`}
-                      alt="na"
-                      className="w-full aspect-[3/2] object-cover rounded-lg ring-2 ring-success/50"
-                    />
-                  )}
-                  <p className="text-xs text-text-secondary text-center">{foto.ruimte || "overig"}</p>
-                </div>
-              ))}
+            <div className="p-4">
+              <VoorbeeldGrid
+                fotos={trainingData.map(f => ({
+                  id: f.id,
+                  ruimte: f.ruimte,
+                  origineel_pad: f.origineel_pad,
+                  bewerkt_pad: f.bewerkt_pad,
+                  toon_als_voorbeeld: f.toon_als_voorbeeld ?? false,
+                }))}
+                supabaseUrl={supabaseUrl ?? ""}
+              />
             </div>
           </div>
         )}

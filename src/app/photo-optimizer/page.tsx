@@ -10,11 +10,11 @@ export default async function PhotoOptimizerPage() {
   const { data: voorbeelden } = await admin
     .from("foto_bewerkingen")
     .select("id, ruimte, origineel_pad, bewerkt_pad")
-    .eq("positief_beoordeeld", true)
+    .eq("toon_als_voorbeeld", true)
     .not("origineel_pad", "is", null)
     .not("bewerkt_pad", "is", null)
     .order("id", { ascending: false })
-    .limit(5);
+    .limit(15);
 
   const fotos = (voorbeelden ?? []).map((f) => ({
     id: f.id,
