@@ -16,7 +16,7 @@ export default function HomePage() {
                 Meer uit jouw verhuur halen?
               </h1>
               <p className="text-text-secondary text-lg sm:text-xl mb-8 max-w-xl mx-auto md:mx-0">
-                Als je verhuur tegenvalt ligt dat vrijwel altijd aan één van deze drie onderdelen: Advertentie, Prijzen of Hosting skills. Boni helpt je met drie krachtige tools om al deze onderdelen te optimaliseren.
+                Als je verhuur tegenvalt ligt dat vrijwel altijd aan één van deze drie onderdelen: Advertentie, Prijzen of Hosting skills. Boni helpt je met professionele AI-tools om al deze onderdelen te optimaliseren.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start flex-wrap">
                 <Link href="/listing-optimizer" className="btn-secondary text-center">
