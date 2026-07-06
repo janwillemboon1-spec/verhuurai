@@ -145,7 +145,7 @@ function FotoOptimizerInhoud() {
         <div className="text-center mb-8">
           <BoniAvatar size={80} className="mx-auto mb-4" />
           <h1 className="font-display text-3xl md:text-4xl text-primary mb-3">
-            Foto Optimizer
+            Photo Optimizer
           </h1>
           <p className="text-text-secondary max-w-lg mx-auto leading-relaxed">
             Upload jouw advertentie foto&apos;s. Boni verbetert ze naar 5-sterren kwaliteit.
