@@ -104,7 +104,7 @@ export default async function PhotoOptimizerPage() {
               <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Voor & Na</h2>
               <p className="text-text-secondary text-lg">Sleep de schuifbalk om het verschil te zien</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               {fotos.map((foto) => (
                 <VoorNaSlider key={foto.id} voor={foto.voor} na={foto.na} label={foto.label} />
               ))}

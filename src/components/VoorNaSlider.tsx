@@ -22,7 +22,7 @@ export function VoorNaSlider({ voor, na, label }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative overflow-hidden rounded-xl select-none aspect-[4/3] cursor-col-resize"
+      className="relative overflow-hidden rounded-xl select-none aspect-[3/2] cursor-col-resize"
       onMouseDown={() => { sleepRef.current = true; }}
       onMouseUp={() => { sleepRef.current = false; }}
       onMouseLeave={() => { sleepRef.current = false; }}
