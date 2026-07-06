@@ -61,7 +61,7 @@ export default function HomePage() {
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary mb-3">Professionele tools met één doel</h2>
             <p className="text-text-secondary text-lg">Meer boekingen, betere reviews, hogere omzet</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
 
             {/* Listing Optimizer */}
             <div className="card p-8 relative flex flex-col">
@@ -145,7 +145,7 @@ export default function HomePage() {
             </div>
 
             {/* Photo Optimizer */}
-            <div className="card p-8 relative flex flex-col">
+            <div className="card p-8 relative flex flex-col xl:hidden">
               <div className="text-5xl mb-5">📷</div>
               <h3 className="font-display text-2xl font-bold text-primary mb-3">Photo Optimizer</h3>
               <p className="text-text-secondary leading-relaxed mb-5">
