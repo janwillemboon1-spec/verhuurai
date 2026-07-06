@@ -13,7 +13,7 @@ function SuccesInhoud() {
   useEffect(() => {
     if (!sessieId) return;
     const timer = setTimeout(() => {
-      router.push(`/foto-optimizer/verwerken/${sessieId}`);
+      router.push(`/photo-optimizer/verwerken/${sessieId}`);
     }, 2500);
     return () => clearTimeout(timer);
   }, [sessieId, router]);
@@ -37,7 +37,7 @@ function SuccesInhoud() {
 
         {sessieId && (
           <button
-            onClick={() => router.push(`/foto-optimizer/verwerken/${sessieId}`)}
+            onClick={() => router.push(`/photo-optimizer/verwerken/${sessieId}`)}
             className="btn-primary w-full text-lg py-4"
           >
             Ga naar mijn foto's →

@@ -48,13 +48,13 @@ export default function VerwerkingPage({
     if (handmatigTimerRef.current) clearTimeout(handmatigTimerRef.current);
     setIsKlaar(true);
     setSimulatedPercent(100);
-    setTimeout(() => router.push(`/foto-optimizer/resultaat/${sessieId}`), 600);
+    setTimeout(() => router.push(`/photo-optimizer/resultaat/${sessieId}`), 600);
   }, [sessieId, router]);
 
   // Check of alle foto's klaar zijn — sessie.status is leidend, individuele statussen als backup
   const checkKlaar = useCallback(async () => {
     try {
-      const res = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`);
+      const res = await fetch(`/api/photo-optimizer/resultaat/${sessieId}`);
       if (!res.ok) return;
       const data = await res.json();
 
@@ -236,7 +236,7 @@ export default function VerwerkingPage({
             </p>
             {toonHandmatig && (
               <button
-                onClick={() => router.push(`/foto-optimizer/resultaat/${sessieId}`)}
+                onClick={() => router.push(`/photo-optimizer/resultaat/${sessieId}`)}
                 className="btn-secondary text-sm"
               >
                 Ga naar resultaten →

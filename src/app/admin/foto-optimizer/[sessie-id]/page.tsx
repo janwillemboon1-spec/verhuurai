@@ -37,7 +37,7 @@ export default function AdminSessieDetailPage() {
   const [bezig, setBezig] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/foto-optimizer/resultaat/${sessieId}`)
+    fetch(`/api/photo-optimizer/resultaat/${sessieId}`)
       .then(r => r.json())
       .then(data => {
         setSessieInfo(data.sessie);
@@ -61,7 +61,7 @@ export default function AdminSessieDetailPage() {
       if (res.ok && data.nieuweUrl) {
         setBewerktUrls(prev => ({ ...prev, [id]: `${data.nieuweUrl}?t=${Date.now()}` }));
         // Herlaad vanuit DB zodat de nieuwste bewerkt_pad behouden blijft na refresh
-        const refreshed = await fetch(`/api/foto-optimizer/resultaat/${sessieId}`).then(r => r.json());
+        const refreshed = await fetch(`/api/photo-optimizer/resultaat/${sessieId}`).then(r => r.json());
         if (refreshed.bewerkingen) setBewerkingen(refreshed.bewerkingen);
       } else {
         alert(data.error || "Mislukt.");
@@ -89,7 +89,7 @@ export default function AdminSessieDetailPage() {
             <p className="text-sm text-text-secondary">{sessieInfo?.email}</p>
           </div>
           <Link
-            href={`/foto-optimizer/resultaat/${sessieId}`}
+            href={`/photo-optimizer/resultaat/${sessieId}`}
             target="_blank"
             className="btn-secondary text-sm"
           >

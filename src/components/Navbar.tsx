@@ -51,6 +51,9 @@ export function Navbar() {
           <Link href="/host-performance" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
             {t("reviewMonitor")}
           </Link>
+          <Link href="/photo-optimizer" className="text-text-secondary hover:text-primary transition-colors text-sm font-medium">
+            {t("photoOptimizer")}
+          </Link>
 
           {/* Gratis tools dropdown */}
           <div className="relative" ref={dropdownRef}>
@@ -103,8 +106,8 @@ export function Navbar() {
               {t("inloggen")}
             </Link>
           )}
-          <Link href="/starten" className="btn-primary text-sm py-2 px-4">
-            {t("analyseer")}
+          <Link href="/community" className="btn-primary text-sm py-2 px-4">
+            {t("community")}
           </Link>
         </div>
 
@@ -132,6 +135,9 @@ export function Navbar() {
           </Link>
           <Link href="/host-performance" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
             {t("reviewMonitor")}
+          </Link>
+          <Link href="/photo-optimizer" onClick={() => setOpen(false)} className="text-text-secondary font-medium">
+            {t("photoOptimizer")}
           </Link>
 
           {/* Gratis tools submenu mobiel */}
@@ -185,8 +191,8 @@ export function Navbar() {
               {t("inloggen")}
             </Link>
           )}
-          <Link href="/starten" onClick={() => setOpen(false)} className="btn-primary text-center">
-            {t("analyseer")}
+          <Link href="/community" onClick={() => setOpen(false)} className="btn-primary text-center">
+            {t("community")}
           </Link>
         </div>
       )}

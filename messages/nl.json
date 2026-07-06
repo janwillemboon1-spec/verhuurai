@@ -3,6 +3,7 @@
     "logo": "Host Boni",
     "listingOptimizer": "Listing Optimizer",
     "reviewMonitor": "Host Performance",
+    "photoOptimizer": "Photo Optimizer",
     "gratisTools": "Gratis tools",
     "prijscalculator": "Prijscalculator",
     "reviewRemover": "Review Remover",
@@ -10,6 +11,7 @@
     "gratisProberen": "Gratis proberen",
     "inloggen": "Inloggen",
     "mijnDashboard": "Mijn dashboard",
+    "community": "Leden Superhost Community",
     "analyseer": "Analyseer mijn advertentie"
   },
   "home": {

@@ -264,7 +264,7 @@ export default function ResultaatPage({ params }: { params: { "sessie-id": strin
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="card p-8 max-w-md text-center">
         <p className="text-danger mb-4">{fout}</p>
-        <Link href="/foto-optimizer" className="btn-primary">Nieuwe analyse starten</Link>
+        <Link href="/photo-optimizer" className="btn-primary">Nieuwe analyse starten</Link>
       </div>
     </div>
   );

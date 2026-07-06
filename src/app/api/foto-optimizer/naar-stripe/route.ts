@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         .update({ status: "betaald" })
         .eq("id", sessieId);
       return NextResponse.json({
-        stripeUrl: `${baseUrl}/foto-optimizer/succes?sessie_id=${sessieId}`,
+        stripeUrl: `${baseUrl}/photo-optimizer/succes?sessie_id=${sessieId}`,
       });
     }
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         .update({ status: "betaald" })
         .eq("id", sessieId);
       return NextResponse.json({
-        stripeUrl: `${baseUrl}/foto-optimizer/succes?sessie_id=${sessieId}`,
+        stripeUrl: `${baseUrl}/photo-optimizer/succes?sessie_id=${sessieId}`,
       });
     }
 
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         },
       ],
       mode: "payment",
-      success_url: `${baseUrl}/foto-optimizer/succes?session_id={CHECKOUT_SESSION_ID}&sessie_id=${sessieId}`,
+      success_url: `${baseUrl}/photo-optimizer/succes?session_id={CHECKOUT_SESSION_ID}&sessie_id=${sessieId}`,
       cancel_url: `${baseUrl}/foto-optimizer`,
       metadata: {
         tool: "foto-optimizer",
