@@ -163,6 +163,7 @@ export default async function AdminPage() {
             <a href="/admin/host-performance" className="btn-secondary text-sm">⭐ HP</a>
             <a href="/admin/prijscalculator" className="btn-secondary text-sm">💰 PC</a>
             <Link href="/admin/foto-optimizer" className="btn-secondary text-sm">📷 Foto</Link>
+            <Link href="/admin/onboarding" className="btn-secondary text-sm">📋 Onboarding</Link>
             <a href="/admin/community" className="btn-secondary text-sm">🏘️ Community</a>
             <a href="/admin/contacten" className="btn-primary text-sm">👥 Contacten</a>
             <a href="/dashboard" className="btn-secondary text-sm">← Dashboard</a>
