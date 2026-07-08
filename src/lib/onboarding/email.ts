@@ -30,6 +30,26 @@ export async function stuurStapVoltooidEmail(
   });
 }
 
+export async function stuurWachtwoordResetEmail(
+  klantEmail: string,
+  klantNaam: string,
+  resetUrl: string
+): Promise<void> {
+  await resend.emails.send({
+    from: "Host Boni <boni@verhuurai.nl>",
+    to: klantEmail,
+    subject: "Nieuw wachtwoord instellen — Host Boni Onboarding",
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
+        <h2 style="color: #2b3885; margin-bottom: 8px;">Wachtwoord opnieuw instellen</h2>
+        <p style="color: #555; margin-bottom: 24px;">Hallo ${klantNaam},<br>Klik op de knop om een nieuw wachtwoord in te stellen. Deze link is 1 uur geldig.</p>
+        <a href="${resetUrl}" style="display: inline-block; background: #2b3885; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Wachtwoord instellen</a>
+        <p style="color: #aaa; font-size: 12px; margin-top: 24px;">Als je dit niet hebt aangevraagd, kun je deze mail negeren.</p>
+      </div>
+    `,
+  });
+}
+
 export async function stuurTodoGedaanEmail(klantNaam: string, todoTekst: string): Promise<void> {
   await resend.emails.send({
     from: FROM,
