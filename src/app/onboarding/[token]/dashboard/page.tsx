@@ -38,7 +38,7 @@ export default async function OnboardingDashboardPage({ params }: { params: { to
         <div className="text-center space-y-1">
           <p className="text-xs text-text-secondary uppercase tracking-wider">Jouw onboarding bij</p>
           <h1 className="font-display text-2xl text-primary">Host Boni</h1>
-          <p className="text-sm text-text-secondary">Hallo {klant.naam} 👋</p>
+          <p className="text-sm text-text-secondary">Hallo {klant.voornaam || klant.naam} 👋</p>
         </div>
         <OnboardingDashboard
           klant={klant}

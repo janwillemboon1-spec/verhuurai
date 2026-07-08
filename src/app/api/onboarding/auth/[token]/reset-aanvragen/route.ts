@@ -9,7 +9,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
   const admin = createAdminClient();
   const { data: klant } = await admin
     .from("onboarding_klanten")
-    .select("id, naam, email, link_token")
+    .select("id, naam, email, link_token, voornaam")
     .eq("link_token", params.token)
     .single();
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
   const resetUrl = `${BASE_URL}/onboarding/${params.token}/reset?rt=${rt}`;
 
   try {
-    await stuurWachtwoordResetEmail(klant.email, klant.naam, resetUrl);
+    await stuurWachtwoordResetEmail(klant.email, klant.naam, resetUrl, klant.voornaam);
   } catch (err) {
     console.error("Reset email fout:", err);
     return NextResponse.json({ error: "E-mail kon niet worden verstuurd" }, { status: 500 });

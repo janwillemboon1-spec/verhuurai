@@ -30,7 +30,7 @@ export async function PATCH(request: Request, { params }: { params: { "item-id":
     .from("onboarding_checklist_items")
     .update(updates)
     .eq("id", params["item-id"])
-    .select("*, onboarding_klanten(naam, email)")
+    .select("*, onboarding_klanten(naam, email, voornaam)")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: { params: { "item-id":
   if (body.voltooid === true && item) {
     const klant = (item as any).onboarding_klanten;
     if (klant?.email) {
-      await stuurStapVoltooidEmail(klant.email, klant.naam, item.naam).catch(() => {});
+      await stuurStapVoltooidEmail(klant.email, klant.naam, item.naam, klant.voornaam).catch(() => {});
     }
   }
 

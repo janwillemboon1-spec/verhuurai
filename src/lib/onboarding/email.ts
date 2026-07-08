@@ -4,10 +4,15 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL || "Boni van Host Boni <boni@verhuurai.nl>";
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
+function aanspreking(klantNaam: string, voornaam?: string | null): string {
+  return voornaam || klantNaam;
+}
+
 export async function stuurStapVoltooidEmail(
   klantEmail: string,
   klantNaam: string,
-  stapNaam: string
+  stapNaam: string,
+  voornaam?: string | null
 ): Promise<void> {
   await resend.emails.send({
     from: FROM,
@@ -18,7 +23,7 @@ export async function stuurStapVoltooidEmail(
         <div style="background: #2b3885; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
           <h1 style="color: white; margin: 0; font-size: 22px;">Host Boni — Onboarding Update</h1>
         </div>
-        <p style="font-size: 16px; color: #111827;">Hoi ${klantNaam},</p>
+        <p style="font-size: 16px; color: #111827;">Hoi ${aanspreking(klantNaam, voornaam)},</p>
         <p style="color: #374151;">We hebben zojuist de volgende stap voor jou afgerond:</p>
         <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 4px; margin: 16px 0;">
           <p style="margin: 0; font-weight: bold; color: #166534;">✓ ${stapNaam}</p>
@@ -33,7 +38,8 @@ export async function stuurStapVoltooidEmail(
 export async function stuurWachtwoordResetEmail(
   klantEmail: string,
   klantNaam: string,
-  resetUrl: string
+  resetUrl: string,
+  voornaam?: string | null
 ): Promise<void> {
   await resend.emails.send({
     from: "Host Boni <boni@verhuurai.nl>",
@@ -42,7 +48,7 @@ export async function stuurWachtwoordResetEmail(
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
         <h2 style="color: #2b3885; margin-bottom: 8px;">Wachtwoord opnieuw instellen</h2>
-        <p style="color: #555; margin-bottom: 24px;">Hallo ${klantNaam},<br>Klik op de knop om een nieuw wachtwoord in te stellen. Deze link is 1 uur geldig.</p>
+        <p style="color: #555; margin-bottom: 24px;">Hallo ${aanspreking(klantNaam, voornaam)},<br>Klik op de knop om een nieuw wachtwoord in te stellen. Deze link is 1 uur geldig.</p>
         <a href="${resetUrl}" style="display: inline-block; background: #2b3885; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Wachtwoord instellen</a>
         <p style="color: #aaa; font-size: 12px; margin-top: 24px;">Als je dit niet hebt aangevraagd, kun je deze mail negeren.</p>
       </div>

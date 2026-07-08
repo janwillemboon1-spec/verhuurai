@@ -14,6 +14,8 @@ export type OnboardingKlant = {
   extra_omzet_periode: string;
   kpi_omzet_365d_nulmeting?: number | null;
   geen_cijfers_nulmeting?: boolean | null;
+  voornaam?: string | null;
+  achternaam?: string | null;
 };
 
 export type OnboardingChecklistItem = {

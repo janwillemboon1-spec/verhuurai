@@ -8,7 +8,7 @@ export default async function OnboardingLoginPage({ params }: { params: { token:
   const admin = createAdminClient();
   const { data: klant } = await admin
     .from("onboarding_klanten")
-    .select("id, naam, link_token")
+    .select("id, naam, voornaam, link_token")
     .eq("link_token", params.token)
     .single();
 
@@ -32,7 +32,7 @@ export default async function OnboardingLoginPage({ params }: { params: { token:
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="card p-8 max-w-sm w-full space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="font-display text-2xl text-primary">Welkom, {klant.naam}</h1>
+          <h1 className="font-display text-2xl text-primary">Welkom, {klant.voornaam || klant.naam}</h1>
           <p className="text-sm text-text-secondary">Voer je wachtwoord in om je onboarding voortgang te bekijken.</p>
         </div>
         <WachtwoordForm token={params.token} />

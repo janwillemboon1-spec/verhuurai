@@ -41,6 +41,8 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     naam: klant.naam,
     email: klant.email,
     wachtwoord: "",
+    voornaam: klant.voornaam ?? "",
+    achternaam: klant.achternaam ?? "",
     kpi_bezetting_nulmeting: klant.kpi_bezetting_nulmeting?.toString() ?? "",
     kpi_adr_nulmeting: klant.kpi_adr_nulmeting?.toString() ?? "",
     kpi_reviewscore_nulmeting: klant.kpi_reviewscore_nulmeting?.toString() ?? "",
@@ -85,6 +87,8 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     const body: Record<string, unknown> = {
       naam: bewerkForm.naam,
       email: bewerkForm.email,
+      voornaam: bewerkForm.voornaam || null,
+      achternaam: bewerkForm.achternaam || null,
       kpi_bezetting_nulmeting: bewerkForm.kpi_bezetting_nulmeting ? parseFloat(bewerkForm.kpi_bezetting_nulmeting) : null,
       kpi_adr_nulmeting: bewerkForm.kpi_adr_nulmeting ? parseFloat(bewerkForm.kpi_adr_nulmeting) : null,
       kpi_reviewscore_nulmeting: bewerkForm.kpi_reviewscore_nulmeting ? parseFloat(bewerkForm.kpi_reviewscore_nulmeting) : null,
@@ -257,6 +261,17 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
               <div>
                 <label className="text-xs text-text-secondary">E-mailadres klant</label>
                 <input type="email" className="input w-full text-sm" value={bewerkForm.email} onChange={e => setBewerkForm(f => ({ ...f, email: e.target.value }))} required />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-text-secondary">Voornaam <span className="text-text-secondary">(optioneel)</span></label>
+                <input className="input w-full text-sm" placeholder="bijv. Lisa" value={bewerkForm.voornaam} onChange={e => setBewerkForm(f => ({ ...f, voornaam: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs text-text-secondary">Achternaam <span className="text-text-secondary">(optioneel)</span></label>
+                <input className="input w-full text-sm" placeholder="bijv. de Vries" value={bewerkForm.achternaam} onChange={e => setBewerkForm(f => ({ ...f, achternaam: e.target.value }))} />
               </div>
             </div>
 

@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { naam, email, wachtwoord, kpi_bezetting_nulmeting, kpi_adr_nulmeting,
+  const { naam, email, wachtwoord, voornaam, achternaam, kpi_bezetting_nulmeting, kpi_adr_nulmeting,
           kpi_reviewscore_nulmeting, kpi_reviews_nulmeting, kpi_omzet_365d_nulmeting,
           geen_cijfers_nulmeting, extra_omzet_periode } = body;
 
@@ -64,6 +64,8 @@ export async function POST(request: Request) {
       naam,
       email,
       wachtwoord_hash: hashWachtwoord(wachtwoord),
+      voornaam: voornaam || null,
+      achternaam: achternaam || null,
       kpi_bezetting_nulmeting: kpi_bezetting_nulmeting ?? null,
       kpi_adr_nulmeting: kpi_adr_nulmeting ?? null,
       kpi_reviewscore_nulmeting: kpi_reviewscore_nulmeting ?? null,

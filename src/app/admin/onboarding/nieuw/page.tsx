@@ -12,6 +12,8 @@ export default function NieuweKlantPage() {
     naam: "",
     email: "",
     wachtwoord: "",
+    voornaam: "",
+    achternaam: "",
     kpi_bezetting_nulmeting: "",
     kpi_adr_nulmeting: "",
     kpi_reviewscore_nulmeting: "",
@@ -33,6 +35,8 @@ export default function NieuweKlantPage() {
           naam: form.naam,
           email: form.email,
           wachtwoord: form.wachtwoord,
+          voornaam: form.voornaam || null,
+          achternaam: form.achternaam || null,
           kpi_bezetting_nulmeting: form.kpi_bezetting_nulmeting ? parseFloat(form.kpi_bezetting_nulmeting) : null,
           kpi_adr_nulmeting: form.kpi_adr_nulmeting ? parseFloat(form.kpi_adr_nulmeting) : null,
           kpi_reviewscore_nulmeting: form.kpi_reviewscore_nulmeting ? parseFloat(form.kpi_reviewscore_nulmeting) : null,
@@ -93,6 +97,27 @@ export default function NieuweKlantPage() {
               minLength={4}
             />
             <p className="text-xs text-text-secondary">Dit wachtwoord geef je door aan de klant.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-primary">Voornaam <span className="text-text-secondary font-normal">(optioneel)</span></label>
+              <input
+                className="input w-full"
+                placeholder="bijv. Lisa"
+                value={form.voornaam}
+                onChange={e => setForm(f => ({ ...f, voornaam: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-primary">Achternaam <span className="text-text-secondary font-normal">(optioneel)</span></label>
+              <input
+                className="input w-full"
+                placeholder="bijv. de Vries"
+                value={form.achternaam}
+                onChange={e => setForm(f => ({ ...f, achternaam: e.target.value }))}
+              />
+            </div>
           </div>
 
           <div className="border-t border-border pt-5">
