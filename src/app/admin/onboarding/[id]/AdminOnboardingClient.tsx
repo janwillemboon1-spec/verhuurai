@@ -293,7 +293,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
                 </div>
                 <div>
                   <label className="text-xs text-text-secondary">Reviewscore</label>
-                  <input type="number" className="input w-full text-sm" placeholder="4.6" min="1" max="5" step="0.1" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_reviewscore_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))} />
+                  <input type="number" className="input w-full text-sm" placeholder="4.62" min="1" max="5" step="0.01" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_reviewscore_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs text-text-secondary">Aantal reviews</label>
@@ -542,7 +542,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
             </div>
             <div>
               <label className="text-xs text-text-secondary">Reviewscore</label>
-              <input type="number" className="input w-full text-sm" placeholder="4.7" min="1" max="5" step="0.1" value={nieuweMeting.reviewscore} onChange={e => setNieuweMeting(f => ({ ...f, reviewscore: e.target.value }))} />
+              <input type="number" className="input w-full text-sm" placeholder="4.72" min="1" max="5" step="0.01" value={nieuweMeting.reviewscore} onChange={e => setNieuweMeting(f => ({ ...f, reviewscore: e.target.value }))} />
             </div>
             <div>
               <label className="text-xs text-text-secondary">Aantal reviews</label>

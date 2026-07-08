@@ -142,10 +142,10 @@ export default function NieuweKlantPage() {
                 <input
                   type="number"
                   className="input w-full"
-                  placeholder="bijv. 4.6"
+                  placeholder="bijv. 4.62"
                   min="1"
                   max="5"
-                  step="0.1"
+                  step="0.01"
                   value={form.kpi_reviewscore_nulmeting}
                   onChange={e => setForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))}
                   disabled={form.geen_cijfers_nulmeting}
