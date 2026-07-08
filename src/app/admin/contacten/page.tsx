@@ -16,11 +16,17 @@ export default async function ContactenPage() {
     { data: listingRapporten },
     { data: abonnementen },
     { data: calculatorRapporten },
+    { data: fotoSessies },
+    { data: gratisRapporten },
+    { data: reviewRemover },
     { data: usersData },
   ] = await Promise.all([
     admin.from("listing_rapporten").select("id, host_naam, email, aangemaakt_op, user_id").order("aangemaakt_op", { ascending: false }),
     admin.from("abonnementen").select("id, listing_naam, airbnb_url, user_id, aangemaakt_op").order("aangemaakt_op", { ascending: false }),
-    admin.from("prijscalculator_rapporten").select("id, email, locatie, land, basisprijs, aangemaakt_op").order("aangemaakt_op", { ascending: false }),
+    admin.from("prijscalculator_rapporten").select("id, email, locatie, land, aangemaakt_op").order("aangemaakt_op", { ascending: false }),
+    admin.from("foto_sessies").select("id, naam, email, aangemaakt_op").order("aangemaakt_op", { ascending: false }),
+    admin.from("gratis_rapporten").select("id, naam, email, aangemaakt_op").order("aangemaakt_op", { ascending: false }),
+    admin.from("review_remover_rapporten").select("id, naam, email, aangemaakt_op").order("aangemaakt_op", { ascending: false }),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -54,6 +60,21 @@ export default async function ContactenPage() {
   // Prijscalculator
   for (const c of calculatorRapporten ?? []) {
     voegToe("", (c as any).email || "", "Prijscalculator", `${(c as any).locatie}, ${(c as any).land}`, c.aangemaakt_op);
+  }
+
+  // Foto Optimizer
+  for (const f of fotoSessies ?? []) {
+    voegToe((f as any).naam || "", (f as any).email || "", "Foto Optimizer", "", f.aangemaakt_op);
+  }
+
+  // Titelanalyse
+  for (const g of gratisRapporten ?? []) {
+    voegToe((g as any).naam || "", (g as any).email || "", "Titelanalyse", "", g.aangemaakt_op);
+  }
+
+  // Review Remover
+  for (const r of reviewRemover ?? []) {
+    voegToe((r as any).naam || "", (r as any).email || "", "Review Remover", "", r.aangemaakt_op);
   }
 
   // Sorteer op datum nieuwste eerst

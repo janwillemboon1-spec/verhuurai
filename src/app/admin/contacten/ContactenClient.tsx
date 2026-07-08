@@ -18,6 +18,9 @@ const SOORT_KLEUR: Record<string, string> = {
   "Listing Optimizer": "bg-accent/10 text-accent",
   "Host Performance Audit": "bg-primary/10 text-primary",
   "Prijscalculator": "bg-success/10 text-success",
+  "Foto Optimizer": "bg-warning/10 text-warning",
+  "Titelanalyse": "bg-danger/10 text-danger",
+  "Review Remover": "bg-surface text-text-secondary",
 };
 
 export default function ContactenClient({ contacten }: { contacten: Contact[] }) {
