@@ -27,7 +27,7 @@ export default async function OnboardingOverzichtPage() {
           </div>
           <div className="flex gap-3">
             <Link href="/admin/onboarding/nieuw" className="btn-primary text-sm">+ Nieuwe klant</Link>
-            <Link href="/admin" className="btn-secondary text-sm">← Admin</Link>
+            <Link href="/cockpit" className="btn-secondary text-sm">← Cockpit</Link>
           </div>
         </div>
 

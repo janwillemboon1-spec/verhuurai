@@ -40,7 +40,7 @@ export default async function PrijscalculatorStatsPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="font-display text-3xl text-primary">Prijscalculator — Statistieken</h1>
-            <a href="/admin" className="btn-secondary text-sm">← Terug naar admin</a>
+            <a href="/cockpit/hostboni-admin" className="btn-secondary text-sm">← Terug naar cockpit</a>
           </div>
           <div className="card p-8 text-center text-text-secondary">Nog geen aanvragen.</div>
         </div>
@@ -135,7 +135,7 @@ export default async function PrijscalculatorStatsPage() {
               {aantalDuplicaten > 0 && <span className="ml-1 text-text-secondary/60">({aantalDuplicaten} duplicaat{aantalDuplicaten === 1 ? "" : "s"} uitgefilterd)</span>}
             </p>
           </div>
-          <a href="/admin" className="btn-secondary text-sm">← Terug naar admin</a>
+          <a href="/cockpit/hostboni-admin" className="btn-secondary text-sm">← Terug naar cockpit</a>
         </div>
 
         {/* KPI's */}

@@ -49,7 +49,7 @@ export default async function AdminFotoOptimizerPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="font-display text-3xl text-primary">Foto Optimizer — Admin</h1>
           <div className="flex gap-3">
-            <Link href="/admin" className="btn-secondary text-sm">← Admin</Link>
+            <Link href="/cockpit/hostboni-admin" className="btn-secondary text-sm">← Cockpit</Link>
           </div>
         </div>
 

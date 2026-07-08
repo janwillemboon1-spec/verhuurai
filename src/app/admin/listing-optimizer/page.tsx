@@ -219,7 +219,7 @@ export default async function ListingOptimizerStatsPage() {
             <h1 className="font-display text-3xl text-primary">Listing Optimizer — Statistieken</h1>
             <p className="text-text-secondary text-sm mt-1">Op basis van {aantalRapporten} actieve rapporten</p>
           </div>
-          <a href="/admin" className="btn-secondary text-sm">← Terug naar admin</a>
+          <a href="/cockpit/hostboni-admin" className="btn-secondary text-sm">← Terug naar cockpit</a>
         </div>
 
         {/* KPI-kaarten */}

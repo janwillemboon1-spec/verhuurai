@@ -99,7 +99,7 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
             </p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            <Link href="/admin" className="btn-secondary text-sm">← Admin</Link>
+            <Link href="/cockpit/hostboni-admin" className="btn-secondary text-sm">← Cockpit</Link>
             <button onClick={downloadEmailsOnly} className="btn-secondary text-sm">⬇️ Emails</button>
             <button onClick={downloadCSV} className="btn-primary text-sm">⬇️ CSV (Mailblue)</button>
           </div>

@@ -139,7 +139,7 @@ export default function AdminCommunityPage() {
                 </>
               ) : "↻ Sync Mailblue"}
             </button>
-            <Link href="/admin" className="btn-secondary text-sm">← Admin</Link>
+            <Link href="/cockpit" className="btn-secondary text-sm">← Cockpit</Link>
           </div>
         </div>
 
