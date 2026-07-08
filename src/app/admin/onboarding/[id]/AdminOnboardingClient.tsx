@@ -50,10 +50,14 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     kpi_omzet_365d_nulmeting: klant.kpi_omzet_365d_nulmeting?.toString() ?? "",
     geen_cijfers_nulmeting: klant.geen_cijfers_nulmeting ?? false,
     extra_omzet_periode: klant.extra_omzet_periode ?? "afgelopen 30 dagen",
+    datum_nulmeting: klant.datum_nulmeting ?? "",
   });
   const [bewerkBezig, setBewerkBezig] = useState(false);
   const [bewerkFout, setBewerkFout] = useState<string | null>(null);
   const [bewerkSucces, setBewerkSucces] = useState(false);
+  const [uitnodigingBezig, setUitnodigingBezig] = useState(false);
+  const [uitnodigingSucces, setUitnodigingSucces] = useState(false);
+  const [uitnodigingFout, setUitnodigingFout] = useState<string | null>(null);
 
   const [nieuwItem, setNieuwItem] = useState({ fase: "", naam: "" });
   const [nieuwTodo, setNieuwTodo] = useState({ tekst: "", deadline: "" });
@@ -96,6 +100,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
       kpi_omzet_365d_nulmeting: bewerkForm.kpi_omzet_365d_nulmeting ? parseFloat(bewerkForm.kpi_omzet_365d_nulmeting) : null,
       geen_cijfers_nulmeting: bewerkForm.geen_cijfers_nulmeting,
       extra_omzet_periode: bewerkForm.extra_omzet_periode,
+      datum_nulmeting: bewerkForm.datum_nulmeting || null,
     };
     if (bewerkForm.wachtwoord) body.wachtwoord = bewerkForm.wachtwoord;
 
@@ -116,6 +121,21 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
       setBewerkFout(data.error || "Opslaan mislukt");
     }
     setBewerkBezig(false);
+  }
+
+  async function stuurUitnodiging() {
+    setUitnodigingBezig(true);
+    setUitnodigingFout(null);
+    setUitnodigingSucces(false);
+    const res = await fetch(`/api/onboarding/klanten/${klant.id}/uitnodiging`, { method: "POST" });
+    if (res.ok) {
+      setUitnodigingSucces(true);
+      setTimeout(() => setUitnodigingSucces(false), 5000);
+    } else {
+      const data = await res.json();
+      setUitnodigingFout(data.error || "Verzenden mislukt");
+    }
+    setUitnodigingBezig(false);
   }
 
   async function toggleChecklist(item: OnboardingChecklistItem) {
@@ -287,6 +307,16 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
 
             <div className="border-t border-border pt-3">
               <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">KPI nulmeting <span className="normal-case font-normal">(PriceLabs)</span></p>
+              <div className="mb-3">
+                <label className="text-xs text-text-secondary">Datum nulmeting</label>
+                <input
+                  type="date"
+                  className="input w-full text-sm"
+                  value={bewerkForm.datum_nulmeting}
+                  onChange={e => setBewerkForm(f => ({ ...f, datum_nulmeting: e.target.value }))}
+                  disabled={bewerkForm.geen_cijfers_nulmeting}
+                />
+              </div>
               <div className="flex items-center gap-2 mb-3">
                 <input
                   type="checkbox"
@@ -327,6 +357,20 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
             <button type="submit" disabled={bewerkBezig} className="btn-primary text-sm">
               {bewerkBezig ? "Opslaan..." : "Wijzigingen opslaan"}
             </button>
+
+            <div className="pt-3 border-t border-border">
+              <p className="text-xs text-text-secondary mb-2">Stuur de klant een e-mail met hun persoonlijke link + een knop om een wachtwoord in te stellen.</p>
+              <button
+                type="button"
+                onClick={stuurUitnodiging}
+                disabled={uitnodigingBezig}
+                className="btn-secondary text-sm"
+              >
+                {uitnodigingBezig ? "Versturen..." : "✉ Stuur uitnodigingsmail"}
+              </button>
+              {uitnodigingSucces && <p className="text-xs text-success mt-2">Uitnodiging verstuurd naar {klantData.email}</p>}
+              {uitnodigingFout && <p className="text-xs text-danger mt-2">{uitnodigingFout}</p>}
+            </div>
           </form>
         )}
       </div>

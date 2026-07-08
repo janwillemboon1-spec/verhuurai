@@ -57,6 +57,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (body.extra_omzet_periode !== undefined) updates.extra_omzet_periode = body.extra_omzet_periode;
   if (body.geen_cijfers_nulmeting !== undefined) updates.geen_cijfers_nulmeting = body.geen_cijfers_nulmeting;
   if (body.kpi_omzet_365d_nulmeting !== undefined) updates.kpi_omzet_365d_nulmeting = body.kpi_omzet_365d_nulmeting;
+  if (body.datum_nulmeting !== undefined) updates.datum_nulmeting = body.datum_nulmeting || null;
 
   const { data, error } = await admin
     .from("onboarding_klanten")

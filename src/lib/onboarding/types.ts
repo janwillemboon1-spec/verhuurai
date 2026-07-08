@@ -16,6 +16,7 @@ export type OnboardingKlant = {
   geen_cijfers_nulmeting?: boolean | null;
   voornaam?: string | null;
   achternaam?: string | null;
+  datum_nulmeting?: string | null;
 };
 
 export type OnboardingChecklistItem = {

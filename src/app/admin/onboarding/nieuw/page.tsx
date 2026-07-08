@@ -21,6 +21,7 @@ export default function NieuweKlantPage() {
     kpi_omzet_365d_nulmeting: "",
     extra_omzet_periode: "afgelopen 30 dagen",
     geen_cijfers_nulmeting: false as boolean,
+    datum_nulmeting: "",
   });
 
   const stuur = async (e: React.FormEvent) => {
@@ -44,6 +45,7 @@ export default function NieuweKlantPage() {
           kpi_omzet_365d_nulmeting: form.kpi_omzet_365d_nulmeting ? parseFloat(form.kpi_omzet_365d_nulmeting) : null,
           geen_cijfers_nulmeting: form.geen_cijfers_nulmeting,
           extra_omzet_periode: form.extra_omzet_periode,
+          datum_nulmeting: form.datum_nulmeting || null,
         }),
       });
       const data = await res.json();
@@ -122,6 +124,16 @@ export default function NieuweKlantPage() {
 
           <div className="border-t border-border pt-5">
             <h3 className="text-sm font-semibold text-primary mb-1">KPI nulmeting <span className="font-normal text-text-secondary">(optioneel — cijfers uit PriceLabs)</span></h3>
+            <div className="space-y-1 mb-3">
+              <label className="text-xs font-medium text-text-secondary">Datum nulmeting</label>
+              <input
+                type="date"
+                className="input w-full"
+                value={form.datum_nulmeting}
+                onChange={e => setForm(f => ({ ...f, datum_nulmeting: e.target.value }))}
+                disabled={form.geen_cijfers_nulmeting}
+              />
+            </div>
             <div className="flex items-center gap-2 mb-3">
               <input
                 type="checkbox"
