@@ -154,7 +154,12 @@ export default function DashboardClient({
               <p className="text-sm text-text-secondary">{email}</p>
             </div>
           </div>
-          <button onClick={uitloggen} className="btn-secondary text-sm">Uitloggen</button>
+          <div className="flex gap-2">
+            {email === "info@bnbassistant.com" && (
+              <a href="/cockpit" className="btn-primary text-sm">Cockpit →</a>
+            )}
+            <button onClick={uitloggen} className="btn-secondary text-sm">Uitloggen</button>
+          </div>
         </div>
 
         {/* Listing Optimizer rapporten */}
