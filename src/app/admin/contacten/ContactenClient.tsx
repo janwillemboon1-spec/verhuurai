@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface Contact {
   naam: string;
@@ -14,6 +14,8 @@ interface Contact {
 type SortField = "datum" | "naam" | "soort" | "plaats";
 type SortDir = "asc" | "desc";
 
+const LS_KEY = "contacten_laatste_download";
+
 const SOORT_KLEUR: Record<string, string> = {
   "Listing Optimizer": "bg-accent/10 text-accent",
   "Host Performance Audit": "bg-primary/10 text-primary",
@@ -23,16 +25,51 @@ const SOORT_KLEUR: Record<string, string> = {
   "Review Remover": "bg-surface text-text-secondary",
 };
 
+function maakCSV(lijst: Contact[]): string {
+  const rijen = [
+    ["email", "voornaam", "soort_rapport", "plaats", "datum"],
+    ...lijst.map(c => [
+      c.email,
+      c.naam.replace(/,/g, " "),
+      c.soort,
+      c.plaats.replace(/,/g, " "),
+      new Date(c.datum).toLocaleDateString("nl-NL"),
+    ]),
+  ];
+  return rijen.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+}
+
+function triggerDownload(inhoud: string, bestandsnaam: string, type: string) {
+  const prefix = type.includes("csv") ? "﻿" : "";
+  const blob = new Blob([prefix + inhoud], { type: `${type};charset=utf-8;` });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = bestandsnaam;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ContactenClient({ contacten }: { contacten: Contact[] }) {
   const [filterSoort, setFilterSoort] = useState<string>("alle");
   const [sortField, setSortField] = useState<SortField>("datum");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [laatsteDownload, setLaatsteDownload] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLaatsteDownload(localStorage.getItem(LS_KEY));
+  }, []);
+
+  const nieuweLeads = useMemo(() => {
+    if (!laatsteDownload) return contacten;
+    return contacten.filter(c => c.datum > laatsteDownload);
+  }, [contacten, laatsteDownload]);
 
   const gefilterdEnGesorteerd = useMemo(() => {
     let lijst = filterSoort === "alle" ? contacten : contacten.filter(c => c.soort === filterSoort);
     lijst = [...lijst].sort((a, b) => {
-      let va = a[sortField] ?? "";
-      let vb = b[sortField] ?? "";
+      const va = a[sortField] ?? "";
+      const vb = b[sortField] ?? "";
       const cmp = va.localeCompare(vb, "nl", { sensitivity: "base" });
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -53,38 +90,31 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
     return <span className="text-accent ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>;
   };
 
-  const downloadCSV = () => {
-    const rijen = [
-      ["email", "voornaam", "soort_rapport", "plaats", "datum"],
-      ...gefilterdEnGesorteerd.map(c => [
-        c.email,
-        c.naam.replace(/,/g, " "),
-        c.soort,
-        c.plaats.replace(/,/g, " "),
-        new Date(c.datum).toLocaleDateString("nl-NL"),
-      ]),
-    ];
-    const csv = rijen.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `verhuurai-contacten-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  function markeerGezien() {
+    const nu = new Date().toISOString();
+    localStorage.setItem(LS_KEY, nu);
+    setLaatsteDownload(nu);
+  }
 
-  const downloadEmailsOnly = () => {
-    const emailLijst = Array.from(new Set(gefilterdEnGesorteerd.map(c => c.email))).filter(Boolean);
-    const csv = ["email", ...emailLijst].join("\n");
-    const blob = new Blob([csv], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `verhuurai-emails-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  function downloadNieuweCSV() {
+    triggerDownload(maakCSV(nieuweLeads), `nieuwe-leads-${new Date().toISOString().split("T")[0]}.csv`, "text/csv");
+    markeerGezien();
+  }
+
+  function downloadNieuweEmails() {
+    const emails = Array.from(new Set(nieuweLeads.map(c => c.email))).filter(Boolean);
+    triggerDownload(["email", ...emails].join("\n"), `nieuwe-emails-${new Date().toISOString().split("T")[0]}.csv`, "text/plain");
+    markeerGezien();
+  }
+
+  function downloadCSV() {
+    triggerDownload(maakCSV(gefilterdEnGesorteerd), `verhuurai-contacten-${new Date().toISOString().split("T")[0]}.csv`, "text/csv");
+  }
+
+  function downloadEmailsOnly() {
+    const emails = Array.from(new Set(gefilterdEnGesorteerd.map(c => c.email))).filter(Boolean);
+    triggerDownload(["email", ...emails].join("\n"), `verhuurai-emails-${new Date().toISOString().split("T")[0]}.csv`, "text/plain");
+  }
 
   const unickeEmails = Array.from(new Set(gefilterdEnGesorteerd.map(c => c.email))).length;
   const soorten = ["alle", ...Array.from(new Set(contacten.map(c => c.soort))).sort()];
@@ -103,12 +133,60 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
           </div>
           <div className="flex gap-3 flex-wrap">
             <Link href="/cockpit/hostboni-admin" className="btn-secondary text-sm">← Cockpit</Link>
-            <button onClick={downloadEmailsOnly} className="btn-secondary text-sm">⬇️ Emails</button>
-            <button onClick={downloadCSV} className="btn-primary text-sm">⬇️ CSV (Mailblue)</button>
+            <button onClick={downloadEmailsOnly} className="btn-secondary text-sm">⬇ Emails</button>
+            <button onClick={downloadCSV} className="btn-primary text-sm">⬇ CSV (Mailblue)</button>
           </div>
         </div>
 
-        {/* Filter + zoek */}
+        {/* Nieuwe leads */}
+        <div className={`card p-5 ${nieuweLeads.length > 0 ? "border-success/30 bg-success/5" : ""}`}>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-semibold text-primary flex items-center gap-2">
+                Nieuwe leads
+                {nieuweLeads.length > 0 && (
+                  <span className="text-xs font-bold bg-success text-white px-2 py-0.5 rounded-full">{nieuweLeads.length}</span>
+                )}
+              </h2>
+              {laatsteDownload ? (
+                <p className="text-xs text-text-secondary mt-0.5">
+                  Sinds laatste download op {new Date(laatsteDownload).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </p>
+              ) : (
+                <p className="text-xs text-text-secondary mt-0.5">Nog nooit gedownload — alle {contacten.length} contacten worden als nieuw beschouwd.</p>
+              )}
+            </div>
+            {nieuweLeads.length > 0 ? (
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={markeerGezien} className="btn-secondary text-xs">Markeer als gezien</button>
+                <button onClick={downloadNieuweEmails} className="btn-secondary text-sm">⬇ Nieuwe emails</button>
+                <button onClick={downloadNieuweCSV} className="btn-primary text-sm">⬇ Nieuwe CSV</button>
+              </div>
+            ) : (
+              <p className="text-sm text-success font-semibold">Alles up-to-date ✓</p>
+            )}
+          </div>
+
+          {nieuweLeads.length > 0 && (
+            <div className="mt-4 space-y-1">
+              {nieuweLeads.slice(0, 5).map((c, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${SOORT_KLEUR[c.soort] || "bg-border text-text-secondary"}`}>{c.soort}</span>
+                  <span className="text-primary font-medium truncate">{c.naam || c.email}</span>
+                  <span className="text-text-secondary text-xs shrink-0">{c.email}</span>
+                  <span className="text-text-secondary text-xs shrink-0 ml-auto">
+                    {new Date(c.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
+              ))}
+              {nieuweLeads.length > 5 && (
+                <p className="text-xs text-text-secondary pt-1">+ {nieuweLeads.length - 5} meer</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Filter */}
         <div className="card p-4 flex flex-wrap gap-3 items-center">
           <span className="text-sm font-semibold text-primary">Filter:</span>
           <div className="flex gap-2 flex-wrap">
@@ -134,29 +212,17 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
             <table className="w-full text-sm">
               <thead className="bg-surface border-b border-border">
                 <tr>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none"
-                    onClick={() => toggleSort("naam")}
-                  >
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none" onClick={() => toggleSort("naam")}>
                     Naam {sortIcon("naam")}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase">Email</th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none"
-                    onClick={() => toggleSort("soort")}
-                  >
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none" onClick={() => toggleSort("soort")}>
                     Soort {sortIcon("soort")}
                   </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none"
-                    onClick={() => toggleSort("plaats")}
-                  >
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none" onClick={() => toggleSort("plaats")}>
                     Plaats {sortIcon("plaats")}
                   </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none"
-                    onClick={() => toggleSort("datum")}
-                  >
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase cursor-pointer hover:text-primary select-none" onClick={() => toggleSort("datum")}>
                     Datum {sortIcon("datum")}
                   </th>
                 </tr>
@@ -166,7 +232,7 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
                   <tr><td colSpan={5} className="px-5 py-8 text-sm text-text-secondary text-center">Geen contacten gevonden.</td></tr>
                 )}
                 {gefilterdEnGesorteerd.map((c, i) => (
-                  <tr key={i} className="hover:bg-surface/50">
+                  <tr key={i} className={`hover:bg-surface/50 ${nieuweLeads.includes(c) ? "bg-success/5" : ""}`}>
                     <td className="px-4 py-3 font-semibold text-primary">{c.naam || "—"}</td>
                     <td className="px-4 py-3 text-text-secondary">{c.email}</td>
                     <td className="px-4 py-3">
