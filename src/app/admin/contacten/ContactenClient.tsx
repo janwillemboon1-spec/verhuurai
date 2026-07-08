@@ -87,7 +87,7 @@ export default function ContactenClient({ contacten }: { contacten: Contact[] })
   };
 
   const unickeEmails = Array.from(new Set(gefilterdEnGesorteerd.map(c => c.email))).length;
-  const soorten = ["alle", "Listing Optimizer", "Host Performance Audit", "Prijscalculator"];
+  const soorten = ["alle", ...Array.from(new Set(contacten.map(c => c.soort))).sort()];
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
