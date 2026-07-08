@@ -53,6 +53,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (body.kpi_reviewscore_nulmeting !== undefined) updates.kpi_reviewscore_nulmeting = body.kpi_reviewscore_nulmeting;
   if (body.kpi_reviews_nulmeting !== undefined) updates.kpi_reviews_nulmeting = body.kpi_reviews_nulmeting;
   if (body.extra_omzet_periode !== undefined) updates.extra_omzet_periode = body.extra_omzet_periode;
+  if (body.geen_cijfers_nulmeting !== undefined) updates.geen_cijfers_nulmeting = body.geen_cijfers_nulmeting;
+  if (body.kpi_omzet_365d_nulmeting !== undefined) updates.kpi_omzet_365d_nulmeting = body.kpi_omzet_365d_nulmeting;
 
   const { data, error } = await admin
     .from("onboarding_klanten")

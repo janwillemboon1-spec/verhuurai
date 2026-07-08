@@ -30,10 +30,28 @@ function berekenExtraOmzet(
 }
 
 export function AdminOnboardingClient({ klant, checklistInit, todosInit, activiteitenInit, metingenInit }: Props) {
+  const [klantData, setKlantData] = useState(klant);
   const [checklist, setChecklist] = useState(checklistInit);
   const [todos, setTodos] = useState(todosInit);
   const [activiteiten, setActiviteiten] = useState(activiteitenInit);
   const [metingen, setMetingen] = useState(metingenInit);
+
+  const [bewerkOpen, setBewerkOpen] = useState(false);
+  const [bewerkForm, setBewerkForm] = useState({
+    naam: klant.naam,
+    email: klant.email,
+    wachtwoord: "",
+    kpi_bezetting_nulmeting: klant.kpi_bezetting_nulmeting?.toString() ?? "",
+    kpi_adr_nulmeting: klant.kpi_adr_nulmeting?.toString() ?? "",
+    kpi_reviewscore_nulmeting: klant.kpi_reviewscore_nulmeting?.toString() ?? "",
+    kpi_reviews_nulmeting: klant.kpi_reviews_nulmeting?.toString() ?? "",
+    kpi_omzet_365d_nulmeting: klant.kpi_omzet_365d_nulmeting?.toString() ?? "",
+    geen_cijfers_nulmeting: klant.geen_cijfers_nulmeting ?? false,
+    extra_omzet_periode: klant.extra_omzet_periode ?? "afgelopen 30 dagen",
+  });
+  const [bewerkBezig, setBewerkBezig] = useState(false);
+  const [bewerkFout, setBewerkFout] = useState<string | null>(null);
+  const [bewerkSucces, setBewerkSucces] = useState(false);
 
   const [nieuwItem, setNieuwItem] = useState({ fase: "", naam: "" });
   const [nieuwTodo, setNieuwTodo] = useState({ tekst: "", deadline: "" });
@@ -49,7 +67,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
   const voltooid = checklist.filter(i => i.voltooid).length;
   const totaal = checklist.length;
   const pct = totaal > 0 ? Math.round((voltooid / totaal) * 100) : 0;
-  const extraOmzet = berekenExtraOmzet(klant, metingen);
+  const extraOmzet = berekenExtraOmzet(klantData, metingen);
   const laatste = metingen[0];
 
   const groepen = checklist.reduce((acc, item) => {
@@ -57,6 +75,44 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     acc[item.fase].push(item);
     return acc;
   }, {} as Record<string, OnboardingChecklistItem[]>);
+
+  async function slaKlantOp(e: React.FormEvent) {
+    e.preventDefault();
+    setBewerkBezig(true);
+    setBewerkFout(null);
+    setBewerkSucces(false);
+
+    const body: Record<string, unknown> = {
+      naam: bewerkForm.naam,
+      email: bewerkForm.email,
+      kpi_bezetting_nulmeting: bewerkForm.kpi_bezetting_nulmeting ? parseFloat(bewerkForm.kpi_bezetting_nulmeting) : null,
+      kpi_adr_nulmeting: bewerkForm.kpi_adr_nulmeting ? parseFloat(bewerkForm.kpi_adr_nulmeting) : null,
+      kpi_reviewscore_nulmeting: bewerkForm.kpi_reviewscore_nulmeting ? parseFloat(bewerkForm.kpi_reviewscore_nulmeting) : null,
+      kpi_reviews_nulmeting: bewerkForm.kpi_reviews_nulmeting ? parseInt(bewerkForm.kpi_reviews_nulmeting) : null,
+      kpi_omzet_365d_nulmeting: bewerkForm.kpi_omzet_365d_nulmeting ? parseFloat(bewerkForm.kpi_omzet_365d_nulmeting) : null,
+      geen_cijfers_nulmeting: bewerkForm.geen_cijfers_nulmeting,
+      extra_omzet_periode: bewerkForm.extra_omzet_periode,
+    };
+    if (bewerkForm.wachtwoord) body.wachtwoord = bewerkForm.wachtwoord;
+
+    const res = await fetch(`/api/onboarding/klanten/${klant.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setKlantData(data.klant);
+      setBewerkSucces(true);
+      setBewerkForm(f => ({ ...f, wachtwoord: "" }));
+      setTimeout(() => setBewerkSucces(false), 3000);
+    } else {
+      const data = await res.json();
+      setBewerkFout(data.error || "Opslaan mislukt");
+    }
+    setBewerkBezig(false);
+  }
 
   async function toggleChecklist(item: OnboardingChecklistItem) {
     setBezig(`check-${item.id}`);
@@ -180,6 +236,86 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
 
   return (
     <div className="space-y-6">
+      {/* Klantgegevens bewerken */}
+      <div className="card p-5">
+        <button
+          type="button"
+          onClick={() => setBewerkOpen(o => !o)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <h2 className="font-semibold text-primary">Klantgegevens</h2>
+          <span className="text-text-secondary text-sm">{bewerkOpen ? "▲ Sluiten" : "▼ Bewerken"}</span>
+        </button>
+
+        {bewerkOpen && (
+          <form onSubmit={slaKlantOp} className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-text-secondary">Naam woning</label>
+                <input className="input w-full text-sm" value={bewerkForm.naam} onChange={e => setBewerkForm(f => ({ ...f, naam: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="text-xs text-text-secondary">E-mailadres klant</label>
+                <input type="email" className="input w-full text-sm" value={bewerkForm.email} onChange={e => setBewerkForm(f => ({ ...f, email: e.target.value }))} required />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-text-secondary">Nieuw wachtwoord (laat leeg om ongewijzigd te laten)</label>
+              <input type="password" className="input w-full text-sm" placeholder="••••••••" value={bewerkForm.wachtwoord} onChange={e => setBewerkForm(f => ({ ...f, wachtwoord: e.target.value }))} minLength={4} />
+            </div>
+
+            <div>
+              <label className="text-xs text-text-secondary">Meetperiode extra omzet</label>
+              <input className="input w-full text-sm" value={bewerkForm.extra_omzet_periode} onChange={e => setBewerkForm(f => ({ ...f, extra_omzet_periode: e.target.value }))} />
+            </div>
+
+            <div className="border-t border-border pt-3">
+              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">KPI nulmeting <span className="normal-case font-normal">(PriceLabs)</span></p>
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  id="bewerk_geen_cijfers"
+                  checked={bewerkForm.geen_cijfers_nulmeting}
+                  onChange={e => setBewerkForm(f => ({ ...f, geen_cijfers_nulmeting: e.target.checked }))}
+                  className="w-4 h-4 accent-accent"
+                />
+                <label htmlFor="bewerk_geen_cijfers" className="text-sm text-text-secondary cursor-pointer">Nieuwe woning — geen cijfers beschikbaar</label>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-text-secondary">Bezetting (%)</label>
+                  <input type="number" className="input w-full text-sm" placeholder="62" min="0" max="100" step="0.1" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_bezetting_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_bezetting_nulmeting: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-text-secondary">ADR (€)</label>
+                  <input type="number" className="input w-full text-sm" placeholder="89" min="0" step="0.01" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_adr_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_adr_nulmeting: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-text-secondary">Reviewscore</label>
+                  <input type="number" className="input w-full text-sm" placeholder="4.6" min="1" max="5" step="0.1" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_reviewscore_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs text-text-secondary">Aantal reviews</label>
+                  <input type="number" className="input w-full text-sm" placeholder="24" min="0" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_reviews_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_reviews_nulmeting: e.target.value }))} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs text-text-secondary">Omzet 365d (€)</label>
+                  <input type="number" className="input w-full text-sm" placeholder="24000" min="0" step="0.01" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_omzet_365d_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_omzet_365d_nulmeting: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
+            {bewerkFout && <p className="text-sm text-danger bg-danger/10 rounded-xl p-3">{bewerkFout}</p>}
+            {bewerkSucces && <p className="text-sm text-success bg-success/10 rounded-xl p-3">Opgeslagen!</p>}
+
+            <button type="submit" disabled={bewerkBezig} className="btn-primary text-sm">
+              {bewerkBezig ? "Opslaan..." : "Wijzigingen opslaan"}
+            </button>
+          </form>
+        )}
+      </div>
+
       {/* Voortgang + extra omzet */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card p-4 text-center sm:col-span-2">
@@ -200,7 +336,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
           {extraOmzet !== null ? (
             <>
               <p className="text-2xl font-bold text-success">+ €{extraOmzet.toLocaleString("nl-NL")}</p>
-              <p className="text-xs text-text-secondary">{klant.extra_omzet_periode}</p>
+              <p className="text-xs text-text-secondary">{klantData.extra_omzet_periode}</p>
             </>
           ) : (
             <p className="text-sm text-text-secondary mt-2">Voeg een meting toe om te berekenen</p>
@@ -214,19 +350,19 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
           <h2 className="font-semibold text-primary">KPI vergelijking</h2>
           <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-lg">Bron: PriceLabs</span>
         </div>
-        {klant.geen_cijfers_nulmeting ? (
+        {klantData.geen_cijfers_nulmeting ? (
           <p className="text-sm text-text-secondary bg-surface rounded-xl p-4">
             Nieuwe woning — geen nulmeting beschikbaar. KPI&apos;s worden bijgehouden zodra er metingen worden toegevoegd.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              { label: "Bezetting", nul: klant.kpi_bezetting_nulmeting, nu: laatste?.bezetting, suffix: "%", decimals: 1 },
-              { label: "ADR", nul: klant.kpi_adr_nulmeting, nu: laatste?.adr, prefix: "€", decimals: 0 },
+              { label: "Bezetting", nul: klantData.kpi_bezetting_nulmeting, nu: laatste?.bezetting, suffix: "%", decimals: 1 },
+              { label: "ADR", nul: klantData.kpi_adr_nulmeting, nu: laatste?.adr, prefix: "€", decimals: 0 },
               {
                 label: "RevPAR",
-                nul: klant.kpi_bezetting_nulmeting && klant.kpi_adr_nulmeting
-                  ? Math.round((klant.kpi_bezetting_nulmeting / 100) * klant.kpi_adr_nulmeting)
+                nul: klantData.kpi_bezetting_nulmeting && klantData.kpi_adr_nulmeting
+                  ? Math.round((klantData.kpi_bezetting_nulmeting / 100) * klantData.kpi_adr_nulmeting)
                   : null,
                 nu: laatste?.bezetting && laatste?.adr
                   ? Math.round((laatste.bezetting / 100) * laatste.adr)
@@ -234,9 +370,9 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
                 prefix: "€",
                 decimals: 0,
               },
-              { label: "Reviewscore", nul: klant.kpi_reviewscore_nulmeting, nu: laatste?.reviewscore, suffix: "/5", decimals: 1 },
-              { label: "Reviews", nul: klant.kpi_reviews_nulmeting, nu: laatste?.reviews_aantal, decimals: 0 },
-              { label: "Omzet 365d", nul: klant.kpi_omzet_365d_nulmeting, nu: laatste?.omzet_365d, prefix: "€", decimals: 0 },
+              { label: "Reviewscore", nul: klantData.kpi_reviewscore_nulmeting, nu: laatste?.reviewscore, suffix: "/5", decimals: 1 },
+              { label: "Reviews", nul: klantData.kpi_reviews_nulmeting, nu: laatste?.reviews_aantal, decimals: 0 },
+              { label: "Omzet 365d", nul: klantData.kpi_omzet_365d_nulmeting, nu: laatste?.omzet_365d, prefix: "€", decimals: 0 },
             ].map(({ label, nul, nu, suffix = "", prefix = "", decimals }) => (
               <div key={label} className="bg-surface rounded-xl p-3 text-center">
                 <p className="text-xs text-text-secondary mb-1">{label}</p>
