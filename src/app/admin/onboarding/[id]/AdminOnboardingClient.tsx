@@ -40,6 +40,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
   const [nieuwActiviteit, setNieuwActiviteit] = useState({ tekst: "", categorie: "overig" as "prijs" | "advertentie" | "review" | "overig" });
   const [nieuweMeting, setNieuweMeting] = useState({
     bezetting: "", adr: "", reviewscore: "", reviews_aantal: "",
+    omzet_365d: "", meting_datum: "",
     omzet_periode_bedrag: "", omzet_periode_label: "", notitie: ""
   });
   const [bezig, setBezig] = useState<string | null>(null);
@@ -152,6 +153,8 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
         adr: nieuweMeting.adr ? parseFloat(nieuweMeting.adr) : null,
         reviewscore: nieuweMeting.reviewscore ? parseFloat(nieuweMeting.reviewscore) : null,
         reviews_aantal: nieuweMeting.reviews_aantal ? parseInt(nieuweMeting.reviews_aantal) : null,
+        omzet_365d: nieuweMeting.omzet_365d ? parseFloat(nieuweMeting.omzet_365d) : null,
+        meting_datum: nieuweMeting.meting_datum || null,
         omzet_periode_bedrag: nieuweMeting.omzet_periode_bedrag ? parseFloat(nieuweMeting.omzet_periode_bedrag) : null,
         omzet_periode_label: nieuweMeting.omzet_periode_label || null,
         notitie: nieuweMeting.notitie || null,
@@ -160,7 +163,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     if (res.ok) {
       const data = await res.json();
       setMetingen(prev => [data.meting, ...prev]);
-      setNieuweMeting({ bezetting: "", adr: "", reviewscore: "", reviews_aantal: "", omzet_periode_bedrag: "", omzet_periode_label: "", notitie: "" });
+      setNieuweMeting({ bezetting: "", adr: "", reviewscore: "", reviews_aantal: "", omzet_365d: "", meting_datum: "", omzet_periode_bedrag: "", omzet_periode_label: "", notitie: "" });
     } else {
       const data = await res.json();
       setFout(data.error);
@@ -206,16 +209,35 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
       </div>
 
       {/* KPI vergelijking */}
-      {(klant.kpi_bezetting_nulmeting || klant.kpi_adr_nulmeting) && (
-        <div className="card p-5">
-          <h2 className="font-semibold text-primary mb-3">KPI vergelijking</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 className="font-semibold text-primary">KPI vergelijking</h2>
+          <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-lg">Bron: PriceLabs</span>
+        </div>
+        {klant.geen_cijfers_nulmeting ? (
+          <p className="text-sm text-text-secondary bg-surface rounded-xl p-4">
+            Nieuwe woning — geen nulmeting beschikbaar. KPI&apos;s worden bijgehouden zodra er metingen worden toegevoegd.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
-              { label: "Bezetting", nul: klant.kpi_bezetting_nulmeting, nu: laatste?.bezetting, suffix: "%" },
-              { label: "ADR", nul: klant.kpi_adr_nulmeting, nu: laatste?.adr, prefix: "€" },
-              { label: "Reviewscore", nul: klant.kpi_reviewscore_nulmeting, nu: laatste?.reviewscore, suffix: "/5" },
-              { label: "Reviews", nul: klant.kpi_reviews_nulmeting, nu: laatste?.reviews_aantal },
-            ].map(({ label, nul, nu, suffix = "", prefix = "" }) => (
+              { label: "Bezetting", nul: klant.kpi_bezetting_nulmeting, nu: laatste?.bezetting, suffix: "%", decimals: 1 },
+              { label: "ADR", nul: klant.kpi_adr_nulmeting, nu: laatste?.adr, prefix: "€", decimals: 0 },
+              {
+                label: "RevPAR",
+                nul: klant.kpi_bezetting_nulmeting && klant.kpi_adr_nulmeting
+                  ? Math.round((klant.kpi_bezetting_nulmeting / 100) * klant.kpi_adr_nulmeting)
+                  : null,
+                nu: laatste?.bezetting && laatste?.adr
+                  ? Math.round((laatste.bezetting / 100) * laatste.adr)
+                  : null,
+                prefix: "€",
+                decimals: 0,
+              },
+              { label: "Reviewscore", nul: klant.kpi_reviewscore_nulmeting, nu: laatste?.reviewscore, suffix: "/5", decimals: 1 },
+              { label: "Reviews", nul: klant.kpi_reviews_nulmeting, nu: laatste?.reviews_aantal, decimals: 0 },
+              { label: "Omzet 365d", nul: klant.kpi_omzet_365d_nulmeting, nu: laatste?.omzet_365d, prefix: "€", decimals: 0 },
+            ].map(({ label, nul, nu, suffix = "", prefix = "", decimals }) => (
               <div key={label} className="bg-surface rounded-xl p-3 text-center">
                 <p className="text-xs text-text-secondary mb-1">{label}</p>
                 <p className="text-sm font-semibold text-text-secondary">{nul != null ? `${prefix}${nul}${suffix}` : "—"}</p>
@@ -224,14 +246,14 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
                 </p>
                 {nul != null && nu != null && (
                   <p className={`text-xs font-semibold ${nu > nul ? "text-success" : nu < nul ? "text-danger" : "text-text-secondary"}`}>
-                    {nu > nul ? "+" : ""}{(nu - nul).toFixed(nu % 1 !== 0 ? 1 : 0)}
+                    {nu > nul ? "+" : ""}{(nu - nul).toFixed(decimals)}
                   </p>
                 )}
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Checklist */}
       <div className="card p-5">
@@ -367,10 +389,13 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
 
       {/* KPI meting toevoegen */}
       <div className="card p-5">
-        <h2 className="font-semibold text-primary mb-4">Nieuwe KPI meting</h2>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <h2 className="font-semibold text-primary">Nieuwe KPI meting</h2>
+          <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-lg">Cijfers uit PriceLabs</span>
+        </div>
         {fout && <p className="text-sm text-danger bg-danger/10 rounded-xl p-3 mb-3">{fout}</p>}
         <form onSubmit={voegMetingToe} className="space-y-3">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-text-secondary">Bezetting (%)</label>
               <input type="number" className="input w-full text-sm" placeholder="71" min="0" max="100" step="0.1" value={nieuweMeting.bezetting} onChange={e => setNieuweMeting(f => ({ ...f, bezetting: e.target.value }))} />
@@ -386,6 +411,14 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
             <div>
               <label className="text-xs text-text-secondary">Aantal reviews</label>
               <input type="number" className="input w-full text-sm" placeholder="28" min="0" value={nieuweMeting.reviews_aantal} onChange={e => setNieuweMeting(f => ({ ...f, reviews_aantal: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs text-text-secondary">Omzet 365d (€)</label>
+              <input type="number" className="input w-full text-sm" placeholder="28500" min="0" step="0.01" value={nieuweMeting.omzet_365d} onChange={e => setNieuweMeting(f => ({ ...f, omzet_365d: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs text-text-secondary">Datum meting</label>
+              <input type="date" className="input w-full text-sm" value={nieuweMeting.meting_datum} onChange={e => setNieuweMeting(f => ({ ...f, meting_datum: e.target.value }))} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -412,11 +445,16 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
             <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Metingen historie</p>
             {metingen.map(m => (
               <div key={m.id} className="text-xs text-text-secondary flex gap-3 flex-wrap">
-                <span className="font-medium text-primary">{m.omzet_periode_label || new Date(m.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <span className="font-medium text-primary">
+                  {m.meting_datum
+                    ? new Date(m.meting_datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })
+                    : m.omzet_periode_label || new Date(m.datum).toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
                 {m.bezetting != null && <span>Bezetting: {m.bezetting}%</span>}
                 {m.adr != null && <span>ADR: €{m.adr}</span>}
+                {m.bezetting != null && m.adr != null && <span>RevPAR: €{Math.round((m.bezetting / 100) * m.adr)}</span>}
+                {m.omzet_365d != null && <span>365d: €{m.omzet_365d.toLocaleString("nl-NL")}</span>}
                 {m.reviewscore != null && <span>Score: {m.reviewscore}/5</span>}
-                {m.omzet_periode_bedrag != null && <span>Omzet: €{m.omzet_periode_bedrag}</span>}
               </div>
             ))}
           </div>

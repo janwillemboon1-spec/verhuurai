@@ -16,7 +16,9 @@ export default function NieuweKlantPage() {
     kpi_adr_nulmeting: "",
     kpi_reviewscore_nulmeting: "",
     kpi_reviews_nulmeting: "",
+    kpi_omzet_365d_nulmeting: "",
     extra_omzet_periode: "afgelopen 30 dagen",
+    geen_cijfers_nulmeting: false as boolean,
   });
 
   const stuur = async (e: React.FormEvent) => {
@@ -35,6 +37,8 @@ export default function NieuweKlantPage() {
           kpi_adr_nulmeting: form.kpi_adr_nulmeting ? parseFloat(form.kpi_adr_nulmeting) : null,
           kpi_reviewscore_nulmeting: form.kpi_reviewscore_nulmeting ? parseFloat(form.kpi_reviewscore_nulmeting) : null,
           kpi_reviews_nulmeting: form.kpi_reviews_nulmeting ? parseInt(form.kpi_reviews_nulmeting) : null,
+          kpi_omzet_365d_nulmeting: form.kpi_omzet_365d_nulmeting ? parseFloat(form.kpi_omzet_365d_nulmeting) : null,
+          geen_cijfers_nulmeting: form.geen_cijfers_nulmeting,
           extra_omzet_periode: form.extra_omzet_periode,
         }),
       });
@@ -92,7 +96,19 @@ export default function NieuweKlantPage() {
           </div>
 
           <div className="border-t border-border pt-5">
-            <h3 className="text-sm font-semibold text-primary mb-3">KPI nulmeting (optioneel)</h3>
+            <h3 className="text-sm font-semibold text-primary mb-1">KPI nulmeting <span className="font-normal text-text-secondary">(optioneel — cijfers uit PriceLabs)</span></h3>
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                type="checkbox"
+                id="geen_cijfers"
+                checked={form.geen_cijfers_nulmeting}
+                onChange={e => setForm(f => ({ ...f, geen_cijfers_nulmeting: e.target.checked }))}
+                className="w-4 h-4 accent-accent"
+              />
+              <label htmlFor="geen_cijfers" className="text-sm text-text-secondary cursor-pointer">
+                Nieuwe woning — nog geen cijfers beschikbaar
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-text-secondary">Bezettingsgraad (%)</label>
@@ -105,6 +121,7 @@ export default function NieuweKlantPage() {
                   step="0.1"
                   value={form.kpi_bezetting_nulmeting}
                   onChange={e => setForm(f => ({ ...f, kpi_bezetting_nulmeting: e.target.value }))}
+                  disabled={form.geen_cijfers_nulmeting}
                 />
               </div>
               <div className="space-y-1">
@@ -117,6 +134,7 @@ export default function NieuweKlantPage() {
                   step="0.01"
                   value={form.kpi_adr_nulmeting}
                   onChange={e => setForm(f => ({ ...f, kpi_adr_nulmeting: e.target.value }))}
+                  disabled={form.geen_cijfers_nulmeting}
                 />
               </div>
               <div className="space-y-1">
@@ -130,6 +148,7 @@ export default function NieuweKlantPage() {
                   step="0.1"
                   value={form.kpi_reviewscore_nulmeting}
                   onChange={e => setForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))}
+                  disabled={form.geen_cijfers_nulmeting}
                 />
               </div>
               <div className="space-y-1">
@@ -141,6 +160,20 @@ export default function NieuweKlantPage() {
                   min="0"
                   value={form.kpi_reviews_nulmeting}
                   onChange={e => setForm(f => ({ ...f, kpi_reviews_nulmeting: e.target.value }))}
+                  disabled={form.geen_cijfers_nulmeting}
+                />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-xs font-medium text-text-secondary">Omzet afgelopen 365 dagen (€)</label>
+                <input
+                  type="number"
+                  className="input w-full"
+                  placeholder="bijv. 24000"
+                  min="0"
+                  step="0.01"
+                  value={form.kpi_omzet_365d_nulmeting}
+                  onChange={e => setForm(f => ({ ...f, kpi_omzet_365d_nulmeting: e.target.value }))}
+                  disabled={form.geen_cijfers_nulmeting}
                 />
               </div>
             </div>

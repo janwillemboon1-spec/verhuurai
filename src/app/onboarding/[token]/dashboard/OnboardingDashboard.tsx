@@ -133,12 +133,19 @@ export function OnboardingDashboard({ klant, checklist, todos: todosInit, activi
       {laatste && (
         <div className="card p-5">
           <h2 className="font-semibold text-primary mb-3">Jouw resultaten</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {[
               { label: "Bezetting", waarde: laatste.bezetting != null ? `${laatste.bezetting}%` : null },
-              { label: "Gemiddelde dagprijs", waarde: laatste.adr != null ? `€${laatste.adr}` : null },
+              { label: "Gem. dagprijs (ADR)", waarde: laatste.adr != null ? `€${laatste.adr}` : null },
+              {
+                label: "RevPAR",
+                waarde: laatste.bezetting != null && laatste.adr != null
+                  ? `€${Math.round((laatste.bezetting / 100) * laatste.adr)}`
+                  : null,
+              },
               { label: "Reviewscore", waarde: laatste.reviewscore != null ? `${laatste.reviewscore}/5` : null },
               { label: "Recensies", waarde: laatste.reviews_aantal != null ? `${laatste.reviews_aantal}` : null },
+              { label: "Omzet 365d", waarde: laatste.omzet_365d != null ? `€${laatste.omzet_365d.toLocaleString("nl-NL")}` : null },
             ].filter(k => k.waarde !== null).map(({ label, waarde }) => (
               <div key={label} className="bg-surface rounded-xl p-3 text-center">
                 <p className="text-xs text-text-secondary mb-1">{label}</p>

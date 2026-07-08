@@ -15,6 +15,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const body = await request.json();
   const { bezetting, adr, reviewscore, reviews_aantal,
+          omzet_365d, meting_datum,
           omzet_periode_bedrag, omzet_periode_label, notitie } = body;
 
   const admin = createAdminClient();
@@ -26,6 +27,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       adr: adr ?? null,
       reviewscore: reviewscore ?? null,
       reviews_aantal: reviews_aantal ?? null,
+      omzet_365d: omzet_365d ?? null,
+      meting_datum: meting_datum ?? null,
       omzet_periode_bedrag: omzet_periode_bedrag ?? null,
       omzet_periode_label: omzet_periode_label ?? null,
       notitie: notitie ?? null,

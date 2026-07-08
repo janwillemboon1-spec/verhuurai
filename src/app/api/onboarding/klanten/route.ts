@@ -50,7 +50,8 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const { naam, email, wachtwoord, kpi_bezetting_nulmeting, kpi_adr_nulmeting,
-          kpi_reviewscore_nulmeting, kpi_reviews_nulmeting, extra_omzet_periode } = body;
+          kpi_reviewscore_nulmeting, kpi_reviews_nulmeting, kpi_omzet_365d_nulmeting,
+          geen_cijfers_nulmeting, extra_omzet_periode } = body;
 
   if (!naam || !email || !wachtwoord) {
     return NextResponse.json({ error: "naam, email en wachtwoord zijn verplicht" }, { status: 400 });
@@ -67,6 +68,8 @@ export async function POST(request: Request) {
       kpi_adr_nulmeting: kpi_adr_nulmeting ?? null,
       kpi_reviewscore_nulmeting: kpi_reviewscore_nulmeting ?? null,
       kpi_reviews_nulmeting: kpi_reviews_nulmeting ?? null,
+      kpi_omzet_365d_nulmeting: kpi_omzet_365d_nulmeting ?? null,
+      geen_cijfers_nulmeting: geen_cijfers_nulmeting ?? false,
       extra_omzet_periode: extra_omzet_periode || "afgelopen 30 dagen",
     })
     .select()

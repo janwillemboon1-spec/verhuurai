@@ -12,6 +12,8 @@ export type OnboardingKlant = {
   kpi_reviewscore_nulmeting: number | null;
   kpi_reviews_nulmeting: number | null;
   extra_omzet_periode: string;
+  kpi_omzet_365d_nulmeting?: number | null;
+  geen_cijfers_nulmeting?: boolean | null;
 };
 
 export type OnboardingChecklistItem = {
@@ -55,4 +57,6 @@ export type OnboardingKpiMeting = {
   omzet_periode_bedrag: number | null;
   omzet_periode_label: string | null;
   notitie: string | null;
+  omzet_365d?: number | null;
+  meting_datum?: string | null;
 };
