@@ -406,7 +406,14 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
       {/* KPI vergelijking */}
       <div className="card p-5">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <h2 className="font-semibold text-primary">KPI vergelijking</h2>
+          <div>
+            <h2 className="font-semibold text-primary">KPI vergelijking</h2>
+            {klantData.datum_nulmeting && (
+              <p className="text-xs text-text-secondary mt-0.5">
+                Nulmeting: {new Date(klantData.datum_nulmeting).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+            )}
+          </div>
           <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-lg">Bron: PriceLabs</span>
         </div>
         {klantData.geen_cijfers_nulmeting ? (
