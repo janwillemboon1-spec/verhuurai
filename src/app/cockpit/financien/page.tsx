@@ -69,6 +69,18 @@ interface Kostenpost {
   van_maand: number | null;
   tot_maand: number | null;
   actief: boolean;
+  jan: number | null;
+  feb: number | null;
+  mrt: number | null;
+  apr: number | null;
+  mei: number | null;
+  jun: number | null;
+  jul: number | null;
+  aug: number | null;
+  sep: number | null;
+  okt: number | null;
+  nov: number | null;
+  dec: number | null;
 }
 
 interface OverigInkomsten {
@@ -639,9 +651,8 @@ function berekenKostenMaanden(k: Kostenpost): number[] {
   const result = Array(12).fill(0);
   switch (k.frequentie) {
     case "maandelijks": {
-      const van = (k.van_maand ?? 1) - 1;
-      const tot = (k.tot_maand ?? 12) - 1;
-      for (let m = van; m <= tot; m++) result[m] = k.bedrag;
+      const maanden = [k.jan, k.feb, k.mrt, k.apr, k.mei, k.jun, k.jul, k.aug, k.sep, k.okt, k.nov, k.dec];
+      for (let m = 0; m < 12; m++) result[m] = maanden[m] ?? 0;
       break;
     }
     case "jaarlijks":
