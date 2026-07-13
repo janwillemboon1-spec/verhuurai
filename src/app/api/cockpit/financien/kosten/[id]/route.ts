@@ -21,7 +21,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const maandVelden: Record<string, number> = {};
   if (body.frequentie === "maandelijks") {
-    for (const m of MAAND_KEYS) maandVelden[m] = body[m] ?? 0;
+    const heeftExpliciteMaanden = MAAND_KEYS.some(m => body[m] !== undefined);
+    if (heeftExpliciteMaanden) {
+      for (const m of MAAND_KEYS) maandVelden[m] = body[m] ?? 0;
+    }
+    // Als geen enkel maandveld is meegestuurd, laten we jan..dec ongemoeid —
+    // een PUT zonder expliciete maandbedragen mag bestaande per-maand
+    // geschiedenis nooit overschrijven met nullen.
   }
 
   const { data, error } = await admin
