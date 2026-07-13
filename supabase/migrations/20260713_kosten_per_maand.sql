@@ -35,4 +35,4 @@ SET
   okt = CASE WHEN 10 BETWEEN COALESCE(van_maand,1) AND COALESCE(tot_maand,12) THEN bedrag ELSE 0 END,
   nov = CASE WHEN 11 BETWEEN COALESCE(van_maand,1) AND COALESCE(tot_maand,12) THEN bedrag ELSE 0 END,
   dec = CASE WHEN 12 BETWEEN COALESCE(van_maand,1) AND COALESCE(tot_maand,12) THEN bedrag ELSE 0 END
-WHERE frequentie = 'maandelijks';
+WHERE frequentie = 'maandelijks' AND jan IS NULL;
