@@ -10,12 +10,25 @@ async function checkAuth() {
   return user?.email === COCKPIT_EMAIL ? user : null;
 }
 
+const MAAND_KEYS = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"] as const;
+
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!await checkAuth()) return NextResponse.json({ error: "Geen toegang" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();
   const admin = createAdminClient();
+
+  const maandVelden: Record<string, number> = {};
+  if (body.frequentie === "maandelijks") {
+    const heeftExpliciteMaanden = MAAND_KEYS.some(m => body[m] !== undefined);
+    if (heeftExpliciteMaanden) {
+      for (const m of MAAND_KEYS) maandVelden[m] = body[m] ?? 0;
+    }
+    // Als geen enkel maandveld is meegestuurd, laten we jan..dec ongemoeid —
+    // een PUT zonder expliciete maandbedragen mag bestaande per-maand
+    // geschiedenis nooit overschrijven met nullen.
+  }
 
   const { data, error } = await admin
     .from("cockpit_fin_kosten")
@@ -28,6 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       van_maand: body.van_maand ?? null,
       tot_maand: body.tot_maand ?? null,
       actief: body.actief ?? true,
+      ...maandVelden,
     })
     .eq("id", parseInt(id))
     .select()

@@ -69,6 +69,18 @@ interface Kostenpost {
   van_maand: number | null;
   tot_maand: number | null;
   actief: boolean;
+  jan: number | null;
+  feb: number | null;
+  mrt: number | null;
+  apr: number | null;
+  mei: number | null;
+  jun: number | null;
+  jul: number | null;
+  aug: number | null;
+  sep: number | null;
+  okt: number | null;
+  nov: number | null;
+  dec: number | null;
 }
 
 interface OverigInkomsten {
@@ -639,9 +651,8 @@ function berekenKostenMaanden(k: Kostenpost): number[] {
   const result = Array(12).fill(0);
   switch (k.frequentie) {
     case "maandelijks": {
-      const van = (k.van_maand ?? 1) - 1;
-      const tot = (k.tot_maand ?? 12) - 1;
-      for (let m = van; m <= tot; m++) result[m] = k.bedrag;
+      const maanden = [k.jan, k.feb, k.mrt, k.apr, k.mei, k.jun, k.jul, k.aug, k.sep, k.okt, k.nov, k.dec];
+      for (let m = 0; m < 12; m++) result[m] = maanden[m] ?? 0;
       break;
     }
     case "jaarlijks":
@@ -659,6 +670,8 @@ function berekenKostenMaanden(k: Kostenpost): number[] {
   return result;
 }
 
+const MAAND_KEYS = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"] as const;
+
 function KostenModal({ kosten, onOpslaan, onSluiten }: {
   kosten: Kostenpost | null;
   onOpslaan: (d: Partial<Kostenpost>) => Promise<void>;
@@ -673,7 +686,22 @@ function KostenModal({ kosten, onOpslaan, onSluiten }: {
     van_maand: String(kosten?.van_maand ?? "1"),
     tot_maand: String(kosten?.tot_maand ?? "12"),
   });
+  const [maanden, setMaanden] = useState<Record<string, number>>(() => {
+    if (kosten) {
+      return {
+        jan: kosten.jan ?? 0, feb: kosten.feb ?? 0, mrt: kosten.mrt ?? 0, apr: kosten.apr ?? 0,
+        mei: kosten.mei ?? 0, jun: kosten.jun ?? 0, jul: kosten.jul ?? 0, aug: kosten.aug ?? 0,
+        sep: kosten.sep ?? 0, okt: kosten.okt ?? 0, nov: kosten.nov ?? 0, dec: kosten.dec ?? 0,
+      };
+    }
+    return Object.fromEntries(MAAND_KEYS.map(m => [m, 0]));
+  });
   const [bezig, setBezig] = useState(false);
+
+  function vulAlleMaanden() {
+    const v = parseFloat(form.bedrag) || 0;
+    setMaanden(Object.fromEntries(MAAND_KEYS.map(m => [m, v])));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -687,6 +715,7 @@ function KostenModal({ kosten, onOpslaan, onSluiten }: {
       van_maand: form.van_maand ? parseInt(form.van_maand) : null,
       tot_maand: form.tot_maand ? parseInt(form.tot_maand) : null,
       actief: true,
+      ...(form.frequentie === "maandelijks" ? maanden : {}),
     });
     setBezig(false);
   }
@@ -716,13 +745,27 @@ function KostenModal({ kosten, onOpslaan, onSluiten }: {
           </Veld>
         )}
         {form.frequentie === "maandelijks" && (
-          <div className="flex gap-3">
-            <Veld label="Vanaf maand">
-              <input type="number" min={1} max={12} className={invoerKlasse} value={form.van_maand} onChange={e => setForm({...form, van_maand: e.target.value})} />
-            </Veld>
-            <Veld label="Tot en met maand">
-              <input type="number" min={1} max={12} className={invoerKlasse} value={form.tot_maand} onChange={e => setForm({...form, tot_maand: e.target.value})} />
-            </Veld>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-gray-600">Bedragen per maand (€)</label>
+              <button type="button" onClick={vulAlleMaanden} className="text-xs text-[#2b3885] hover:underline">
+                Toepassen op alle maanden
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {MAAND_KEYS.map(m => (
+                <div key={m}>
+                  <span className="text-xs text-gray-500">{m}</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full text-xs border border-gray-200 rounded px-2 py-1 mt-0.5"
+                    value={maanden[m] ?? 0}
+                    onChange={e => setMaanden({...maanden, [m]: parseFloat(e.target.value) || 0})}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
         <div className="flex gap-2 pt-2">
