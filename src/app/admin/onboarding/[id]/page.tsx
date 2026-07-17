@@ -20,7 +20,7 @@ export default async function AdminKlantPage({ params }: { params: { id: string 
     { data: activiteiten },
     { data: metingen },
   ] = await Promise.all([
-    admin.from("onboarding_klanten").select("*").eq("id", params.id).single(),
+    admin.from("onboarding_klanten").select("*, onboarding_logins(*)").eq("id", params.id).single(),
     admin.from("onboarding_checklist_items").select("*").eq("klant_id", params.id).order("volgorde"),
     admin.from("onboarding_todos").select("*").eq("klant_id", params.id).order("aangemaakt_op"),
     admin.from("onboarding_activiteiten").select("*").eq("klant_id", params.id).order("datum", { ascending: false }),
@@ -29,17 +29,25 @@ export default async function AdminKlantPage({ params }: { params: { id: string 
 
   if (!klant) notFound();
 
+  const login = (klant as any).onboarding_logins;
+
+  const { data: andereWoningen } = await admin
+    .from("onboarding_klanten")
+    .select("id, naam")
+    .eq("login_id", login.id)
+    .neq("id", params.id);
+
   return (
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="font-display text-2xl text-primary">{klant.naam}</h1>
-            <p className="text-text-secondary text-sm">{klant.email}</p>
+            <p className="text-text-secondary text-sm">{login.email}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <a
-              href={`${BASE_URL}/onboarding/${klant.link_token}`}
+              href={`${BASE_URL}/onboarding/${login.link_token}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary text-xs"
@@ -52,6 +60,8 @@ export default async function AdminKlantPage({ params }: { params: { id: string 
 
         <AdminOnboardingClient
           klant={klant}
+          login={login}
+          andereWoningen={andereWoningen || []}
           checklistInit={checklist || []}
           todosInit={todos || []}
           activiteitenInit={activiteiten || []}

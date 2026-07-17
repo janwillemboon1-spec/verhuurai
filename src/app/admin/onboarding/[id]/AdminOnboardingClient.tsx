@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type {
   OnboardingKlant,
+  OnboardingLogin,
   OnboardingChecklistItem,
   OnboardingTodo,
   OnboardingActiviteit,
@@ -11,6 +12,8 @@ import type {
 
 type Props = {
   klant: OnboardingKlant;
+  login: OnboardingLogin;
+  andereWoningen: { id: string; naam: string }[];
   checklistInit: OnboardingChecklistItem[];
   todosInit: OnboardingTodo[];
   activiteitenInit: OnboardingActiviteit[];
@@ -29,20 +32,17 @@ function berekenExtraOmzet(
   return Math.round((dagNieuw - dagOud) * 30);
 }
 
-export function AdminOnboardingClient({ klant, checklistInit, todosInit, activiteitenInit, metingenInit }: Props) {
+export function AdminOnboardingClient({ klant, login, andereWoningen, checklistInit, todosInit, activiteitenInit, metingenInit }: Props) {
   const [klantData, setKlantData] = useState(klant);
+  const [loginData, setLoginData] = useState(login);
   const [checklist, setChecklist] = useState(checklistInit);
   const [todos, setTodos] = useState(todosInit);
   const [activiteiten, setActiviteiten] = useState(activiteitenInit);
   const [metingen, setMetingen] = useState(metingenInit);
 
-  const [bewerkOpen, setBewerkOpen] = useState(false);
-  const [bewerkForm, setBewerkForm] = useState({
+  const [woningBewerkOpen, setWoningBewerkOpen] = useState(false);
+  const [woningForm, setWoningForm] = useState({
     naam: klant.naam,
-    email: klant.email,
-    wachtwoord: "",
-    voornaam: klant.voornaam ?? "",
-    achternaam: klant.achternaam ?? "",
     kpi_bezetting_nulmeting: klant.kpi_bezetting_nulmeting?.toString() ?? "",
     kpi_adr_nulmeting: klant.kpi_adr_nulmeting?.toString() ?? "",
     kpi_reviewscore_nulmeting: klant.kpi_reviewscore_nulmeting?.toString() ?? "",
@@ -52,9 +52,21 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     extra_omzet_periode: klant.extra_omzet_periode ?? "afgelopen 30 dagen",
     datum_nulmeting: klant.datum_nulmeting ?? "",
   });
-  const [bewerkBezig, setBewerkBezig] = useState(false);
-  const [bewerkFout, setBewerkFout] = useState<string | null>(null);
-  const [bewerkSucces, setBewerkSucces] = useState(false);
+  const [woningBezig, setWoningBezig] = useState(false);
+  const [woningFout, setWoningFout] = useState<string | null>(null);
+  const [woningSucces, setWoningSucces] = useState(false);
+
+  const [loginBewerkOpen, setLoginBewerkOpen] = useState(false);
+  const [loginForm, setLoginForm] = useState({
+    email: login.email,
+    wachtwoord: "",
+    voornaam: login.voornaam ?? "",
+    achternaam: login.achternaam ?? "",
+  });
+  const [loginBezig, setLoginBezig] = useState(false);
+  const [loginFout, setLoginFout] = useState<string | null>(null);
+  const [loginSucces, setLoginSucces] = useState(false);
+
   const [uitnodigingBezig, setUitnodigingBezig] = useState(false);
   const [uitnodigingSucces, setUitnodigingSucces] = useState(false);
   const [uitnodigingFout, setUitnodigingFout] = useState<string | null>(null);
@@ -82,27 +94,23 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     return acc;
   }, {} as Record<string, OnboardingChecklistItem[]>);
 
-  async function slaKlantOp(e: React.FormEvent) {
+  async function slaWoningOp(e: React.FormEvent) {
     e.preventDefault();
-    setBewerkBezig(true);
-    setBewerkFout(null);
-    setBewerkSucces(false);
+    setWoningBezig(true);
+    setWoningFout(null);
+    setWoningSucces(false);
 
     const body: Record<string, unknown> = {
-      naam: bewerkForm.naam,
-      email: bewerkForm.email,
-      voornaam: bewerkForm.voornaam || null,
-      achternaam: bewerkForm.achternaam || null,
-      kpi_bezetting_nulmeting: bewerkForm.kpi_bezetting_nulmeting ? parseFloat(bewerkForm.kpi_bezetting_nulmeting) : null,
-      kpi_adr_nulmeting: bewerkForm.kpi_adr_nulmeting ? parseFloat(bewerkForm.kpi_adr_nulmeting) : null,
-      kpi_reviewscore_nulmeting: bewerkForm.kpi_reviewscore_nulmeting ? parseFloat(bewerkForm.kpi_reviewscore_nulmeting) : null,
-      kpi_reviews_nulmeting: bewerkForm.kpi_reviews_nulmeting ? parseInt(bewerkForm.kpi_reviews_nulmeting) : null,
-      kpi_omzet_365d_nulmeting: bewerkForm.kpi_omzet_365d_nulmeting ? parseFloat(bewerkForm.kpi_omzet_365d_nulmeting) : null,
-      geen_cijfers_nulmeting: bewerkForm.geen_cijfers_nulmeting,
-      extra_omzet_periode: bewerkForm.extra_omzet_periode,
-      datum_nulmeting: bewerkForm.datum_nulmeting || null,
+      naam: woningForm.naam,
+      kpi_bezetting_nulmeting: woningForm.kpi_bezetting_nulmeting ? parseFloat(woningForm.kpi_bezetting_nulmeting) : null,
+      kpi_adr_nulmeting: woningForm.kpi_adr_nulmeting ? parseFloat(woningForm.kpi_adr_nulmeting) : null,
+      kpi_reviewscore_nulmeting: woningForm.kpi_reviewscore_nulmeting ? parseFloat(woningForm.kpi_reviewscore_nulmeting) : null,
+      kpi_reviews_nulmeting: woningForm.kpi_reviews_nulmeting ? parseInt(woningForm.kpi_reviews_nulmeting) : null,
+      kpi_omzet_365d_nulmeting: woningForm.kpi_omzet_365d_nulmeting ? parseFloat(woningForm.kpi_omzet_365d_nulmeting) : null,
+      geen_cijfers_nulmeting: woningForm.geen_cijfers_nulmeting,
+      extra_omzet_periode: woningForm.extra_omzet_periode,
+      datum_nulmeting: woningForm.datum_nulmeting || null,
     };
-    if (bewerkForm.wachtwoord) body.wachtwoord = bewerkForm.wachtwoord;
 
     const res = await fetch(`/api/onboarding/klanten/${klant.id}`, {
       method: "PATCH",
@@ -113,14 +121,45 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
     if (res.ok) {
       const data = await res.json();
       setKlantData(data.klant);
-      setBewerkSucces(true);
-      setBewerkForm(f => ({ ...f, wachtwoord: "" }));
-      setTimeout(() => setBewerkSucces(false), 3000);
+      setWoningSucces(true);
+      setTimeout(() => setWoningSucces(false), 3000);
     } else {
       const data = await res.json();
-      setBewerkFout(data.error || "Opslaan mislukt");
+      setWoningFout(data.error || "Opslaan mislukt");
     }
-    setBewerkBezig(false);
+    setWoningBezig(false);
+  }
+
+  async function slaLoginOp(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginBezig(true);
+    setLoginFout(null);
+    setLoginSucces(false);
+
+    const body: Record<string, unknown> = {
+      email: loginForm.email,
+      voornaam: loginForm.voornaam || null,
+      achternaam: loginForm.achternaam || null,
+    };
+    if (loginForm.wachtwoord) body.wachtwoord = loginForm.wachtwoord;
+
+    const res = await fetch(`/api/onboarding/logins/${login.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setLoginData(data.login);
+      setLoginSucces(true);
+      setLoginForm(f => ({ ...f, wachtwoord: "" }));
+      setTimeout(() => setLoginSucces(false), 3000);
+    } else {
+      const data = await res.json();
+      setLoginFout(data.error || "Opslaan mislukt");
+    }
+    setLoginBezig(false);
   }
 
   async function stuurUitnodiging() {
@@ -260,49 +299,27 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
 
   return (
     <div className="space-y-6">
-      {/* Klantgegevens bewerken */}
+      {/* Woninggegevens bewerken */}
       <div className="card p-5">
         <button
           type="button"
-          onClick={() => setBewerkOpen(o => !o)}
+          onClick={() => setWoningBewerkOpen(o => !o)}
           className="w-full flex items-center justify-between text-left"
         >
-          <h2 className="font-semibold text-primary">Klantgegevens</h2>
-          <span className="text-text-secondary text-sm">{bewerkOpen ? "▲ Sluiten" : "▼ Bewerken"}</span>
+          <h2 className="font-semibold text-primary">Woninggegevens</h2>
+          <span className="text-text-secondary text-sm">{woningBewerkOpen ? "▲ Sluiten" : "▼ Bewerken"}</span>
         </button>
 
-        {bewerkOpen && (
-          <form onSubmit={slaKlantOp} className="mt-4 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-text-secondary">Naam woning</label>
-                <input className="input w-full text-sm" value={bewerkForm.naam} onChange={e => setBewerkForm(f => ({ ...f, naam: e.target.value }))} required />
-              </div>
-              <div>
-                <label className="text-xs text-text-secondary">E-mailadres klant</label>
-                <input type="email" className="input w-full text-sm" value={bewerkForm.email} onChange={e => setBewerkForm(f => ({ ...f, email: e.target.value }))} required />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-text-secondary">Voornaam <span className="text-text-secondary">(optioneel)</span></label>
-                <input className="input w-full text-sm" placeholder="bijv. Lisa" value={bewerkForm.voornaam} onChange={e => setBewerkForm(f => ({ ...f, voornaam: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-xs text-text-secondary">Achternaam <span className="text-text-secondary">(optioneel)</span></label>
-                <input className="input w-full text-sm" placeholder="bijv. de Vries" value={bewerkForm.achternaam} onChange={e => setBewerkForm(f => ({ ...f, achternaam: e.target.value }))} />
-              </div>
-            </div>
-
+        {woningBewerkOpen && (
+          <form onSubmit={slaWoningOp} className="mt-4 space-y-4">
             <div>
-              <label className="text-xs text-text-secondary">Nieuw wachtwoord (laat leeg om ongewijzigd te laten)</label>
-              <input type="password" className="input w-full text-sm" placeholder="••••••••" value={bewerkForm.wachtwoord} onChange={e => setBewerkForm(f => ({ ...f, wachtwoord: e.target.value }))} minLength={4} />
+              <label className="text-xs text-text-secondary">Naam woning</label>
+              <input className="input w-full text-sm" value={woningForm.naam} onChange={e => setWoningForm(f => ({ ...f, naam: e.target.value }))} required />
             </div>
 
             <div>
               <label className="text-xs text-text-secondary">Meetperiode extra omzet</label>
-              <input className="input w-full text-sm" value={bewerkForm.extra_omzet_periode} onChange={e => setBewerkForm(f => ({ ...f, extra_omzet_periode: e.target.value }))} />
+              <input className="input w-full text-sm" value={woningForm.extra_omzet_periode} onChange={e => setWoningForm(f => ({ ...f, extra_omzet_periode: e.target.value }))} />
             </div>
 
             <div className="border-t border-border pt-3">
@@ -312,50 +329,101 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
                 <input
                   type="date"
                   className="input w-full text-sm"
-                  value={bewerkForm.datum_nulmeting}
-                  onChange={e => setBewerkForm(f => ({ ...f, datum_nulmeting: e.target.value }))}
-                  disabled={bewerkForm.geen_cijfers_nulmeting}
+                  value={woningForm.datum_nulmeting}
+                  onChange={e => setWoningForm(f => ({ ...f, datum_nulmeting: e.target.value }))}
+                  disabled={woningForm.geen_cijfers_nulmeting}
                 />
               </div>
               <div className="flex items-center gap-2 mb-3">
                 <input
                   type="checkbox"
-                  id="bewerk_geen_cijfers"
-                  checked={bewerkForm.geen_cijfers_nulmeting}
-                  onChange={e => setBewerkForm(f => ({ ...f, geen_cijfers_nulmeting: e.target.checked }))}
+                  id="woning_geen_cijfers"
+                  checked={woningForm.geen_cijfers_nulmeting}
+                  onChange={e => setWoningForm(f => ({ ...f, geen_cijfers_nulmeting: e.target.checked }))}
                   className="w-4 h-4 accent-accent"
                 />
-                <label htmlFor="bewerk_geen_cijfers" className="text-sm text-text-secondary cursor-pointer">Nieuwe woning — geen cijfers beschikbaar</label>
+                <label htmlFor="woning_geen_cijfers" className="text-sm text-text-secondary cursor-pointer">Nieuwe woning — geen cijfers beschikbaar</label>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs text-text-secondary">Bezetting (%)</label>
-                  <input type="number" className="input w-full text-sm" placeholder="62" min="0" max="100" step="0.1" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_bezetting_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_bezetting_nulmeting: e.target.value }))} />
+                  <input type="number" className="input w-full text-sm" placeholder="62" min="0" max="100" step="0.1" disabled={woningForm.geen_cijfers_nulmeting} value={woningForm.kpi_bezetting_nulmeting} onChange={e => setWoningForm(f => ({ ...f, kpi_bezetting_nulmeting: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs text-text-secondary">ADR (€)</label>
-                  <input type="number" className="input w-full text-sm" placeholder="89" min="0" step="0.01" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_adr_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_adr_nulmeting: e.target.value }))} />
+                  <input type="number" className="input w-full text-sm" placeholder="89" min="0" step="0.01" disabled={woningForm.geen_cijfers_nulmeting} value={woningForm.kpi_adr_nulmeting} onChange={e => setWoningForm(f => ({ ...f, kpi_adr_nulmeting: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs text-text-secondary">Reviewscore</label>
-                  <input type="number" className="input w-full text-sm" placeholder="4.62" min="1" max="5" step="0.01" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_reviewscore_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))} />
+                  <input type="number" className="input w-full text-sm" placeholder="4.62" min="1" max="5" step="0.01" disabled={woningForm.geen_cijfers_nulmeting} value={woningForm.kpi_reviewscore_nulmeting} onChange={e => setWoningForm(f => ({ ...f, kpi_reviewscore_nulmeting: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs text-text-secondary">Aantal reviews</label>
-                  <input type="number" className="input w-full text-sm" placeholder="24" min="0" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_reviews_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_reviews_nulmeting: e.target.value }))} />
+                  <input type="number" className="input w-full text-sm" placeholder="24" min="0" disabled={woningForm.geen_cijfers_nulmeting} value={woningForm.kpi_reviews_nulmeting} onChange={e => setWoningForm(f => ({ ...f, kpi_reviews_nulmeting: e.target.value }))} />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs text-text-secondary">Omzet 365d (€)</label>
-                  <input type="number" className="input w-full text-sm" placeholder="24000" min="0" step="0.01" disabled={bewerkForm.geen_cijfers_nulmeting} value={bewerkForm.kpi_omzet_365d_nulmeting} onChange={e => setBewerkForm(f => ({ ...f, kpi_omzet_365d_nulmeting: e.target.value }))} />
+                  <input type="number" className="input w-full text-sm" placeholder="24000" min="0" step="0.01" disabled={woningForm.geen_cijfers_nulmeting} value={woningForm.kpi_omzet_365d_nulmeting} onChange={e => setWoningForm(f => ({ ...f, kpi_omzet_365d_nulmeting: e.target.value }))} />
                 </div>
               </div>
             </div>
 
-            {bewerkFout && <p className="text-sm text-danger bg-danger/10 rounded-xl p-3">{bewerkFout}</p>}
-            {bewerkSucces && <p className="text-sm text-success bg-success/10 rounded-xl p-3">Opgeslagen!</p>}
+            {woningFout && <p className="text-sm text-danger bg-danger/10 rounded-xl p-3">{woningFout}</p>}
+            {woningSucces && <p className="text-sm text-success bg-success/10 rounded-xl p-3">Opgeslagen!</p>}
 
-            <button type="submit" disabled={bewerkBezig} className="btn-primary text-sm">
-              {bewerkBezig ? "Opslaan..." : "Wijzigingen opslaan"}
+            <button type="submit" disabled={woningBezig} className="btn-primary text-sm">
+              {woningBezig ? "Opslaan..." : "Wijzigingen opslaan"}
+            </button>
+          </form>
+        )}
+      </div>
+
+      {/* Login bewerken */}
+      <div className="card p-5">
+        <button
+          type="button"
+          onClick={() => setLoginBewerkOpen(o => !o)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <h2 className="font-semibold text-primary">Login</h2>
+          <span className="text-text-secondary text-sm">{loginBewerkOpen ? "▲ Sluiten" : "▼ Bewerken"}</span>
+        </button>
+
+        {andereWoningen.length > 0 && (
+          <p className="text-xs text-text-secondary bg-surface rounded-lg px-3 py-2 mt-3">
+            Deze login hoort ook bij: {andereWoningen.map(w => w.naam).join(", ")}. Wijzigingen hier gelden voor al deze woningen.
+          </p>
+        )}
+
+        {loginBewerkOpen && (
+          <form onSubmit={slaLoginOp} className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-text-secondary">E-mailadres klant</label>
+                <input type="email" className="input w-full text-sm" value={loginForm.email} onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))} required />
+              </div>
+              <div>
+                <label className="text-xs text-text-secondary">Nieuw wachtwoord (laat leeg om ongewijzigd te laten)</label>
+                <input type="password" className="input w-full text-sm" placeholder="••••••••" value={loginForm.wachtwoord} onChange={e => setLoginForm(f => ({ ...f, wachtwoord: e.target.value }))} minLength={4} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-text-secondary">Voornaam <span className="text-text-secondary">(optioneel)</span></label>
+                <input className="input w-full text-sm" placeholder="bijv. Lisa" value={loginForm.voornaam} onChange={e => setLoginForm(f => ({ ...f, voornaam: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs text-text-secondary">Achternaam <span className="text-text-secondary">(optioneel)</span></label>
+                <input className="input w-full text-sm" placeholder="bijv. de Vries" value={loginForm.achternaam} onChange={e => setLoginForm(f => ({ ...f, achternaam: e.target.value }))} />
+              </div>
+            </div>
+
+            {loginFout && <p className="text-sm text-danger bg-danger/10 rounded-xl p-3">{loginFout}</p>}
+            {loginSucces && <p className="text-sm text-success bg-success/10 rounded-xl p-3">Opgeslagen!</p>}
+
+            <button type="submit" disabled={loginBezig} className="btn-primary text-sm">
+              {loginBezig ? "Opslaan..." : "Wijzigingen opslaan"}
             </button>
 
             <div className="pt-3 border-t border-border">
@@ -368,7 +436,7 @@ export function AdminOnboardingClient({ klant, checklistInit, todosInit, activit
               >
                 {uitnodigingBezig ? "Versturen..." : "✉ Stuur uitnodigingsmail"}
               </button>
-              {uitnodigingSucces && <p className="text-xs text-success mt-2">Uitnodiging verstuurd naar {klantData.email}</p>}
+              {uitnodigingSucces && <p className="text-xs text-success mt-2">Uitnodiging verstuurd naar {loginData.email}</p>}
               {uitnodigingFout && <p className="text-xs text-danger mt-2">{uitnodigingFout}</p>}
             </div>
           </form>
