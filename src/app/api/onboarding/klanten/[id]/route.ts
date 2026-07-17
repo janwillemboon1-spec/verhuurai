@@ -1,7 +1,7 @@
+// src/app/api/onboarding/klanten/[id]/route.ts
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { hashWachtwoord } from "@/lib/onboarding/auth";
 
 const ADMIN_EMAIL = "info@bnbassistant.com";
 
@@ -17,7 +17,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   const admin = createAdminClient();
   const { data: klant, error } = await admin
     .from("onboarding_klanten")
-    .select("*")
+    .select("*, onboarding_logins(id, voornaam, achternaam, email, link_token)")
     .eq("id", params.id)
     .single();
 
@@ -46,10 +46,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
   const updates: Record<string, unknown> = {};
   if (body.naam !== undefined) updates.naam = body.naam;
-  if (body.email !== undefined) updates.email = body.email;
-  if (body.wachtwoord) updates.wachtwoord_hash = hashWachtwoord(body.wachtwoord);
-  if (body.voornaam !== undefined) updates.voornaam = body.voornaam || null;
-  if (body.achternaam !== undefined) updates.achternaam = body.achternaam || null;
   if (body.kpi_bezetting_nulmeting !== undefined) updates.kpi_bezetting_nulmeting = body.kpi_bezetting_nulmeting;
   if (body.kpi_adr_nulmeting !== undefined) updates.kpi_adr_nulmeting = body.kpi_adr_nulmeting;
   if (body.kpi_reviewscore_nulmeting !== undefined) updates.kpi_reviewscore_nulmeting = body.kpi_reviewscore_nulmeting;

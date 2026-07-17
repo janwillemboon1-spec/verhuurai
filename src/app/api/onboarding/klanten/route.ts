@@ -1,3 +1,4 @@
+// src/app/api/onboarding/klanten/route.ts
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -34,7 +35,7 @@ export async function GET() {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("onboarding_klanten")
-    .select("*, onboarding_checklist_items(id, voltooid), onboarding_todos(id, gedaan)")
+    .select("*, onboarding_logins(id, voornaam, achternaam, email, link_token), onboarding_checklist_items(id, voltooid), onboarding_todos(id, gedaan)")
     .order("aangemaakt_op", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -49,23 +50,55 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { naam, email, wachtwoord, voornaam, achternaam, kpi_bezetting_nulmeting, kpi_adr_nulmeting,
+  const { naam, login_id, email, wachtwoord, voornaam, achternaam, kpi_bezetting_nulmeting, kpi_adr_nulmeting,
           kpi_reviewscore_nulmeting, kpi_reviews_nulmeting, kpi_omzet_365d_nulmeting,
           geen_cijfers_nulmeting, extra_omzet_periode, datum_nulmeting } = body;
 
-  if (!naam || !email || !wachtwoord) {
-    return NextResponse.json({ error: "naam, email en wachtwoord zijn verplicht" }, { status: 400 });
+  if (!naam) {
+    return NextResponse.json({ error: "naam van de woning is verplicht" }, { status: 400 });
   }
 
   const admin = createAdminClient();
+  let loginId: string | undefined = login_id;
+
+  if (!loginId) {
+    if (!email || !wachtwoord) {
+      return NextResponse.json({ error: "email en wachtwoord zijn verplicht voor een nieuwe klant" }, { status: 400 });
+    }
+
+    const { data: bestaand } = await admin
+      .from("onboarding_logins")
+      .select("id")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+
+    if (bestaand) {
+      return NextResponse.json(
+        { error: "Dit e-mailadres bestaat al — voeg de woning toe via 'Bestaande klant'" },
+        { status: 409 }
+      );
+    }
+
+    const { data: login, error: loginError } = await admin
+      .from("onboarding_logins")
+      .insert({
+        email: email.toLowerCase(),
+        wachtwoord_hash: hashWachtwoord(wachtwoord),
+        voornaam: voornaam || null,
+        achternaam: achternaam || null,
+      })
+      .select("id")
+      .single();
+
+    if (loginError || !login) return NextResponse.json({ error: loginError?.message || "Klant aanmaken mislukt" }, { status: 500 });
+    loginId = login.id;
+  }
+
   const { data: klant, error } = await admin
     .from("onboarding_klanten")
     .insert({
       naam,
-      email,
-      wachtwoord_hash: hashWachtwoord(wachtwoord),
-      voornaam: voornaam || null,
-      achternaam: achternaam || null,
+      login_id: loginId,
       kpi_bezetting_nulmeting: kpi_bezetting_nulmeting ?? null,
       kpi_adr_nulmeting: kpi_adr_nulmeting ?? null,
       kpi_reviewscore_nulmeting: kpi_reviewscore_nulmeting ?? null,
