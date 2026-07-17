@@ -18,7 +18,7 @@ type WoningRow = {
     achternaam: string | null;
     email: string;
     link_token: string;
-  };
+  } | null;
 };
 
 export default async function OnboardingOverzichtPage() {
@@ -32,9 +32,10 @@ export default async function OnboardingOverzichtPage() {
     .select("id, naam, startdatum, onboarding_checklist_items(id, voltooid), onboarding_todos(id, gedaan), onboarding_logins(id, voornaam, achternaam, email, link_token)")
     .order("aangemaakt_op", { ascending: false });
 
-  const groepen = new Map<string, { login: WoningRow["onboarding_logins"]; woningen: WoningRow[] }>();
+  const groepen = new Map<string, { login: NonNullable<WoningRow["onboarding_logins"]>; woningen: WoningRow[] }>();
   for (const woning of (woningen || []) as unknown as WoningRow[]) {
     const login = woning.onboarding_logins;
+    if (!login) continue;
     if (!groepen.has(login.id)) groepen.set(login.id, { login, woningen: [] });
     groepen.get(login.id)!.woningen.push(woning);
   }
