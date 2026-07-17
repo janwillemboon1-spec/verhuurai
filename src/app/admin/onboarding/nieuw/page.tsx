@@ -15,6 +15,8 @@ export default function NieuweKlantPage() {
   const router = useRouter();
   const [modus, setModus] = useState<"nieuw" | "bestaand">("nieuw");
   const [logins, setLogins] = useState<Login[]>([]);
+  const [ladenLogins, setLadenLogins] = useState(false);
+  const [loginsFout, setLoginsFout] = useState<string | null>(null);
   const [zoek, setZoek] = useState("");
   const [gekozenLoginId, setGekozenLoginId] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
@@ -37,9 +39,16 @@ export default function NieuweKlantPage() {
 
   useEffect(() => {
     if (modus === "bestaand" && logins.length === 0) {
+      setLadenLogins(true);
+      setLoginsFout(null);
       fetch("/api/onboarding/logins")
-        .then(res => res.json())
-        .then(data => setLogins(data.logins || []));
+        .then(res => {
+          if (!res.ok) throw new Error("Ophalen klanten mislukt");
+          return res.json();
+        })
+        .then(data => setLogins(data.logins || []))
+        .catch(() => setLoginsFout("Klanten laden mislukt. Probeer het opnieuw."))
+        .finally(() => setLadenLogins(false));
     }
   }, [modus, logins.length]);
 
@@ -128,8 +137,10 @@ export default function NieuweKlantPage() {
                 onChange={e => setZoek(e.target.value)}
               />
               <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
-                {gefilterdeLogins.length === 0 && <p className="text-xs text-text-secondary p-2">Geen klanten gevonden.</p>}
-                {gefilterdeLogins.map(login => (
+                {ladenLogins && <p className="text-xs text-text-secondary p-2">Klanten laden...</p>}
+                {!ladenLogins && loginsFout && <p className="text-xs text-danger p-2">{loginsFout}</p>}
+                {!ladenLogins && !loginsFout && gefilterdeLogins.length === 0 && <p className="text-xs text-text-secondary p-2">Geen klanten gevonden.</p>}
+                {!ladenLogins && !loginsFout && gefilterdeLogins.map(login => (
                   <button
                     type="button"
                     key={login.id}
