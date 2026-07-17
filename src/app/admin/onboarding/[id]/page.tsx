@@ -30,6 +30,7 @@ export default async function AdminKlantPage({ params }: { params: { id: string 
   if (!klant) notFound();
 
   const login = (klant as any).onboarding_logins;
+  if (!login) notFound();
 
   const { data: andereWoningen } = await admin
     .from("onboarding_klanten")
