@@ -32,7 +32,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   const admin = createAdminClient();
 
   const updates: Record<string, unknown> = {};
-  if (body.email !== undefined) updates.email = body.email;
+  if (body.email !== undefined) updates.email = body.email.toLowerCase();
   if (body.wachtwoord) updates.wachtwoord_hash = hashWachtwoord(body.wachtwoord);
   if (body.voornaam !== undefined) updates.voornaam = body.voornaam || null;
   if (body.achternaam !== undefined) updates.achternaam = body.achternaam || null;
