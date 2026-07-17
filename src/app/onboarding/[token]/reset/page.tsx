@@ -32,20 +32,22 @@ export default async function ResetPage({
   }
 
   const admin = createAdminClient();
-  const { data: klant } = await admin
-    .from("onboarding_klanten")
-    .select("naam")
+  const { data: login } = await admin
+    .from("onboarding_logins")
+    .select("voornaam, achternaam")
     .eq("link_token", params.token)
     .single();
 
-  if (!klant) notFound();
+  if (!login) notFound();
+
+  const naam = login.voornaam || login.achternaam || "daar";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="card p-8 max-w-sm w-full space-y-6">
         <div className="text-center space-y-1">
           <h1 className="font-display text-2xl text-primary">Nieuw wachtwoord</h1>
-          <p className="text-sm text-text-secondary">Kies een nieuw wachtwoord voor {klant.naam}.</p>
+          <p className="text-sm text-text-secondary">Kies een nieuw wachtwoord voor {naam}.</p>
         </div>
         <ResetForm token={params.token} rt={rt} />
       </div>

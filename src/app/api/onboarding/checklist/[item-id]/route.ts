@@ -30,15 +30,16 @@ export async function PATCH(request: Request, { params }: { params: { "item-id":
     .from("onboarding_checklist_items")
     .update(updates)
     .eq("id", params["item-id"])
-    .select("*, onboarding_klanten(naam, email, voornaam)")
+    .select("*, onboarding_klanten(naam, onboarding_logins(email, voornaam))")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (body.voltooid === true && item) {
     const klant = (item as any).onboarding_klanten;
-    if (klant?.email) {
-      await stuurStapVoltooidEmail(klant.email, klant.naam, item.naam, klant.voornaam).catch(() => {});
+    const login = klant?.onboarding_logins;
+    if (login?.email) {
+      await stuurStapVoltooidEmail(login.email, klant.naam, item.naam, login.voornaam).catch(() => {});
     }
   }
 

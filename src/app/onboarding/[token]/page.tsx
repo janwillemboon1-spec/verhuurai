@@ -6,13 +6,13 @@ import { WachtwoordForm } from "./WachtwoordForm";
 
 export default async function OnboardingLoginPage({ params }: { params: { token: string } }) {
   const admin = createAdminClient();
-  const { data: klant } = await admin
-    .from("onboarding_klanten")
-    .select("id, naam, voornaam, link_token")
+  const { data: login } = await admin
+    .from("onboarding_logins")
+    .select("id, voornaam, achternaam, link_token")
     .eq("link_token", params.token)
     .single();
 
-  if (!klant) {
+  if (!login) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="card p-8 text-center max-w-sm w-full">
@@ -28,11 +28,13 @@ export default async function OnboardingLoginPage({ params }: { params: { token:
     redirect(`/onboarding/${params.token}/dashboard`);
   }
 
+  const naam = login.voornaam || login.achternaam || "daar";
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="card p-8 max-w-sm w-full space-y-6">
         <div className="text-center space-y-1">
-          <h1 className="font-display text-2xl text-primary">Welkom, {klant.voornaam || klant.naam}</h1>
+          <h1 className="font-display text-2xl text-primary">Welkom, {naam}</h1>
           <p className="text-sm text-text-secondary">Voer je wachtwoord in om je onboarding voortgang te bekijken.</p>
         </div>
         <WachtwoordForm token={params.token} />

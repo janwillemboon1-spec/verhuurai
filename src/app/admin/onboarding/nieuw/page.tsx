@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+type Login = {
+  id: string;
+  voornaam: string | null;
+  achternaam: string | null;
+  email: string;
+};
+
 export default function NieuweKlantPage() {
   const router = useRouter();
+  const [modus, setModus] = useState<"nieuw" | "bestaand">("nieuw");
+  const [logins, setLogins] = useState<Login[]>([]);
+  const [ladenLogins, setLadenLogins] = useState(false);
+  const [loginsFout, setLoginsFout] = useState<string | null>(null);
+  const [zoek, setZoek] = useState("");
+  const [gekozenLoginId, setGekozenLoginId] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
   const [fout, setFout] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -24,29 +37,59 @@ export default function NieuweKlantPage() {
     datum_nulmeting: "",
   });
 
+  useEffect(() => {
+    if (modus === "bestaand" && logins.length === 0) {
+      setLadenLogins(true);
+      setLoginsFout(null);
+      fetch("/api/onboarding/logins")
+        .then(res => {
+          if (!res.ok) throw new Error("Ophalen klanten mislukt");
+          return res.json();
+        })
+        .then(data => setLogins(data.logins || []))
+        .catch(() => setLoginsFout("Klanten laden mislukt. Probeer het opnieuw."))
+        .finally(() => setLadenLogins(false));
+    }
+  }, [modus, logins.length]);
+
+  const gefilterdeLogins = logins.filter(l => {
+    const tekst = `${l.voornaam || ""} ${l.achternaam || ""} ${l.email}`.toLowerCase();
+    return tekst.includes(zoek.toLowerCase());
+  });
+
   const stuur = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (modus === "bestaand" && !gekozenLoginId) {
+      setFout("Kies eerst een bestaande klant");
+      return;
+    }
     setBezig(true);
     setFout(null);
     try {
+      const body: Record<string, unknown> = {
+        naam: form.naam,
+        kpi_bezetting_nulmeting: form.kpi_bezetting_nulmeting ? parseFloat(form.kpi_bezetting_nulmeting) : null,
+        kpi_adr_nulmeting: form.kpi_adr_nulmeting ? parseFloat(form.kpi_adr_nulmeting) : null,
+        kpi_reviewscore_nulmeting: form.kpi_reviewscore_nulmeting ? parseFloat(form.kpi_reviewscore_nulmeting) : null,
+        kpi_reviews_nulmeting: form.kpi_reviews_nulmeting ? parseInt(form.kpi_reviews_nulmeting) : null,
+        kpi_omzet_365d_nulmeting: form.kpi_omzet_365d_nulmeting ? parseFloat(form.kpi_omzet_365d_nulmeting) : null,
+        geen_cijfers_nulmeting: form.geen_cijfers_nulmeting,
+        extra_omzet_periode: form.extra_omzet_periode,
+        datum_nulmeting: form.datum_nulmeting || null,
+      };
+      if (modus === "bestaand") {
+        body.login_id = gekozenLoginId;
+      } else {
+        body.email = form.email;
+        body.wachtwoord = form.wachtwoord;
+        body.voornaam = form.voornaam || null;
+        body.achternaam = form.achternaam || null;
+      }
+
       const res = await fetch("/api/onboarding/klanten", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          naam: form.naam,
-          email: form.email,
-          wachtwoord: form.wachtwoord,
-          voornaam: form.voornaam || null,
-          achternaam: form.achternaam || null,
-          kpi_bezetting_nulmeting: form.kpi_bezetting_nulmeting ? parseFloat(form.kpi_bezetting_nulmeting) : null,
-          kpi_adr_nulmeting: form.kpi_adr_nulmeting ? parseFloat(form.kpi_adr_nulmeting) : null,
-          kpi_reviewscore_nulmeting: form.kpi_reviewscore_nulmeting ? parseFloat(form.kpi_reviewscore_nulmeting) : null,
-          kpi_reviews_nulmeting: form.kpi_reviews_nulmeting ? parseInt(form.kpi_reviews_nulmeting) : null,
-          kpi_omzet_365d_nulmeting: form.kpi_omzet_365d_nulmeting ? parseFloat(form.kpi_omzet_365d_nulmeting) : null,
-          geen_cijfers_nulmeting: form.geen_cijfers_nulmeting,
-          extra_omzet_periode: form.extra_omzet_periode,
-          datum_nulmeting: form.datum_nulmeting || null,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Aanmaken mislukt");
@@ -62,11 +105,56 @@ export default function NieuweKlantPage() {
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="font-display text-2xl text-primary">Nieuwe onboarding klant</h1>
+          <h1 className="font-display text-2xl text-primary">Nieuwe woning</h1>
           <Link href="/admin/onboarding" className="btn-secondary text-sm">← Terug</Link>
         </div>
 
         <form onSubmit={stuur} className="card p-6 space-y-5">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setModus("nieuw")}
+              className={modus === "nieuw" ? "btn-primary text-sm" : "btn-secondary text-sm"}
+            >
+              Nieuwe klant
+            </button>
+            <button
+              type="button"
+              onClick={() => setModus("bestaand")}
+              className={modus === "bestaand" ? "btn-primary text-sm" : "btn-secondary text-sm"}
+            >
+              Bestaande klant
+            </button>
+          </div>
+
+          {modus === "bestaand" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-primary">Zoek klant *</label>
+              <input
+                className="input w-full"
+                placeholder="Naam of e-mailadres"
+                value={zoek}
+                onChange={e => setZoek(e.target.value)}
+              />
+              <div className="max-h-48 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
+                {ladenLogins && <p className="text-xs text-text-secondary p-2">Klanten laden...</p>}
+                {!ladenLogins && loginsFout && <p className="text-xs text-danger p-2">{loginsFout}</p>}
+                {!ladenLogins && !loginsFout && gefilterdeLogins.length === 0 && <p className="text-xs text-text-secondary p-2">Geen klanten gevonden.</p>}
+                {!ladenLogins && !loginsFout && gefilterdeLogins.map(login => (
+                  <button
+                    type="button"
+                    key={login.id}
+                    onClick={() => setGekozenLoginId(login.id)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm ${gekozenLoginId === login.id ? "bg-accent/10 text-accent font-semibold" : "hover:bg-surface"}`}
+                  >
+                    {[login.voornaam, login.achternaam].filter(Boolean).join(" ") || login.email}
+                    <span className="text-text-secondary ml-2">{login.email}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1">
             <label className="text-sm font-medium text-primary">Naam woning *</label>
             <input
@@ -77,50 +165,55 @@ export default function NieuweKlantPage() {
               required
             />
           </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-primary">E-mailadres klant *</label>
-            <input
-              type="email"
-              className="input w-full"
-              placeholder="klant@email.nl"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-primary">Wachtwoord voor klant *</label>
-            <input
-              className="input w-full"
-              placeholder="Bijv. villa2026"
-              value={form.wachtwoord}
-              onChange={e => setForm(f => ({ ...f, wachtwoord: e.target.value }))}
-              required
-              minLength={4}
-            />
-            <p className="text-xs text-text-secondary">Dit wachtwoord geef je door aan de klant.</p>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-primary">Voornaam <span className="text-text-secondary font-normal">(optioneel)</span></label>
-              <input
-                className="input w-full"
-                placeholder="bijv. Lisa"
-                value={form.voornaam}
-                onChange={e => setForm(f => ({ ...f, voornaam: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-primary">Achternaam <span className="text-text-secondary font-normal">(optioneel)</span></label>
-              <input
-                className="input w-full"
-                placeholder="bijv. de Vries"
-                value={form.achternaam}
-                onChange={e => setForm(f => ({ ...f, achternaam: e.target.value }))}
-              />
-            </div>
-          </div>
+          {modus === "nieuw" && (
+            <>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-primary">E-mailadres klant *</label>
+                <input
+                  type="email"
+                  className="input w-full"
+                  placeholder="klant@email.nl"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-primary">Wachtwoord voor klant *</label>
+                <input
+                  className="input w-full"
+                  placeholder="Bijv. villa2026"
+                  value={form.wachtwoord}
+                  onChange={e => setForm(f => ({ ...f, wachtwoord: e.target.value }))}
+                  required
+                  minLength={4}
+                />
+                <p className="text-xs text-text-secondary">Dit wachtwoord geef je door aan de klant.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-primary">Voornaam <span className="text-text-secondary font-normal">(optioneel)</span></label>
+                  <input
+                    className="input w-full"
+                    placeholder="bijv. Lisa"
+                    value={form.voornaam}
+                    onChange={e => setForm(f => ({ ...f, voornaam: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-primary">Achternaam <span className="text-text-secondary font-normal">(optioneel)</span></label>
+                  <input
+                    className="input w-full"
+                    placeholder="bijv. de Vries"
+                    value={form.achternaam}
+                    onChange={e => setForm(f => ({ ...f, achternaam: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="border-t border-border pt-5">
             <h3 className="text-sm font-semibold text-primary mb-1">KPI nulmeting <span className="font-normal text-text-secondary">(optioneel — cijfers uit PriceLabs)</span></h3>
@@ -229,7 +322,7 @@ export default function NieuweKlantPage() {
           {fout && <p className="text-sm text-danger bg-danger/10 rounded-xl p-3">{fout}</p>}
 
           <button type="submit" disabled={bezig} className="btn-primary w-full">
-            {bezig ? "Aanmaken..." : "Klant aanmaken"}
+            {bezig ? "Aanmaken..." : "Woning aanmaken"}
           </button>
         </form>
       </div>

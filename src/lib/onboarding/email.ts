@@ -37,7 +37,6 @@ export async function stuurStapVoltooidEmail(
 
 export async function stuurWachtwoordResetEmail(
   klantEmail: string,
-  klantNaam: string,
   resetUrl: string,
   voornaam?: string | null
 ): Promise<void> {
@@ -48,7 +47,7 @@ export async function stuurWachtwoordResetEmail(
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
         <h2 style="color: #2b3885; margin-bottom: 8px;">Wachtwoord opnieuw instellen</h2>
-        <p style="color: #555; margin-bottom: 24px;">Hallo ${aanspreking(klantNaam, voornaam)},<br>Klik op de knop om een nieuw wachtwoord in te stellen. Deze link is 1 uur geldig.</p>
+        <p style="color: #555; margin-bottom: 24px;">Hallo ${aanspreking("daar", voornaam)},<br>Klik op de knop om een nieuw wachtwoord in te stellen. Deze link is 1 uur geldig.</p>
         <a href="${resetUrl}" style="display: inline-block; background: #2b3885; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">Wachtwoord instellen</a>
         <p style="color: #aaa; font-size: 12px; margin-top: 24px;">Als je dit niet hebt aangevraagd, kun je deze mail negeren.</p>
       </div>
@@ -58,12 +57,11 @@ export async function stuurWachtwoordResetEmail(
 
 export async function stuurUitnodigingsEmail(
   klantEmail: string,
-  klantNaam: string,
   dashboardUrl: string,
   resetUrl: string,
   voornaam?: string | null
 ): Promise<void> {
-  const naam = voornaam || klantNaam;
+  const naam = aanspreking("daar", voornaam);
   await resend.emails.send({
     from: "Host Boni <boni@verhuurai.nl>",
     to: klantEmail,
@@ -71,7 +69,7 @@ export async function stuurUitnodigingsEmail(
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 16px;">
         <h2 style="color: #2b3885; margin-bottom: 8px;">Welkom bij Host Boni, ${naam}!</h2>
-        <p style="color: #555; margin-bottom: 8px;">Je persoonlijke onboarding dashboard is aangemaakt. Hier kun je de voortgang van jouw onboarding volgen en to-do's afvinken.</p>
+        <p style="color: #555; margin-bottom: 8px;">Je persoonlijke onboarding dashboard is aangemaakt. Hier kun je de voortgang van jouw woning(en) volgen en to-do's afvinken.</p>
         <p style="color: #555; margin-bottom: 24px;">Klik op de knop hieronder om eerst een wachtwoord in te stellen, daarna kom je direct op je dashboard.</p>
         <a href="${resetUrl}" style="display: inline-block; background: #2b3885; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 16px;">Wachtwoord instellen & inloggen</a>
         <p style="color: #aaa; font-size: 12px; margin-top: 8px;">Of ga direct naar je dashboard: <a href="${dashboardUrl}" style="color: #2b3885;">${dashboardUrl}</a></p>
