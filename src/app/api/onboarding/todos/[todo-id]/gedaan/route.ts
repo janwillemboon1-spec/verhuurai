@@ -8,14 +8,14 @@ export async function POST(request: NextRequest, { params }: { params: { "todo-i
 
   const { data: todo, error: todoError } = await admin
     .from("onboarding_todos")
-    .select("*, onboarding_klanten(naam, email, link_token)")
+    .select("*, onboarding_klanten(naam, onboarding_logins(link_token))")
     .eq("id", params["todo-id"])
     .single();
 
   if (todoError || !todo) return NextResponse.json({ error: "Niet gevonden" }, { status: 404 });
 
   const klant = (todo as any).onboarding_klanten;
-  const token = klant?.link_token;
+  const token = klant?.onboarding_logins?.link_token;
 
   const cookieWaarde = request.cookies.get(COOKIE_NAAM)?.value;
   if (!cookieWaarde || !verifyCookieWaarde(cookieWaarde, token)) {

@@ -17,21 +17,22 @@ export async function POST(_: NextRequest, { params }: { params: { id: string } 
   const admin = createAdminClient();
   const { data: klant } = await admin
     .from("onboarding_klanten")
-    .select("id, naam, email, link_token, voornaam")
+    .select("id, onboarding_logins(email, link_token, voornaam)")
     .eq("id", params.id)
     .single();
 
-  if (!klant) {
+  const login = (klant as any)?.onboarding_logins;
+  if (!klant || !login) {
     return NextResponse.json({ error: "Klant niet gevonden" }, { status: 404 });
   }
 
-  const token = klant.link_token;
+  const token = login.link_token;
   const rt = maakResetToken(token);
   const dashboardUrl = `${BASE_URL}/onboarding/${token}/dashboard`;
   const resetUrl = `${BASE_URL}/onboarding/${token}/reset?rt=${rt}`;
 
   try {
-    await stuurUitnodigingsEmail(klant.email, klant.naam, dashboardUrl, resetUrl, klant.voornaam);
+    await stuurUitnodigingsEmail(login.email, dashboardUrl, resetUrl, login.voornaam);
   } catch (err) {
     console.error("Uitnodigingsmail fout:", err);
     return NextResponse.json({ error: "E-mail kon niet worden verstuurd" }, { status: 500 });
