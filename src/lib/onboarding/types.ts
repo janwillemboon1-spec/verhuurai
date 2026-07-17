@@ -1,10 +1,18 @@
 // src/lib/onboarding/types.ts
 
-export type OnboardingKlant = {
+export type OnboardingLogin = {
   id: string;
-  naam: string;
+  voornaam: string | null;
+  achternaam: string | null;
   email: string;
   link_token: string;
+  aangemaakt_op: string;
+};
+
+export type OnboardingKlant = {
+  id: string;
+  login_id: string;
+  naam: string;
   startdatum: string;
   aangemaakt_op: string;
   kpi_bezetting_nulmeting: number | null;
@@ -14,8 +22,6 @@ export type OnboardingKlant = {
   extra_omzet_periode: string;
   kpi_omzet_365d_nulmeting?: number | null;
   geen_cijfers_nulmeting?: boolean | null;
-  voornaam?: string | null;
-  achternaam?: string | null;
   datum_nulmeting?: string | null;
 };
 
