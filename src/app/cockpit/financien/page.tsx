@@ -91,6 +91,29 @@ interface OverigInkomsten {
   jul: number; aug: number; sep: number; okt: number; nov: number; dec: number;
 }
 
+interface WoningConfig {
+  listing_id: string;
+  listing_naam: string;
+  pms: string;
+  model: string;
+  tarief: number | null;
+  tarief_1_2: number | null;
+  tarief_3: number | null;
+  tarief_4plus: number | null;
+  groeit_mee: boolean;
+  actief: boolean;
+  van_maand: number | null;
+  tot_maand: number | null;
+  sort_order: number | null;
+}
+
+const MODELLEN = [
+  { id: "pct_rent", label: "Percentage van huurbedrag" },
+  { id: "pct_payout", label: "Percentage van uitbetaling" },
+  { id: "vast_maand", label: "Vast bedrag per maand" },
+  { id: "per_nacht_verschil", label: "Verschil per nacht" },
+];
+
 type TabId = "inkomsten" | "kosten" | "pl";
 
 export default function FinancienPage() {
@@ -114,6 +137,9 @@ export default function FinancienPage() {
   const [nieuwKosten, setNieuwKosten] = useState(false);
   const [bewerkOverig, setBewerkOverig] = useState<OverigInkomsten | null>(null);
   const [nieuwOverig, setNieuwOverig] = useState(false);
+  const [woningen, setWoningen] = useState<WoningConfig[]>([]);
+  const [bewerkWoning, setBewerkWoning] = useState<WoningConfig | null>(null);
+  const [nieuweWoning, setNieuweWoning] = useState(false);
 
   const maandIndices = useMemo(
     () => getMaandIndices(periode, eigenVan, eigenTot, huidigeMaand),
@@ -122,16 +148,18 @@ export default function FinancienPage() {
 
   const laadData = useCallback(async () => {
     setLaden(true);
-    const [ovRes, comRes, kosRes, ovgRes] = await Promise.all([
+    const [ovRes, comRes, kosRes, ovgRes, wonRes] = await Promise.all([
       fetch(`/api/cockpit/financien/overzicht?jaar=${jaar}`).then(r => r.json()),
       fetch(`/api/cockpit/financien/commissies?jaar=${jaar}`).then(r => r.json()),
       fetch(`/api/cockpit/financien/kosten?jaar=${jaar}`).then(r => r.json()),
       fetch(`/api/cockpit/financien/overig?jaar=${jaar}`).then(r => r.json()),
+      fetch(`/api/cockpit/financien/listings`).then(r => r.json()),
     ]);
     setOverzicht(ovRes);
     setCommissies(comRes);
     setKosten(kosRes.kosten ?? []);
     setOverig(ovgRes.overig ?? []);
+    setWoningen(wonRes.listings ?? []);
     setLaden(false);
   }, [jaar]);
 
@@ -215,6 +243,29 @@ export default function FinancienPage() {
   async function verwijderOverig(id: number) {
     if (!confirm("Inkomstenbron verwijderen?")) return;
     await fetch(`/api/cockpit/financien/overig/${id}`, { method: "DELETE" });
+    await laadData();
+  }
+
+  async function slaWoningOp(data: Partial<WoningConfig>) {
+    if (bewerkWoning) {
+      await fetch(`/api/cockpit/financien/listings/${bewerkWoning.listing_id}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } else {
+      await fetch("/api/cockpit/financien/listings", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    }
+    setBewerkWoning(null);
+    setNieuweWoning(false);
+    await laadData();
+  }
+
+  async function verwijderWoning(listingId: string) {
+    if (!confirm("Woning verwijderen uit het financiën-overzicht?")) return;
+    await fetch(`/api/cockpit/financien/listings/${listingId}`, { method: "DELETE" });
     await laadData();
   }
 
@@ -349,7 +400,15 @@ export default function FinancienPage() {
       {/* Tab: Inkomsten */}
       {actieveTab === "inkomsten" && commissies && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Commissies per woning</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">Commissies per woning</h2>
+            <button
+              onClick={() => setNieuweWoning(true)}
+              className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition-colors"
+            >
+              + Woning toevoegen
+            </button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
@@ -363,22 +422,31 @@ export default function FinancienPage() {
                   {maandIndices.length > 1 && (
                     <th className="text-right py-2 px-3 font-semibold text-gray-700 w-20">Totaal</th>
                   )}
+                  <th className="w-16" />
                 </tr>
               </thead>
               <tbody>
-                {commissies.listings.map(l => {
-                  const totaal = sumIndices(l.maanden, maandIndices);
+                {woningen.filter(w => w.actief).map(w => {
+                  const commissieRow = commissies.listings.find(l => l.listing_id === w.listing_id);
+                  const maanden = commissieRow?.maanden ?? Array(12).fill(0);
+                  const totaal = sumIndices(maanden, maandIndices);
                   return (
-                    <tr key={l.listing_id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-3 text-gray-700 truncate max-w-[180px]">{l.listing_naam}</td>
+                    <tr key={w.listing_id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="py-2 px-3 text-gray-700 truncate max-w-[180px]">{w.listing_naam}</td>
                       {maandIndices.map(i => (
-                        <td key={i} className={`text-right py-2 px-2 ${l.maanden[i] === 0 ? "text-gray-300" : "text-gray-700"}`}>
-                          {l.maanden[i] === 0 ? "—" : eur(l.maanden[i])}
+                        <td key={i} className={`text-right py-2 px-2 ${maanden[i] === 0 ? "text-gray-300" : "text-gray-700"}`}>
+                          {maanden[i] === 0 ? "—" : eur(maanden[i])}
                         </td>
                       ))}
                       {maandIndices.length > 1 && (
                         <td className="text-right py-2 px-3 font-semibold text-gray-800">{eur(totaal)}</td>
                       )}
+                      <td className="text-right py-2 px-3">
+                        <div className="flex gap-2 justify-end">
+                          <button onClick={() => setBewerkWoning(w)} className="text-gray-400 hover:text-[#2b3885]">✏️</button>
+                          <button onClick={() => verwijderWoning(w.listing_id)} className="text-gray-400 hover:text-red-500">🗑</button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -393,10 +461,14 @@ export default function FinancienPage() {
                       {eur(sumIndices(commissies.totaal_per_maand, maandIndices))}
                     </td>
                   )}
+                  <td />
                 </tr>
               </tbody>
             </table>
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Na toevoegen of wijzigen van een woning: klik boven op &quot;↻ Synchroniseer&quot; om de bedragen te (her)berekenen.
+          </p>
 
           {/* Overige inkomsten */}
           {overzicht && (
@@ -630,6 +702,13 @@ export default function FinancienPage() {
           onSluiten={() => { setBewerkOverig(null); setNieuwOverig(false); }}
         />
       )}
+      {(bewerkWoning || nieuweWoning) && (
+        <WoningModal
+          woning={bewerkWoning}
+          onOpslaan={slaWoningOp}
+          onSluiten={() => { setBewerkWoning(null); setNieuweWoning(false); }}
+        />
+      )}
     </div>
   );
 }
@@ -825,6 +904,136 @@ function OverigModal({ overig, onOpslaan, onSluiten }: {
             ))}
           </div>
         </div>
+        <div className="flex gap-2 pt-2">
+          <button type="submit" disabled={bezig} className="flex-1 py-2 bg-[#2b3885] text-white text-sm font-medium rounded-lg hover:bg-[#1e2a6e] disabled:opacity-50">
+            {bezig ? "Opslaan..." : "Opslaan"}
+          </button>
+          <button type="button" onClick={onSluiten} className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+            Annuleren
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function WoningModal({ woning, onOpslaan, onSluiten }: {
+  woning: WoningConfig | null;
+  onOpslaan: (d: Partial<WoningConfig>) => Promise<void>;
+  onSluiten: () => void;
+}) {
+  const isPctModel = (m: string) => m === "pct_rent" || m === "pct_payout";
+
+  const [form, setForm] = useState({
+    listing_id: woning?.listing_id ?? "",
+    listing_naam: woning?.listing_naam ?? "",
+    pms: woning?.pms ?? "hostaway",
+    model: woning?.model ?? "vast_maand",
+    tarief_pct: String(woning && isPctModel(woning.model) ? (woning.tarief ?? 0) * 100 : ""),
+    tarief_vast: String(woning?.model === "vast_maand" ? (woning?.tarief ?? "") : ""),
+    tarief_1_2: String(woning?.tarief_1_2 ?? ""),
+    tarief_3: String(woning?.tarief_3 ?? ""),
+    tarief_4plus: String(woning?.tarief_4plus ?? ""),
+    groeit_mee: woning?.groeit_mee ?? true,
+    van_maand: String(woning?.van_maand ?? "1"),
+    tot_maand: String(woning?.tot_maand ?? "12"),
+  });
+  const [bezig, setBezig] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBezig(true);
+    const isVast = form.model === "vast_maand";
+    await onOpslaan({
+      listing_id: form.listing_id,
+      listing_naam: form.listing_naam,
+      pms: form.pms,
+      model: form.model,
+      tarief: isPctModel(form.model)
+        ? (parseFloat(form.tarief_pct) || 0) / 100
+        : isVast ? (parseFloat(form.tarief_vast) || 0) : null,
+      tarief_1_2: form.model === "per_nacht_verschil" ? (parseFloat(form.tarief_1_2) || null) : null,
+      tarief_3: form.model === "per_nacht_verschil" ? (parseFloat(form.tarief_3) || null) : null,
+      tarief_4plus: form.model === "per_nacht_verschil" ? (parseFloat(form.tarief_4plus) || null) : null,
+      groeit_mee: isVast ? false : form.groeit_mee,
+      actief: true,
+      van_maand: parseInt(form.van_maand) || 1,
+      tot_maand: parseInt(form.tot_maand) || 12,
+    });
+    setBezig(false);
+  }
+
+  return (
+    <Modal titel={woning ? "Woning bewerken" : "Nieuwe woning"} onSluiten={onSluiten}>
+      <form onSubmit={submit} className="space-y-3">
+        <Veld label="Naam">
+          <input className={invoerKlasse} value={form.listing_naam} onChange={e => setForm({...form, listing_naam: e.target.value})} required />
+        </Veld>
+        <Veld label="Listing ID (uit de Airbnb/Hostaway URL)">
+          <input
+            className={invoerKlasse}
+            value={form.listing_id}
+            onChange={e => setForm({...form, listing_id: e.target.value})}
+            disabled={!!woning}
+            required
+          />
+        </Veld>
+        <Veld label="PMS / bron">
+          <select className={invoerKlasse} value={form.pms} onChange={e => setForm({...form, pms: e.target.value})}>
+            <option value="hostaway">Hostaway</option>
+            <option value="airbnb">Airbnb-direct</option>
+          </select>
+        </Veld>
+        <Veld label="Commissiemodel">
+          <select className={invoerKlasse} value={form.model} onChange={e => setForm({...form, model: e.target.value})}>
+            {MODELLEN.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+          </select>
+        </Veld>
+
+        {isPctModel(form.model) && (
+          <Veld label="Tarief (%)">
+            <input type="number" step="0.01" className={invoerKlasse} value={form.tarief_pct} onChange={e => setForm({...form, tarief_pct: e.target.value})} required />
+          </Veld>
+        )}
+        {form.model === "vast_maand" && (
+          <Veld label="Vast bedrag per maand (€)">
+            <input type="number" step="0.01" className={invoerKlasse} value={form.tarief_vast} onChange={e => setForm({...form, tarief_vast: e.target.value})} required />
+          </Veld>
+        )}
+        {form.model === "per_nacht_verschil" && (
+          <>
+            <Veld label="Ownertarief bij 1-2 gasten (€/nacht)">
+              <input type="number" step="0.01" className={invoerKlasse} value={form.tarief_1_2} onChange={e => setForm({...form, tarief_1_2: e.target.value})} />
+            </Veld>
+            <Veld label="Ownertarief bij 3 gasten (€/nacht)">
+              <input type="number" step="0.01" className={invoerKlasse} value={form.tarief_3} onChange={e => setForm({...form, tarief_3: e.target.value})} />
+            </Veld>
+            <Veld label="Ownertarief bij 4+ gasten (€/nacht)">
+              <input type="number" step="0.01" className={invoerKlasse} value={form.tarief_4plus} onChange={e => setForm({...form, tarief_4plus: e.target.value})} />
+            </Veld>
+          </>
+        )}
+
+        {form.model !== "vast_maand" && (
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" checked={form.groeit_mee} onChange={e => setForm({...form, groeit_mee: e.target.checked})} />
+            Groeit mee met prijsstijgingen
+          </label>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <Veld label="Vanaf maand">
+            <select className={invoerKlasse} value={form.van_maand} onChange={e => setForm({...form, van_maand: e.target.value})}>
+              {MAANDEN_LANG.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+            </select>
+          </Veld>
+          <Veld label="Tot en met maand">
+            <select className={invoerKlasse} value={form.tot_maand} onChange={e => setForm({...form, tot_maand: e.target.value})}>
+              {MAANDEN_LANG.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+            </select>
+          </Veld>
+        </div>
+
         <div className="flex gap-2 pt-2">
           <button type="submit" disabled={bezig} className="flex-1 py-2 bg-[#2b3885] text-white text-sm font-medium rounded-lg hover:bg-[#1e2a6e] disabled:opacity-50">
             {bezig ? "Opslaan..." : "Opslaan"}

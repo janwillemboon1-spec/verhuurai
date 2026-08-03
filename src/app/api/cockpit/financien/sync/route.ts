@@ -27,6 +27,8 @@ interface CommissieConfig {
   groeit_mee: boolean;
   actief: boolean;
   sort_order: number;
+  van_maand: number | null;
+  tot_maand: number | null;
 }
 
 function maandVanDatum(datum: string): string {
@@ -199,6 +201,9 @@ export async function POST(req: Request) {
         if (!config) continue;
 
         const maand = maandVanDatum(r.check_in);
+        const maandNr = parseInt(maand.slice(5, 7));
+        if (maandNr < (config.van_maand ?? 1) || maandNr > (config.tot_maand ?? 12)) continue;
+
         const sleutel = `${r.listing_id}|${maand}`;
 
         if (!commissieMap.has(sleutel)) {
@@ -232,10 +237,12 @@ export async function POST(req: Request) {
         entry.omzet_basis += basis;
       }
 
-      // Voeg vaste maandbedragen toe (12 maanden)
+      // Voeg vaste maandbedragen toe (binnen van_maand–tot_maand)
       for (const config of configs as CommissieConfig[]) {
         if (config.model !== "vast_maand") continue;
-        for (let m = 1; m <= 12; m++) {
+        const vanMaand = config.van_maand ?? 1;
+        const totMaand = config.tot_maand ?? 12;
+        for (let m = vanMaand; m <= totMaand; m++) {
           const maand = `${jaar}-${String(m).padStart(2, "0")}`;
           const sleutel = `${config.listing_id}|${maand}`;
           commissieMap.set(sleutel, {
