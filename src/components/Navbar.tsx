@@ -11,6 +11,7 @@ export function Navbar() {
   const [gratisOpen, setGratisOpen] = useState(false);
   const [ingelogd, setIngelogd] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobielGratisRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
@@ -25,8 +26,14 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
+    // Sluit het gratis-tools-menu alleen bij een klik buiten zowel de desktop-
+    // dropdown als het mobiele submenu. Anders sluit een tik op een mobiele
+    // link het submenu al bij mousedown, nog voordat de klik de link bereikt.
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const doel = e.target as Node;
+      const binnenDesktop = dropdownRef.current?.contains(doel) ?? false;
+      const binnenMobiel = mobielGratisRef.current?.contains(doel) ?? false;
+      if (!binnenDesktop && !binnenMobiel) {
         setGratisOpen(false);
       }
     }
@@ -141,7 +148,7 @@ export function Navbar() {
           </Link>
 
           {/* Gratis tools submenu mobiel */}
-          <div>
+          <div ref={mobielGratisRef}>
             <button
               onClick={() => setGratisOpen(!gratisOpen)}
               className="flex items-center justify-between w-full text-text-secondary font-medium"
