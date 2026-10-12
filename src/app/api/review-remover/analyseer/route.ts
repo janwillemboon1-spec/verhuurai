@@ -81,6 +81,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (typeof context !== "string" || !context.trim()) {
+      return NextResponse.json(
+        { error: "Reden van bezwaar / context is verplicht" },
+        { status: 400 }
+      );
+    }
     if (!Number.isInteger(sterren) || sterren < 1 || sterren > 5) {
       return NextResponse.json(
         { error: "Sterrenbeoordeling moet 1 t/m 5 zijn" },

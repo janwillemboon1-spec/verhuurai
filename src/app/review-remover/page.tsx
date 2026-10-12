@@ -57,6 +57,7 @@ export default function ReviewRemoverPage() {
     email.trim().includes("@") &&
     reviewTekst.trim().length > 0 &&
     sterren !== null &&
+    context.trim().length > 0 &&
     !laden;
 
   const voegToe = (bestanden: File[]) => {
@@ -125,7 +126,7 @@ export default function ReviewRemoverPage() {
           taal,
           reviewTekst: reviewTekst.trim(),
           sterren,
-          context: context.trim() || undefined,
+          context: context.trim(),
           screenshotPaden,
         }),
       });
@@ -267,7 +268,9 @@ export default function ReviewRemoverPage() {
 
           {/* Context */}
           <div>
-            <label className="block text-sm font-semibold text-primary mb-1.5">Context (optioneel)</label>
+            <label className="block text-sm font-semibold text-primary mb-1.5">
+              Reden van bezwaar / context <span className="text-accent">*</span>
+            </label>
             <textarea
               value={context}
               onChange={(e) => setContext(e.target.value)}
