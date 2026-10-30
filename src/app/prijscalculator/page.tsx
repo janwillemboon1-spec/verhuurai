@@ -61,7 +61,7 @@ export default function PrijscalculatorPage() {
   const [minNachten, setMinNachten] = useState("");
   const [voornaam, setVoornaam] = useState("");
   const [email, setEmail] = useState("");
-  const [marketingToestemming, setMarketingToestemming] = useState(false);
+  const [marketingToestemming, setMarketingToestemming] = useState(true);
   const [laden, setLaden] = useState(false);
   const [analyse, setAnalyse] = useState<Analyse | null>(null);
   const [fout, setFout] = useState<string | null>(null);
@@ -72,7 +72,7 @@ export default function PrijscalculatorPage() {
   const minN = parseInt(minNachten) || 1;
   const locatie = [plaats, land].filter(Boolean).join(", ");
   const gebruikBasisprijs = minN >= 6;
-  const formulierCompleet = !!land.trim() && !!plaats.trim() && !!basis && !!voornaam.trim() && email.includes("@") && marketingToestemming;
+  const formulierCompleet = !!land.trim() && !!plaats.trim() && !!basis && !!voornaam.trim() && email.includes("@");
 
   const analyseer = async () => {
     if (!formulierCompleet) return;
@@ -247,17 +247,16 @@ export default function PrijscalculatorPage() {
             </div>
           </div>
 
-          {/* Marketingtoestemming (verplicht) */}
+          {/* Marketingtoestemming (optioneel, standaard aangevinkt) */}
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={marketingToestemming}
               onChange={e => setMarketingToestemming(e.target.checked)}
-              required
               className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-border accent-accent cursor-pointer"
             />
             <span className="text-sm text-text-secondary leading-relaxed">
-              {MARKETING_TOESTEMMING_TEKST} <span className="text-accent">*</span>
+              {MARKETING_TOESTEMMING_TEKST}
             </span>
           </label>
 

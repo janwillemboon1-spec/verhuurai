@@ -5,11 +5,6 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { voornaam, email, locatie, land, basisprijs, minNachten, jaar, resultaat, marketingToestemming, marketingToestemmingTekst } = await request.json();
-
-  // Marketingtoestemming is verplicht om de calculator te gebruiken
-  if (marketingToestemming !== true) {
-    return NextResponse.json({ error: "Toestemming voor marketingmails is verplicht." }, { status: 400 });
-  }
   const admin = createAdminClient();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
@@ -30,7 +25,8 @@ export async function POST(request: Request) {
       resultaat_json: {
         ...resultaat,
         marketing_toestemming: {
-          akkoord: true,
+          akkoord: marketingToestemming === true,
+          standaard_aangevinkt: true,
           tijdstip: new Date().toISOString(),
           tekst: typeof marketingToestemmingTekst === "string" ? marketingToestemmingTekst.slice(0, 500) : null,
         },
