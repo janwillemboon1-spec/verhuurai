@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         ...resultaat,
         marketing_toestemming: {
           akkoord: marketingToestemming === true,
-          standaard_aangevinkt: true,
+          standaard_aangevinkt: false,
           tijdstip: new Date().toISOString(),
           tekst: typeof marketingToestemmingTekst === "string" ? marketingToestemmingTekst.slice(0, 500) : null,
         },

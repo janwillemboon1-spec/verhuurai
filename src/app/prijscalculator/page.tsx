@@ -29,7 +29,7 @@ const KLEUR_CLASSES: Record<string, { bg: string; text: string; border: string; 
 const MAANDEN = ["Januari","Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"];
 const JAAR = new Date().getFullYear() + 1;
 const MARKETING_TOESTEMMING_TEKST =
-  "Ja, Host Boni mag me af en toe tips en aanbiedingen over vakantieverhuur mailen. Geen spam, en afmelden kan altijd met één klik.";
+  "Ja, stuur me ook Boni's beste prijs- en verhuurtips, zodat ik meer uit mijn vakantiewoning haal (af en toe met een aanbieding). Geen spam, afmelden kan altijd met één klik.";
 
 // ── Hulpfuncties ──────────────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ export default function PrijscalculatorPage() {
   const [minNachten, setMinNachten] = useState("");
   const [voornaam, setVoornaam] = useState("");
   const [email, setEmail] = useState("");
-  const [marketingToestemming, setMarketingToestemming] = useState(true);
+  const [marketingToestemming, setMarketingToestemming] = useState(false);
   const [laden, setLaden] = useState(false);
   const [analyse, setAnalyse] = useState<Analyse | null>(null);
   const [fout, setFout] = useState<string | null>(null);
@@ -247,7 +247,7 @@ export default function PrijscalculatorPage() {
             </div>
           </div>
 
-          {/* Marketingtoestemming (optioneel, standaard aangevinkt) */}
+          {/* Marketingtoestemming (optioneel, standaard uit: toestemming moet een actieve keuze zijn) */}
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input
               type="checkbox"
