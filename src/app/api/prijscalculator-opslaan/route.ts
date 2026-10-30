@@ -4,7 +4,12 @@ import { Resend } from "resend";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const { voornaam, email, locatie, land, basisprijs, minNachten, jaar, resultaat } = await request.json();
+  const { voornaam, email, locatie, land, basisprijs, minNachten, jaar, resultaat, marketingToestemming, marketingToestemmingTekst } = await request.json();
+
+  // Marketingtoestemming is verplicht om de calculator te gebruiken
+  if (marketingToestemming !== true) {
+    return NextResponse.json({ error: "Toestemming voor marketingmails is verplicht." }, { status: 400 });
+  }
   const admin = createAdminClient();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.hostboni.com";
 
@@ -19,7 +24,18 @@ export async function POST(request: Request) {
 
   const { data, error } = await admin
     .from("prijscalculator_rapporten")
-    .insert({ voornaam: voornaam || null, email: email || null, locatie, land, basisprijs, min_nachten: minNachten || 1, jaar, resultaat_json: resultaat, user_id: userId })
+    .insert({
+      voornaam: voornaam || null, email: email || null, locatie, land, basisprijs, min_nachten: minNachten || 1, jaar, user_id: userId,
+      // Bewijs van toestemming (AVG): wanneer en met welke tekst. Bewust in de JSON, zodat er geen schemawijziging nodig is.
+      resultaat_json: {
+        ...resultaat,
+        marketing_toestemming: {
+          akkoord: true,
+          tijdstip: new Date().toISOString(),
+          tekst: typeof marketingToestemmingTekst === "string" ? marketingToestemmingTekst.slice(0, 500) : null,
+        },
+      },
+    })
     .select()
     .single();
 

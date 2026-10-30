@@ -28,6 +28,8 @@ const KLEUR_CLASSES: Record<string, { bg: string; text: string; border: string; 
 
 const MAANDEN = ["Januari","Februari","Maart","April","Mei","Juni","Juli","Augustus","September","Oktober","November","December"];
 const JAAR = new Date().getFullYear() + 1;
+const MARKETING_TOESTEMMING_TEKST =
+  "Ja, Host Boni mag me af en toe tips en aanbiedingen over vakantieverhuur mailen. Geen spam, en afmelden kan altijd met één klik.";
 
 // ── Hulpfuncties ──────────────────────────────────────────────────────────────
 
@@ -59,6 +61,7 @@ export default function PrijscalculatorPage() {
   const [minNachten, setMinNachten] = useState("");
   const [voornaam, setVoornaam] = useState("");
   const [email, setEmail] = useState("");
+  const [marketingToestemming, setMarketingToestemming] = useState(false);
   const [laden, setLaden] = useState(false);
   const [analyse, setAnalyse] = useState<Analyse | null>(null);
   const [fout, setFout] = useState<string | null>(null);
@@ -69,9 +72,10 @@ export default function PrijscalculatorPage() {
   const minN = parseInt(minNachten) || 1;
   const locatie = [plaats, land].filter(Boolean).join(", ");
   const gebruikBasisprijs = minN >= 6;
+  const formulierCompleet = !!land.trim() && !!plaats.trim() && !!basis && !!voornaam.trim() && email.includes("@") && marketingToestemming;
 
   const analyseer = async () => {
-    if (!land.trim() || !plaats.trim() || !basis || !voornaam.trim() || !email.includes("@")) return;
+    if (!formulierCompleet) return;
     setLaden(true); setFout(null); setAnalyse(null); setOpgeslagenId(null);
     try {
       const res = await fetch("/api/locatie-analyse", {
@@ -96,6 +100,8 @@ export default function PrijscalculatorPage() {
           minNachten: minN,
           jaar: JAAR,
           resultaat: data.data,
+          marketingToestemming,
+          marketingToestemmingTekst: MARKETING_TOESTEMMING_TEKST,
         }),
       });
       const saveData = await saveRes.json();
@@ -241,6 +247,20 @@ export default function PrijscalculatorPage() {
             </div>
           </div>
 
+          {/* Marketingtoestemming (verplicht) */}
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={marketingToestemming}
+              onChange={e => setMarketingToestemming(e.target.checked)}
+              required
+              className="mt-0.5 h-5 w-5 flex-shrink-0 rounded border-border accent-accent cursor-pointer"
+            />
+            <span className="text-sm text-text-secondary leading-relaxed">
+              {MARKETING_TOESTEMMING_TEKST} <span className="text-accent">*</span>
+            </span>
+          </label>
+
           <div className="text-center">
             <a href="/prijscalculator/demo" className="text-center block text-sm border border-accent/40 text-accent font-semibold px-4 py-2.5 rounded-xl hover:bg-accent/5 transition-colors flex items-center justify-center gap-2">
               👁️ Bekijk een voorbeeldrapport (Estepona, Spanje) →
@@ -251,8 +271,8 @@ export default function PrijscalculatorPage() {
 
           <button
             onClick={analyseer}
-            disabled={!land.trim() || !plaats.trim() || !basis || !voornaam.trim() || !email.includes("@") || laden}
-            className={`btn-primary w-full text-lg py-4 flex items-center justify-center gap-2 ${(!land.trim() || !plaats.trim() || !basis || !voornaam.trim() || !email.includes("@") || laden) ? "opacity-40 cursor-not-allowed" : ""}`}
+            disabled={!formulierCompleet || laden}
+            className={`btn-primary w-full text-lg py-4 flex items-center justify-center gap-2 ${(!formulierCompleet || laden) ? "opacity-40 cursor-not-allowed" : ""}`}
           >
             {laden ? (
               <>
